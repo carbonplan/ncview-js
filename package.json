@@ -1,0 +1,41 @@
+{
+  "name": "article-template",
+  "version": "1.0.0",
+  "description": "template for developing a standalone carbonplan research article",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next -p 5001",
+    "build": "next build",
+    "start": "next start",
+    "format": "npm run format-js && npm run format-md",
+    "format-js": "prettier --write '*.js' '{components,pages,article,tool}/**/*.js'",
+    "format-md": "prettier --write README.md 'article/**/*.md' --parser mdx"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carbonplan/article-template.git"
+  },
+  "author": "carbonplan",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/carbonplan/article-template/issues"
+  },
+  "homepage": "https://github.com/carbonplan/article-template#readme",
+  "dependencies": {
+    "@carbonplan/components": "^11.0.6",
+    "@carbonplan/layouts": "^2.1.0",
+    "@carbonplan/theme": "^7.0.0",
+    "@mdx-js/loader": "^1.6.22",
+    "@mdx-js/react": "^1.6.22",
+    "@next/mdx": "^11.0.1",
+    "@theme-ui/color": "^0.13.1",
+    "next": "^12.0.5",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "rehype-slug": "^4.0.1",
+    "theme-ui": "^0.13.1"
+  },
+  "devDependencies": {
+    "prettier": "2.3.2"
+  }
+}
