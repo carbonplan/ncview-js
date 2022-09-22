@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import { get } from 'zarrita/ndarray'
+import ndarray from 'ndarray'
+import ops from 'ndarray-ops'
 
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
@@ -29,11 +31,11 @@ const aspects = {
   equirectangular: 0.5,
 }
 
-// const DATASET =
-//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
-
 const DATASET =
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
+  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
+
+// const DATASET =
+//   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
 
 const getRange = (arr) => {
   return arr.reduce(
@@ -106,7 +108,23 @@ const fetchData = async () => {
 
     return { scale, translate }
   }
-  return { nullValue, clim, data, bounds, getMapProps }
+
+  const test = ndarray(new Float32Array(Array(data.size)), data.shape)
+  for (let i = 0; i < data.shape[0]; i++) {
+    for (let j = 0; j < data.shape[1]; j++) {
+      test.set(i, j, data.get(data.shape[0] - 1 - i, j))
+    }
+  }
+
+  return {
+    nullValue,
+    clim,
+    data: test, // ndarray(new Float32Array(data.data), data.shape)
+    // bounds,
+    bounds: { lat: [15, 75], lon: [-160, -30] }, // originally: { lat: [15, 75], lon: [200, 330] }
+
+    getMapProps,
+  }
 }
 
 const Map = () => {
@@ -171,7 +189,7 @@ const Map = () => {
 
       <Box sx={{ width: '50%', ml: [4], mt: [6], mb: [3] }}>
         {data && bounds && clim && (
-          <Minimap {...mapProps} projection={projections[projection]}>
+          <Minimap projection={projections[projection]}>
             {basemaps.ocean && (
               <Path
                 fill={theme.colors.background}
