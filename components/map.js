@@ -3,7 +3,6 @@ import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import { get } from 'zarrita/ndarray'
 import ndarray from 'ndarray'
-import ops from 'ndarray-ops'
 
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
