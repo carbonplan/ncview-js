@@ -118,17 +118,31 @@ const fetchData = async () => {
     return { scale, translate }
   }
 
-  const test = ndarray(new Float32Array(Array(data.size)), data.shape)
-  for (let i = 0; i < data.shape[0]; i++) {
-    for (let j = 0; j < data.shape[1]; j++) {
-      test.set(i, j, data.get(data.shape[0] - 1 - i, j))
+  let normalizedData = ndarray(new Float32Array(data.data), data.shape)
+
+  const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
+  const lonsReversed = lon.data[0] > lon.data[lon.data.length - 1]
+
+  if (latsReversed || lonsReversed) {
+    normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
+    for (let i = 0; i < data.shape[0]; i++) {
+      for (let j = 0; j < data.shape[1]; j++) {
+        normalizedData.set(
+          i,
+          j,
+          data.get(
+            latsReversed ? data.shape[0] - 1 - i : i,
+            lonsReversed ? data.shape[1] - 1 - j : j
+          )
+        )
+      }
     }
   }
 
   return {
     nullValue,
     clim,
-    data: test, // ndarray(new Float32Array(data.data), data.shape)
+    data: normalizedData,
     bounds,
     getMapProps,
   }
