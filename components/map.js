@@ -43,6 +43,17 @@ const getRange = (arr) => {
   )
 }
 
+const getBounds = ({ data, lat, lon }) => {
+  const lonBounds = getRange(data[lon].data)
+
+  return {
+    lat: getRange(data[lat].data),
+    lon: lonBounds.some((d) => d > 180)
+      ? lonBounds.map((d) => d - 360)
+      : lonBounds,
+  }
+}
+
 const COMPRESSORS = {
   zlib: Zlib,
   blosc: Blosc,
@@ -78,8 +89,7 @@ const fetchData = async () => {
   const nullValue = arrs[0].fill_value ?? 0
   const [data, lat, lon] = await Promise.all(arrs.map((arr) => get(arr)))
   const clim = getRange(data.data)
-
-  const bounds = { lat: getRange(lat.data), lon: getRange(lon.data) }
+  const bounds = getBounds({ data: { lat, lon }, lat: 'lat', lon: 'lon' })
 
   const f = {
     type: 'Feature',
@@ -119,9 +129,7 @@ const fetchData = async () => {
     nullValue,
     clim,
     data: test, // ndarray(new Float32Array(data.data), data.shape)
-    // bounds,
-    bounds: { lat: [15, 75], lon: [-160, -30] }, // originally: { lat: [15, 75], lon: [200, 330] }
-
+    bounds,
     getMapProps,
   }
 }
