@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import { get } from 'zarrita/ndarray'
+import ndarray from 'ndarray'
 
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
@@ -29,17 +30,28 @@ const aspects = {
   equirectangular: 0.5,
 }
 
-// const DATASET =
-//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
-
 const DATASET =
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
+  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
+
+// const DATASET =
+//   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
 
 const getRange = (arr) => {
   return arr.reduce(
     ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
     [Infinity, -Infinity]
   )
+}
+
+const getBounds = ({ data, lat, lon }) => {
+  const lonBounds = getRange(data[lon].data)
+
+  return {
+    lat: getRange(data[lat].data),
+    lon: lonBounds.some((d) => d > 180)
+      ? lonBounds.map((d) => d - 360)
+      : lonBounds,
+  }
 }
 
 const COMPRESSORS = {
@@ -77,8 +89,7 @@ const fetchData = async () => {
   const nullValue = arrs[0].fill_value ?? 0
   const [data, lat, lon] = await Promise.all(arrs.map((arr) => get(arr)))
   const clim = getRange(data.data)
-
-  const bounds = { lat: getRange(lat.data), lon: getRange(lon.data) }
+  const bounds = getBounds({ data: { lat, lon }, lat: 'lat', lon: 'lon' })
 
   const f = {
     type: 'Feature',
@@ -106,7 +117,35 @@ const fetchData = async () => {
 
     return { scale, translate }
   }
-  return { nullValue, clim, data, bounds, getMapProps }
+
+  let normalizedData = ndarray(new Float32Array(data.data), data.shape)
+
+  const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
+  const lonsReversed = lon.data[0] > lon.data[lon.data.length - 1]
+
+  if (latsReversed || lonsReversed) {
+    normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
+    for (let i = 0; i < data.shape[0]; i++) {
+      for (let j = 0; j < data.shape[1]; j++) {
+        normalizedData.set(
+          i,
+          j,
+          data.get(
+            latsReversed ? data.shape[0] - 1 - i : i,
+            lonsReversed ? data.shape[1] - 1 - j : j
+          )
+        )
+      }
+    }
+  }
+
+  return {
+    nullValue,
+    clim,
+    data: normalizedData,
+    bounds,
+    getMapProps,
+  }
 }
 
 const Map = () => {
