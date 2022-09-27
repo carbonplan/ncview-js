@@ -210,7 +210,7 @@ const Map = () => {
 
       <Box sx={{ width: '50%', ml: [4], mt: [6], mb: [3] }}>
         {data && bounds && clim && (
-          <Minimap projection={projections[projection]}>
+          <Minimap {...mapProps} projection={projections[projection]}>
             {basemaps.ocean && (
               <Path
                 fill={theme.colors.background}
