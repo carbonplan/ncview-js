@@ -30,11 +30,14 @@ const aspects = {
   equirectangular: 0.5,
 }
 
-const DATASET =
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
+// const DATASET =
+//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
 
 // const DATASET =
 //   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
+
+const DATASET =
+  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr'
 
 const getRange = (arr) => {
   return arr.reduce(
@@ -43,11 +46,24 @@ const getRange = (arr) => {
   )
 }
 
-const getBounds = ({ data, lat, lon }) => {
-  const lonBounds = getRange(data[lon].data)
+const getBounds = ({
+  data,
+  lat,
+  lon,
+  grid_mapping_name,
+  grid_north_pole_latitude,
+  grid_north_pole_longitude,
+}) => {
+  let latOffset = 0
+  let lonOffset = 0
+  if (grid_mapping_name === 'rotated_latitude_longitude') {
+    latOffset = -1 * (90 - grid_north_pole_latitude)
+    lonOffset = 180 + grid_north_pole_longitude
+  }
+  const lonBounds = getRange(data[lon].data.map((d) => d + lonOffset))
 
   return {
-    lat: getRange(data[lat].data),
+    lat: getRange(data[lat].data.map((d) => d + latOffset)),
     lon: lonBounds.some((d) => d > 180)
       ? lonBounds.map((d) => d - 360)
       : lonBounds,
@@ -69,11 +85,19 @@ const fetchData = async () => {
     .filter(Boolean)
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
+    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
 
-  // temporarily hardcode to always look at first variable
-  const variable = variables[0]
+  // temporarily hardcode to always look at last variable
+  const variable = variables[variables.length - 1]
   const compressorId = metadata.metadata[`${variable}/.zarray`].compressor.id
   const compressor = COMPRESSORS[compressorId]
+
+  const zattrs = metadata.metadata[`${variable}/.zattrs`]
+  const coords = zattrs['_ARRAY_DIMENSIONS']
+
+  const gridMapping = zattrs.grid_mapping
+    ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
+    : null
 
   if (!compressor) {
     throw new Error(`no compressor found for compressor.id=${compressorId}`)
@@ -81,15 +105,21 @@ const fetchData = async () => {
 
   zarr.registry.set(compressor.codecId, () => compressor)
   const store = new FetchStore(DATASET)
+
   const arrs = await Promise.all([
     zarr.get_array(store, '/' + variable),
-    zarr.get_array(store, '/lat'),
-    zarr.get_array(store, '/lon'),
+    ...coords.map((coord) => zarr.get_array(store, `/${coord}`)),
   ])
   const nullValue = arrs[0].fill_value ?? 0
   const [data, lat, lon] = await Promise.all(arrs.map((arr) => get(arr)))
   const clim = getRange(data.data)
-  const bounds = getBounds({ data: { lat, lon }, lat: 'lat', lon: 'lon' })
+
+  const bounds = getBounds({
+    data: { lat, lon },
+    lat: 'lat',
+    lon: 'lon',
+    ...gridMapping,
+  })
 
   const f = {
     type: 'Feature',
