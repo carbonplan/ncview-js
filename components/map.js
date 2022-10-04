@@ -110,7 +110,12 @@ const fetchData = async () => {
     zarr.get_array(store, '/' + variable),
     ...coords.map((coord) => zarr.get_array(store, `/${coord}`)),
   ])
-  const nullValue = arrs[0].fill_value ?? 0
+
+  let nullValue = arrs[0].fill_value ?? 0
+  if (/NaN/gi.test(nullValue)) {
+    nullValue = NaN
+  }
+
   const [data, lat, lon] = await Promise.all(arrs.map((arr) => get(arr)))
   const clim = getRange(data.data)
 
