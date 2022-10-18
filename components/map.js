@@ -49,27 +49,10 @@ const getRange = (arr) => {
   )
 }
 
-const getBounds = ({
-  data,
-  lat,
-  lon,
-  grid_mapping_name,
-  grid_north_pole_latitude,
-  grid_north_pole_longitude,
-}) => {
-  let latOffset = 0
-  let lonOffset = 0
-  if (grid_mapping_name === 'rotated_latitude_longitude') {
-    latOffset = -1 * (90 - grid_north_pole_latitude)
-    lonOffset = 180 + grid_north_pole_longitude
-  }
-  const lonBounds = getRange(data[lon].data.map((d) => d + lonOffset))
-
+const getBounds = ({ data, lat, lon }) => {
   return {
-    lat: getRange(data[lat].data.map((d) => d + latOffset)),
-    lon: lonBounds.some((d) => d > 180)
-      ? lonBounds.map((d) => d - 360)
-      : lonBounds,
+    lat: getRange(data[lat].data),
+    lon: getRange(data[lon].data),
   }
 }
 
@@ -126,7 +109,6 @@ const fetchData = async () => {
     data: { lat, lon },
     lat: 'lat',
     lon: 'lon',
-    ...gridMapping,
   })
 
   const f = {
@@ -183,6 +165,14 @@ const fetchData = async () => {
     data: normalizedData,
     bounds,
     getMapProps,
+    ...(gridMapping
+      ? {
+          northPole: [
+            gridMapping.grid_north_pole_longitude,
+            gridMapping.grid_north_pole_latitude,
+          ],
+        }
+      : {}),
   }
 }
 
@@ -191,6 +181,7 @@ const Map = () => {
   const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
   const [data, setData] = useState()
   const [bounds, setBounds] = useState()
+  const [northPole, setNorthPole] = useState(null)
   const [nullValue, setNullValue] = useState()
   const [clim, setClim] = useState()
   const [projection, setProjection] = useState('naturalEarth1')
@@ -207,6 +198,7 @@ const Map = () => {
       setBounds(result.bounds)
       setNullValue(result.nullValue)
       setClim(result.clim)
+      setNorthPole(result.northPole)
       getMapProps.current = result.getMapProps
       setMapProps(getMapProps.current(projection))
     })
@@ -276,6 +268,7 @@ const Map = () => {
             <Raster
               source={data}
               bounds={bounds}
+              northPole={northPole}
               colormap={colormap}
               mode={'lut'}
               clim={clim}
