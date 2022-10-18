@@ -39,6 +39,9 @@ const aspects = {
 const DATASET =
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr'
 
+// const DATASET =
+//   'https://carbonplan-scratch.s3.us-west-2.amazonaws.com/ARDEM.zarr'
+
 const getRange = (arr) => {
   return arr.reduce(
     ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
