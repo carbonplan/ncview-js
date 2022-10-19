@@ -36,11 +36,17 @@ const aspects = {
 // const DATASET =
 //   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
 
-const DATASET =
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr'
+// const DATASET =
+//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr'
 
 // const DATASET =
 //   'https://carbonplan-scratch.s3.us-west-2.amazonaws.com/ARDEM.zarr'
+
+const DATASET =
+  'https://carbonplan-scratch.s3.us-west-2.amazonaws.com/single_timestep/sample_EUR_cordex_data.zarr'
+
+// const DATASET =
+//   'https://carbonplan-scratch.s3.us-west-2.amazonaws.com/single_timestep/sample_AFR_cordex_data.zarr'
 
 const getRange = (arr) => {
   return arr.reduce(
