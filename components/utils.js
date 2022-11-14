@@ -98,10 +98,7 @@ export const fetchData = async () => {
 
   const getMapProps = (projection) => {
     const aspect = ASPECTS[projection]
-    const p = PROJECTIONS[projection]().fitSize(
-      [Math.PI * (1 / aspect), Math.PI],
-      f
-    )
+    const p = PROJECTIONS[projection]().fitSize([Math.PI * 2, Math.PI], f)
     const scale = p.scale()
     const translate = [
       p.translate()[0] / Math.PI - 1,
