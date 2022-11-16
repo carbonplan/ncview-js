@@ -35,6 +35,49 @@ const Map = () => {
     })
   }, [])
 
+  useEffect(() => {
+    const handler = ({ key, keyCode, metaKey }) => {
+      // Only handle keydowns after initial map props have been set using getMapProps
+      if (getMapProps.current) {
+        if (key.includes('Arrow')) {
+          const offsets = {
+            ArrowUp: [0, 1],
+            ArrowRight: [-1, 0],
+            ArrowDown: [0, -1],
+            ArrowLeft: [1, 0],
+          }
+          const offset = offsets[key]
+
+          if (!offset) {
+            throw new Error(`Unexpected arrow key: ${key}`)
+          }
+
+          setMapProps((prev) => ({
+            scale: prev.scale,
+            translate: prev.translate.map((d, i) => d + offset[i]),
+          }))
+        } else if (key === '=') {
+          // zoom in
+          setMapProps((prev) => ({
+            scale: prev.scale + 1,
+            translate: prev.translate,
+          }))
+        } else if (key === '-') {
+          // zoom out
+          setMapProps((prev) => ({
+            scale: prev.scale - 1,
+            translate: prev.translate,
+          }))
+        }
+      }
+    }
+    window.addEventListener('keydown', handler)
+
+    return () => {
+      document.removeEventListener('keydown', handler)
+    }
+  }, [])
+
   const handleProjectionChange = useCallback((e) => {
     setProjection(e.target.value)
     if (getMapProps.current) {
