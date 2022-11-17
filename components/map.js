@@ -60,13 +60,17 @@ const Map = () => {
           // zoom in
           setMapProps((prev) => ({
             scale: prev.scale + 1,
-            translate: prev.translate,
+            translate: prev.translate.map(
+              (d) => (d / prev.scale) * (prev.scale + 1)
+            ),
           }))
         } else if (key === '-') {
           // zoom out
           setMapProps((prev) => ({
             scale: prev.scale - 1,
-            translate: prev.translate,
+            translate: prev.translate.map(
+              (d) => (d / prev.scale) * (prev.scale - 1)
+            ),
           }))
         }
       }
