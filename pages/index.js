@@ -1,5 +1,6 @@
 import { Row, Column } from '@carbonplan/components'
 import { Box, Container, Divider } from 'theme-ui'
+import Display from '../components/display'
 
 import Header from '../components/header'
 import Map from '../components/map'
@@ -35,8 +36,9 @@ const Index = () => {
               }}
             >
               <Divider sx={{ mt: '56px', mx: [-4, -5, -5, -6], mb: 4 }} />
+              <Display />
             </Column>
-            <Column start={[5]} width={[8]}>
+            <Column start={[5]} width={[8]} sx={{ mt: '56px' }}>
               <Map />
             </Column>
           </Row>
