@@ -9,16 +9,21 @@ import { useDisplayStore } from './stores'
 
 const Map = () => {
   const { theme } = useThemeUI()
-  const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
+  const colormapName = useDisplayStore((state) => state.colormap)
+  const colormap = useThemedColormap(colormapName, {
+    count: 255,
+    format: 'rgb',
+  })
   const [data, setData] = useState()
   const [bounds, setBounds] = useState()
   const [northPole, setNorthPole] = useState(null)
   const [nullValue, setNullValue] = useState()
-  const [clim, setClim] = useState()
   const getMapProps = useRef(null)
   const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
   const basemaps = useDisplayStore((state) => state.basemaps)
   const projection = useDisplayStore((state) => state.projection)
+  const clim = useDisplayStore((state) => state.clim)
+  const setClim = useDisplayStore((state) => state.setClim)
 
   useEffect(() => {
     fetchData().then((result) => {
