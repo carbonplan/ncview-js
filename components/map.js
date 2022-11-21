@@ -24,15 +24,16 @@ const Map = () => {
   const bounds = useStore((state) => state.bounds)
   const northPole = useStore((state) => state.northPole)
   const nullValue = useStore((state) => state.nullValue)
+  const variable = useStore((state) => state.variable)
 
   useEffect(() => {
-    if (url) {
-      fetchData(url).then((result) => {
+    fetchData().then((result) => {
+      if (result) {
         getMapProps.current = result
         setMapProps(getMapProps.current(projection))
-      })
-    }
-  }, [url])
+      }
+    })
+  }, [url, variable])
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {

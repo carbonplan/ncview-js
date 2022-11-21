@@ -20,12 +20,7 @@ const getBounds = ({ data, lat, lon }) => {
   }
 }
 
-const COMPRESSORS = {
-  zlib: Zlib,
-  blosc: Blosc,
-}
-
-export const fetchData = async (url) => {
+export const getMetadata = async (url) => {
   // fetch zmetadata to figure out compression and variables
   const response = await fetch(`${url}/.zmetadata`)
   const metadata = await response.json()
@@ -37,10 +32,20 @@ export const fetchData = async (url) => {
     .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
 
-  // temporarily hardcode to always look at last variable
-  const variable = variables[variables.length - 1]
+  return { metadata, variables }
+}
+
+const COMPRESSORS = {
+  zlib: Zlib,
+  blosc: Blosc,
+}
+
+export const fetchData = async (url, metadata, variable) => {
   const compressorId = metadata.metadata[`${variable}/.zarray`].compressor.id
   const compressor = COMPRESSORS[compressorId]
+  if (!compressor) {
+    throw new Error(`no compressor found for compressor.id=${compressorId}`)
+  }
 
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
   const coords = zattrs['_ARRAY_DIMENSIONS']
@@ -48,10 +53,6 @@ export const fetchData = async (url) => {
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
     : null
-
-  if (!compressor) {
-    throw new Error(`no compressor found for compressor.id=${compressorId}`)
-  }
 
   zarr.registry.set(compressor.codecId, () => compressor)
   const store = new FetchStore(url)
@@ -121,8 +122,6 @@ export const fetchData = async (url) => {
   }
 
   return {
-    variable,
-    metadata,
     nullValue,
     clim,
     data: normalizedData,
