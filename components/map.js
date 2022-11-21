@@ -3,38 +3,32 @@ import { useEffect, useRef, useState } from 'react'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
-import { fetchData } from './utils'
 import { PROJECTIONS } from './constants'
-import { useDatasetStore, useDisplayStore } from './stores'
+import useStore from './store'
 
 const Map = () => {
   const { theme } = useThemeUI()
-  const colormapName = useDisplayStore((state) => state.colormap)
+  const colormapName = useStore((state) => state.colormap)
   const colormap = useThemedColormap(colormapName, {
     count: 255,
     format: 'rgb',
   })
-  const [data, setData] = useState()
-  const [bounds, setBounds] = useState()
-  const [northPole, setNorthPole] = useState(null)
-  const [nullValue, setNullValue] = useState()
   const getMapProps = useRef(null)
   const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
-  const basemaps = useDisplayStore((state) => state.basemaps)
-  const projection = useDisplayStore((state) => state.projection)
-  const clim = useDisplayStore((state) => state.clim)
-  const setClim = useDisplayStore((state) => state.setClim)
-  const url = useDatasetStore((state) => state.url)
+  const basemaps = useStore((state) => state.basemaps)
+  const projection = useStore((state) => state.projection)
+  const clim = useStore((state) => state.clim)
+  const url = useStore((state) => state.url)
+  const fetchData = useStore((state) => state.fetchData)
+  const data = useStore((state) => state.data)
+  const bounds = useStore((state) => state.bounds)
+  const northPole = useStore((state) => state.northPole)
+  const nullValue = useStore((state) => state.nullValue)
 
   useEffect(() => {
     if (url) {
       fetchData(url).then((result) => {
-        setData(result.data)
-        setBounds(result.bounds)
-        setNullValue(result.nullValue)
-        setClim(result.clim)
-        setNorthPole(result.northPole)
-        getMapProps.current = result.getMapProps
+        getMapProps.current = result
         setMapProps(getMapProps.current(projection))
       })
     }

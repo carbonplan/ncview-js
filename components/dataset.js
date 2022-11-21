@@ -1,7 +1,7 @@
 import { Select } from '@carbonplan/components'
 import { Box } from 'theme-ui'
 import Label from './label'
-import { useDatasetStore } from './stores'
+import useStore from './store'
 
 const DATASETS = [
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
@@ -10,8 +10,8 @@ const DATASETS = [
 ]
 
 const Dataset = () => {
-  const url = useDatasetStore((state) => state.url)
-  const setUrl = useDatasetStore((state) => state.setUrl)
+  const url = useStore((state) => state.url)
+  const setUrl = useStore((state) => state.setUrl)
 
   return (
     <Box>

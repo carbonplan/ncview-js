@@ -3,20 +3,20 @@ import { Toggle, Select, Colorbar } from '@carbonplan/components'
 import { colormaps, useThemedColormap } from '@carbonplan/colormaps'
 import { format } from 'd3-format'
 
-import { useDatasetStore, useDisplayStore } from './stores'
+import useStore from './store'
 import Label from './label'
 
 const Display = () => {
-  const url = useDatasetStore((state) => state.url)
+  const url = useStore((state) => state.url)
   const loading = !url
-  const basemaps = useDisplayStore((state) => state.basemaps)
-  const setBasemaps = useDisplayStore((state) => state.setBasemaps)
-  const projection = useDisplayStore((state) => state.projection)
-  const setProjection = useDisplayStore((state) => state.setProjection)
-  const clim = useDisplayStore((state) => state.clim)
-  const setClim = useDisplayStore((state) => state.setClim)
-  const setColormap = useDisplayStore((state) => state.setColormap)
-  const colormapName = useDisplayStore((state) => state.colormap)
+  const basemaps = useStore((state) => state.basemaps)
+  const setBasemaps = useStore((state) => state.setBasemaps)
+  const projection = useStore((state) => state.projection)
+  const setProjection = useStore((state) => state.setProjection)
+  const clim = useStore((state) => state.clim)
+  const setClim = useStore((state) => state.setClim)
+  const setColormap = useStore((state) => state.setColormap)
+  const colormapName = useStore((state) => state.colormap)
   const colormap = useThemedColormap(loading ? 'greys' : colormapName, {
     count: 255,
     format: 'rgb',

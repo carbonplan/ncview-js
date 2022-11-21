@@ -121,6 +121,8 @@ export const fetchData = async (url) => {
   }
 
   return {
+    variable,
+    metadata,
     nullValue,
     clim,
     data: normalizedData,
