@@ -24,6 +24,7 @@
   "dependencies": {
     "@carbonplan/colormaps": "^4.0.0",
     "@carbonplan/components": "^12.0.0",
+    "@carbonplan/icons": "^2.0.0",
     "@carbonplan/layouts": "^3.0.0",
     "@carbonplan/minimaps": "^2.0.0",
     "@carbonplan/prism": "^2.0.0",
@@ -39,6 +40,7 @@
     "next": "^12.0.7",
     "numcodecs": "^0.2.2",
     "react": "^18.2.0",
+    "react-animate-height": "^3.0.5",
     "react-dom": "^18.2.0",
     "theme-ui": "^0.15.3",
     "zarrita": "^0.2.2",

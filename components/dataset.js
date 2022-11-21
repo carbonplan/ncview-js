@@ -1,7 +1,10 @@
 import { Select } from '@carbonplan/components'
-import { Box, Flex } from 'theme-ui'
+import { Flex } from 'theme-ui'
 import Label from './label'
+import { TooltipContent, TooltipWrapper } from './tooltip'
 import useStore from './store'
+import VariableMetadata from './variable-metadata'
+import { useState } from 'react'
 
 const DATASETS = [
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
@@ -18,13 +21,13 @@ const sx = {
   },
 }
 const Dataset = () => {
+  const [expanded, setExpanded] = useState(false)
   const url = useStore((state) => state.url)
   const setUrl = useStore((state) => state.setUrl)
 
   const variable = useStore((state) => state.variable)
   const variables = useStore((state) => state.variables)
 
-  const metadata = useStore((state) => state.metadata)
   const setVariable = useStore((state) => state.setVariable)
 
   return (
@@ -48,20 +51,29 @@ const Dataset = () => {
         </Select>
       </Label>
 
-      <Label value='Variable' htmlFor='variable'>
-        <Select
-          value={variable}
-          onChange={(e) => setVariable(e.target.value)}
-          id='variable'
-          sx={sx.select}
-        >
-          {variables.map((d, i) => (
-            <option key={d} value={d}>
-              {d}
-            </option>
-          ))}
-        </Select>
-      </Label>
+      {variable && (
+        <>
+          <Label value='Variable' htmlFor='variable'>
+            <TooltipWrapper expanded={expanded} setExpanded={setExpanded}>
+              <Select
+                value={variable}
+                onChange={(e) => setVariable(e.target.value)}
+                id='variable'
+                sx={sx.select}
+              >
+                {variables.map((d, i) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </Select>
+            </TooltipWrapper>
+          </Label>
+          <TooltipContent expanded={expanded}>
+            <VariableMetadata />
+          </TooltipContent>
+        </>
+      )}
     </Flex>
   )
 }
