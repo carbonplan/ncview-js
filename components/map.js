@@ -5,7 +5,7 @@ import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { fetchData } from './utils'
 import { PROJECTIONS } from './constants'
-import { useDisplayStore } from './stores'
+import { useDatasetStore, useDisplayStore } from './stores'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -24,18 +24,21 @@ const Map = () => {
   const projection = useDisplayStore((state) => state.projection)
   const clim = useDisplayStore((state) => state.clim)
   const setClim = useDisplayStore((state) => state.setClim)
+  const url = useDatasetStore((state) => state.url)
 
   useEffect(() => {
-    fetchData().then((result) => {
-      setData(result.data)
-      setBounds(result.bounds)
-      setNullValue(result.nullValue)
-      setClim(result.clim)
-      setNorthPole(result.northPole)
-      getMapProps.current = result.getMapProps
-      setMapProps(getMapProps.current(projection))
-    })
-  }, [])
+    if (url) {
+      fetchData(url).then((result) => {
+        setData(result.data)
+        setBounds(result.bounds)
+        setNullValue(result.nullValue)
+        setClim(result.clim)
+        setNorthPole(result.northPole)
+        getMapProps.current = result.getMapProps
+        setMapProps(getMapProps.current(projection))
+      })
+    }
+  }, [url])
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {
@@ -129,6 +132,21 @@ const Map = () => {
           />
         </Minimap>
       )}
+
+      {!data ? (
+        <Box
+          sx={{
+            width: '100%',
+            mt: '30vh',
+            textAlign: 'center',
+            fontFamily: 'mono',
+            letterSpacing: 'mono',
+            color: 'secondary',
+          }}
+        >
+          {url ? 'Loading...' : 'Provide a Zarr link to explore data'}
+        </Box>
+      ) : null}
     </Box>
   )
 }

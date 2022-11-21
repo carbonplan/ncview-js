@@ -1,5 +1,10 @@
 import create from 'zustand'
 
+export const useDatasetStore = create((set, get) => ({
+  url: null,
+  setUrl: (url) => set({ url }),
+}))
+
 export const useDisplayStore = create((set, get) => ({
   projection: 'naturalEarth1',
   basemaps: { land: true, ocean: false },

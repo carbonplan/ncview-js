@@ -6,15 +6,6 @@ import ndarray from 'ndarray'
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { PROJECTIONS, ASPECTS } from './constants'
 
-// const DATASET =
-//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
-
-const DATASET =
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
-
-// const DATASET =
-//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr'
-
 const getRange = (arr) => {
   return arr.reduce(
     ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
@@ -34,9 +25,9 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
-export const fetchData = async () => {
+export const fetchData = async (url) => {
   // fetch zmetadata to figure out compression and variables
-  const response = await fetch(`${DATASET}/.zmetadata`)
+  const response = await fetch(`${url}/.zmetadata`)
   const metadata = await response.json()
 
   const variables = Object.keys(metadata.metadata)
@@ -63,7 +54,7 @@ export const fetchData = async () => {
   }
 
   zarr.registry.set(compressor.codecId, () => compressor)
-  const store = new FetchStore(DATASET)
+  const store = new FetchStore(url)
 
   const arrs = await Promise.all([
     zarr.get_array(store, '/' + variable),
