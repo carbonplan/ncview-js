@@ -1,5 +1,6 @@
 import { Select } from '@carbonplan/components'
 import { Box } from 'theme-ui'
+import Label from './label'
 import { useDatasetStore } from './stores'
 
 const DATASETS = [
@@ -14,26 +15,29 @@ const Dataset = () => {
 
   return (
     <Box>
-      <Select
-        value={url ?? undefined}
-        onChange={(e) => setUrl(e.target.value)}
-        sx={{
-          '& select': {
-            width: '100%',
-            overflow: 'hidden',
-          },
-        }}
-      >
-        <option disabled selected value>
-          select an option
-        </option>
-
-        {DATASETS.map((d, i) => (
-          <option key={d} value={d}>
-            {d}
+      <Label value='Dataset' htmlFor='dataset' direction='vertical'>
+        <Select
+          value={url ?? undefined}
+          onChange={(e) => setUrl(e.target.value)}
+          id='dataset'
+          sx={{
+            '& select': {
+              width: '100%',
+              overflow: 'hidden',
+            },
+          }}
+        >
+          <option disabled selected value>
+            select an option
           </option>
-        ))}
-      </Select>
+
+          {DATASETS.map((d, i) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </Select>
+      </Label>
     </Box>
   )
 }
