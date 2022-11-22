@@ -1,5 +1,5 @@
 import { Colors, Column, Row } from '@carbonplan/components'
-import { Box } from 'theme-ui'
+import { Box, Divider } from 'theme-ui'
 
 import useStore from './store'
 
@@ -7,10 +7,9 @@ const VariableMetadata = () => {
   const variables = useStore((state) => state.variables)
   const metadata = useStore((state) => state.metadata)
 
-  console.log()
   return (
     <Box>
-      {variables.map((variable) => {
+      {variables.map((variable, i) => {
         const zarray = metadata.metadata[`${variable}/.zarray`]
         const zattrs = metadata.metadata[`${variable}/.zattrs`]
         const coords = zattrs['_ARRAY_DIMENSIONS']
@@ -31,14 +30,19 @@ const VariableMetadata = () => {
             </Column>
             <Column start={2} width={2}>
               (
-              {coords.map((c, i) => (
+              {coords.map((c, j) => (
                 <span key={c}>
-                  {c}: <Colors.Secondary>{zarray.shape[i]}</Colors.Secondary>
-                  {i < coords.length - 1 ? ', ' : ''}
+                  {c}: <Colors.Secondary>{zarray.shape[j]}</Colors.Secondary>
+                  {j < coords.length - 1 ? ', ' : ''}
                 </span>
               ))}
               )
             </Column>
+            {i < variables.length - 1 ? (
+              <Column start={1} width={3}>
+                <Divider sx={{ width: '100%' }} />
+              </Column>
+            ) : null}
           </Row>
         )
       })}
