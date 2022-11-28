@@ -52,30 +52,22 @@ const useStore = create((set, get) => ({
     const initialValues = get()
     const { url } = initialValues
     if (url && !initialValues.data) {
-      let metadata
-      let variable
-      let variables
-      const { metadata: existingMetadata } = initialValues
+      let latestValues = initialValues
 
-      if (!existingMetadata) {
-        const result = await getMetadata(url)
-        metadata = result.metadata
-        variables = result.variables
-
-        // default to look at last variable
-        variable = variables[variables.length - 1]
-      } else {
-        metadata = initialValues.metadata
-        variables = initialValues.variables
-        variable = initialValues.variable
+      if (!initialValues.metadata) {
+        const { metadata, variables } = await getMetadata(url)
+        latestValues = {
+          metadata,
+          variables,
+          // default to look at last variable
+          variable: variables[variables.length - 1],
+        }
       }
 
       const { data, bounds, nullValue, clim, northPole, getMapProps } =
-        await fetchData(url, metadata, variable)
+        await fetchData(url, latestValues.metadata, latestValues.variable)
       set({
-        variable,
-        variables,
-        metadata,
+        ...latestValues,
         data,
         bounds,
         nullValue,
