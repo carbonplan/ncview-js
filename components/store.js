@@ -1,5 +1,5 @@
 import create from 'zustand'
-import { fetchData, getMetadata } from './utils'
+import { getArrays, getData, getMetadata, getVariableInfo } from './utils'
 
 const createDatasetsSlice = (set, get) => ({
   url: null,
@@ -11,27 +11,9 @@ const createDatasetsSlice = (set, get) => ({
   bounds: null,
   nullValue: null,
   northPole: null,
-  setUrl: (url) =>
-    set({
-      url,
-      // Null out all dataset-related fields
-      variable: null,
-      variables: [],
-      metadata: null,
-      data: null,
-      bounds: null,
-      nullValue: null,
-      northPole: null,
-    }),
-  setVariable: (variable) =>
-    set({
-      variable,
-      // Null out variable-specific fields
-      data: null,
-      bounds: null,
-      nullValue: null,
-      northPole: null,
-    }),
+  arrays: {},
+  chunkKey: [],
+  coordinates: [],
 })
 
 const createDisplaySlice = (set, get) => ({
@@ -49,40 +31,108 @@ const createDisplaySlice = (set, get) => ({
 const useStore = create((set, get) => ({
   ...createDatasetsSlice(set, get),
   ...createDisplaySlice(set, get),
-  fetchData: async () => {
-    const initialValues = get()
-    const { url } = initialValues
-    if (url && !initialValues.data) {
-      let latestValues = initialValues
+  setUrl: async (url) => {
+    set({
+      url,
+      // Null out all dataset-related fields
+      variable: null,
+      variables: [],
+      metadata: null,
+      data: null,
+      bounds: null,
+      nullValue: null,
+      northPole: null,
+      arrays: {},
+      chunkKey: [],
+      coordinates: [],
+    })
 
-      if (!initialValues.metadata) {
-        const { metadata, variables, isChunked } = await getMetadata(url)
-        latestValues = {
-          metadata,
-          variables,
-          isChunked,
-          // default to look at last variable
-          variable: variables[variables.length - 1],
-        }
-
-        // temporary escape hatch for chunked datasets
-        if (isChunked) {
-          return
-        }
-      }
-
-      const { data, bounds, nullValue, clim, northPole, getMapProps } =
-        await fetchData(url, latestValues.metadata, latestValues.variable)
-      set({
-        ...latestValues,
-        data,
-        bounds,
-        nullValue,
-        clim,
-        northPole,
-      })
-      return getMapProps
+    if (!url) {
+      throw new Error('Tried to initializeStore, but no url provided')
     }
+
+    const { metadata, variables, isChunked } = await getMetadata(url)
+    const arrays = await getArrays(url, metadata, variables)
+
+    // default to first variable
+    const variable = variables[0]
+
+    const { chunkKey, nullValue, northPole, coordinates } =
+      await getVariableInfo(variable, { arrays, metadata, isChunked })
+
+    const { data, clim, bounds, getMapProps } = await getData(chunkKey, {
+      arrays,
+      coordinates,
+      variable,
+    })
+
+    set({
+      // store info
+      metadata,
+      variable,
+      variables,
+      isChunked,
+      arrays,
+      // variable info
+      chunkKey,
+      nullValue,
+      northPole,
+      coordinates,
+      // chunk info
+      data,
+      clim,
+      bounds,
+      getMapProps,
+    })
+  },
+  setVariable: async (variable) => {
+    set({
+      variable,
+      // Null out variable-specific fields
+      chunkKey: [],
+      coordinates: [],
+      data: null,
+      bounds: null,
+      nullValue: null,
+      northPole: null,
+    })
+
+    const { chunkKey, nullValue, northPole, coordinates } =
+      await getVariableInfo(variable, get())
+
+    const { data, clim, bounds, getMapProps } = await getData(chunkKey, {
+      ...get(),
+      coordinates,
+      variable,
+    })
+
+    set({
+      // variable info
+      chunkKey,
+      nullValue,
+      northPole,
+      coordinates,
+      // chunk info
+      data,
+      clim,
+      bounds,
+      getMapProps,
+    })
+  },
+
+  setChunk: async (chunkKey) => {
+    set({
+      chunkKey,
+      // Null out chunk-specific fields
+      data: null,
+      bounds: null,
+      clim: null,
+      getMapProps: null,
+    })
+
+    const { data, clim, bounds, getMapProps } = await getData(chunkKey, get())
+
+    set({ data, clim, bounds, getMapProps })
   },
 }))
 

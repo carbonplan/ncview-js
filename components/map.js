@@ -13,32 +13,21 @@ const Map = () => {
     count: 255,
     format: 'rgb',
   })
-  const getMapProps = useRef(null)
   const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
   const basemaps = useStore((state) => state.basemaps)
   const projection = useStore((state) => state.projection)
   const clim = useStore((state) => state.clim)
   const url = useStore((state) => state.url)
-  const fetchData = useStore((state) => state.fetchData)
+  const getMapProps = useStore((state) => state.getMapProps)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
   const northPole = useStore((state) => state.northPole)
   const nullValue = useStore((state) => state.nullValue)
-  const variable = useStore((state) => state.variable)
-
-  useEffect(() => {
-    fetchData().then((result) => {
-      if (result) {
-        getMapProps.current = result
-        setMapProps(getMapProps.current(projection))
-      }
-    })
-  }, [url, variable])
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {
       // Only handle keydowns after initial map props have been set using getMapProps
-      if (getMapProps.current) {
+      if (getMapProps) {
         if (key.includes('Arrow')) {
           const offsets = {
             ArrowUp: [0, 1],
@@ -80,13 +69,13 @@ const Map = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [])
+  }, [getMapProps])
 
   useEffect(() => {
-    if (getMapProps.current) {
-      setMapProps(getMapProps.current(projection))
+    if (getMapProps) {
+      setMapProps(getMapProps(projection))
     }
-  }, [projection])
+  }, [getMapProps, projection])
 
   return (
     <Box sx={{ width: '100%', mx: [4], mb: [3] }}>
