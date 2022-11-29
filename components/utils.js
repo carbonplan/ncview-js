@@ -31,6 +31,11 @@ export const getMetadata = async (url) => {
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
+    .filter((d) =>
+      metadata.metadata[`${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
+        (dim) => metadata.metadata[`${dim}/.zarray`]
+      )
+    )
 
   const isChunked = variables.some((v) => {
     const zarray = metadata.metadata[`${v}/.zarray`]
