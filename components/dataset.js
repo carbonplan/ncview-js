@@ -10,6 +10,7 @@ const DATASETS = [
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_rechunked.zarr',
 ]
 
 const sx = {

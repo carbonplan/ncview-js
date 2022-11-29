@@ -32,7 +32,12 @@ export const getMetadata = async (url) => {
     .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
 
-  return { metadata, variables }
+  const isChunked = variables.some((v) => {
+    const zarray = metadata.metadata[`${v}/.zarray`]
+    return zarray.chunks.some((d, i) => d !== zarray.shape[i])
+  })
+
+  return { metadata, variables, isChunked }
 }
 
 const COMPRESSORS = {

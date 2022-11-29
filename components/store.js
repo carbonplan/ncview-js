@@ -3,6 +3,7 @@ import { fetchData, getMetadata } from './utils'
 
 const createDatasetsSlice = (set, get) => ({
   url: null,
+  isChunked: null,
   variable: null,
   variables: [],
   metadata: null,
@@ -55,12 +56,18 @@ const useStore = create((set, get) => ({
       let latestValues = initialValues
 
       if (!initialValues.metadata) {
-        const { metadata, variables } = await getMetadata(url)
+        const { metadata, variables, isChunked } = await getMetadata(url)
         latestValues = {
           metadata,
           variables,
+          isChunked,
           // default to look at last variable
           variable: variables[variables.length - 1],
+        }
+
+        // temporary escape hatch for chunked datasets
+        if (isChunked) {
+          return
         }
       }
 
