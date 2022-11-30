@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
@@ -23,6 +23,8 @@ const Map = () => {
   const bounds = useStore((state) => state.bounds)
   const northPole = useStore((state) => state.northPole)
   const nullValue = useStore((state) => state.nullValue)
+  const isChunked = useStore((state) => state.isChunked)
+  const incrementChunk = useStore((state) => state.incrementChunk)
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {
@@ -41,10 +43,14 @@ const Map = () => {
             throw new Error(`Unexpected arrow key: ${key}`)
           }
 
-          setMapProps((prev) => ({
-            scale: prev.scale,
-            translate: prev.translate.map((d, i) => d + offset[i]),
-          }))
+          if (isChunked) {
+            incrementChunk(offset)
+          } else {
+            setMapProps((prev) => ({
+              scale: prev.scale,
+              translate: prev.translate.map((d, i) => d + offset[i]),
+            }))
+          }
         } else if (key === '=') {
           // zoom in
           setMapProps((prev) => ({
@@ -69,7 +75,7 @@ const Map = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [getMapProps])
+  }, [getMapProps, isChunked])
 
   useEffect(() => {
     if (getMapProps) {

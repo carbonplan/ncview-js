@@ -6,22 +6,33 @@ import ndarray from 'ndarray'
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { PROJECTIONS, ASPECTS } from './constants'
 
-const getRange = (arr) => {
-  return arr.reduce(
-    ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
-    [Infinity, -Infinity]
-  )
+const getRange = (arr, { nullValue }) => {
+  return arr
+    .filter((d) => !Number.isNaN(d) && d !== nullValue)
+    .reduce(
+      ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
+      [Infinity, -Infinity]
+    )
 }
 
-const getChunkBounds = (chunkKey, { coordinates, chunk, shape }) => {
+const getChunkBounds = (chunkKey, { coordinates, chunk, shape, nullValue }) => {
   return coordinates.map((coord, i) => {
     if (chunkKey.length > 0 && chunk[i] < shape[i]) {
       const start = chunkKey[i] * chunk[i]
-      return getRange(coord.data.slice(start, start + chunk[i]))
+      return getRange(coord.data.slice(start, start + chunk[i]), { nullValue })
     } else {
-      return getRange(coord.data)
+      return getRange(coord.data, { nullValue })
     }
   })
+}
+
+const getNullValue = (dataArray) => {
+  let nullValue = dataArray.fill_value ?? 0
+  if (/NaN/gi.test(nullValue)) {
+    nullValue = NaN
+  }
+
+  return nullValue
 }
 
 export const getMetadata = async (url) => {
@@ -92,12 +103,6 @@ export const getVariableInfo = async (
   { arrays, metadata, isChunked }
 ) => {
   const chunkKey = isChunked ? arrays[variable].shape.map((d) => 0) : []
-
-  let nullValue = arrays[variable].fill_value ?? 0
-  if (/NaN/gi.test(nullValue)) {
-    nullValue = NaN
-  }
-
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
 
   const gridMapping = zattrs.grid_mapping
@@ -109,7 +114,7 @@ export const getVariableInfo = async (
 
   return {
     chunkKey,
-    nullValue,
+    nullValue: getNullValue(arrays[variable]),
     northPole: gridMapping
       ? [
           gridMapping.grid_north_pole_longitude,
@@ -128,11 +133,11 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
         .then((c) => ndarray(new Float32Array(c.data), c.shape))
     : get(dataArray))
 
-  const clim = getRange(data.data)
+  const clim = getRange(data.data, { nullValue: getNullValue(dataArray) })
 
   let normalizedData = ndarray(new Float32Array(data.data), data.shape)
 
-  // TODO: ingest lat/lon from API or user preferences
+  // TODO: remove assumption about lat, lon coordinate order
   const [lat, lon] = coordinates
 
   const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
@@ -158,6 +163,7 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
     coordinates,
     chunk: dataArray.chunk_shape,
     shape: dataArray.shape,
+    nullValue: getNullValue(dataArray),
   })
   const bounds = { lat: latRange, lon: lonRange }
 
@@ -186,4 +192,21 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
   }
 
   return { data: normalizedData, clim, bounds, getMapProps }
+}
+
+export const getChunkKey = (offset, { chunkKey, chunk, shape }) => {
+  const [horizontalOffset, verticalOffset] = offset
+
+  // TODO: remove assumption about lat, lon coordinate order
+  const coordinateOffset = [verticalOffset, horizontalOffset]
+
+  const newChunkKey = chunkKey.map((d, i) => d + coordinateOffset[i])
+
+  // if new chunk key corresponds to array indices outside of the range represented
+  // by `shape`, return null
+  if (newChunkKey.some((d, i) => d * chunk[i] < 0 || d * chunk[i] > shape[i])) {
+    return null
+  } else {
+    return newChunkKey
+  }
 }

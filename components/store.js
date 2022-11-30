@@ -1,5 +1,11 @@
 import create from 'zustand'
-import { getArrays, getData, getMetadata, getVariableInfo } from './utils'
+import {
+  getArrays,
+  getChunkKey,
+  getData,
+  getMetadata,
+  getVariableInfo,
+} from './utils'
 
 const createDatasetsSlice = (set, get) => ({
   url: null,
@@ -119,8 +125,7 @@ const useStore = create((set, get) => ({
       getMapProps,
     })
   },
-
-  setChunk: async (chunkKey) => {
+  setChunkKey: async (chunkKey) => {
     set({
       chunkKey,
       // Null out chunk-specific fields
@@ -133,6 +138,19 @@ const useStore = create((set, get) => ({
     const { data, clim, bounds, getMapProps } = await getData(chunkKey, get())
 
     set({ data, clim, bounds, getMapProps })
+  },
+  incrementChunk: async (offset) => {
+    const { chunkKey, variable, arrays, setChunkKey } = get()
+    const dataArray = arrays[variable]
+    const newChunkKey = getChunkKey(offset, {
+      chunkKey,
+      chunk: dataArray.chunk_shape,
+      shape: dataArray.shape,
+    })
+
+    if (newChunkKey) {
+      setChunkKey(newChunkKey)
+    }
   },
 }))
 
