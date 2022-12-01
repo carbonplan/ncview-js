@@ -15,6 +15,10 @@ const getRange = (arr, { nullValue }) => {
     )
 }
 
+const getBounds = ({ coordinates, nullValue }) => {
+  return coordinates.map((coord) => getRange(coord.data, { nullValue }))
+}
+
 const getChunkBounds = (
   chunkKeyArray,
   { coordinates, chunk, shape, nullValue }
@@ -120,7 +124,8 @@ export const getVariableInfo = async (
   variable,
   { arrays, metadata, isChunked }
 ) => {
-  const chunkKeyArray = isChunked ? arrays[variable].shape.map((d) => 0) : []
+  const dataArray = arrays[variable]
+  const chunkKeyArray = isChunked ? dataArray.shape.map((d) => 0) : []
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
 
   const gridMapping = zattrs.grid_mapping
@@ -130,9 +135,18 @@ export const getVariableInfo = async (
 
   const coordinates = await Promise.all(coordArrays.map((arr) => get(arr)))
 
+  const nullValue = getNullValue(dataArray)
+
+  // TODO: remove assumption about lat, lon coordinate order
+  const [latRange, lonRange] = getBounds({
+    coordinates,
+    nullValue,
+  })
+  const bounds = { lat: latRange, lon: lonRange }
+
   return {
     chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
-    nullValue: getNullValue(arrays[variable]),
+    nullValue,
     northPole: gridMapping
       ? [
           gridMapping.grid_north_pole_longitude,
@@ -140,10 +154,14 @@ export const getVariableInfo = async (
         ]
       : undefined,
     coordinates,
+    bounds,
   }
 }
 
-export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
+export const getData = async (
+  chunkKey,
+  { arrays, variable: { coordinates, name: variable, nullValue } }
+) => {
   const dataArray = arrays[variable]
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
   const data = await (chunkKeyArray.length > 0
@@ -152,7 +170,7 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
         .then((c) => ndarray(new Float32Array(c.data), c.shape))
     : get(dataArray))
 
-  const clim = getRange(data.data, { nullValue: getNullValue(dataArray) })
+  const clim = getRange(data.data, { nullValue })
 
   let normalizedData = ndarray(new Float32Array(data.data), data.shape)
 
@@ -178,11 +196,12 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
     }
   }
 
+  // TODO: remove assumption about lat, lon coordinate order
   const [latRange, lonRange] = getChunkBounds(chunkKeyArray, {
     coordinates,
     chunk: dataArray.chunk_shape,
     shape: dataArray.shape,
-    nullValue: getNullValue(dataArray),
+    nullValue,
   })
   const bounds = { lat: latRange, lon: lonRange }
 

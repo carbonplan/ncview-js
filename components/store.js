@@ -69,10 +69,17 @@ const useStore = create((set, get) => ({
     const arrays = await getArrays(url, metadata, variables)
 
     // default to first variable
-    const variable = variables[0]
+    const variableName = variables[0]
 
     const { chunkKey, nullValue, northPole, coordinates } =
-      await getVariableInfo(variable, { arrays, metadata, isChunked })
+      await getVariableInfo(variableName, { arrays, metadata, isChunked })
+
+    const variable = {
+      name: variableName,
+      coordinates,
+      nullValue,
+      northPole,
+    }
 
     const { data, clim, bounds } = await getData(chunkKey, {
       arrays,
@@ -87,12 +94,7 @@ const useStore = create((set, get) => ({
       isChunked,
       arrays,
       // variable info
-      variable: {
-        name: variable,
-        coordinates,
-        nullValue,
-        northPole,
-      },
+      variable,
       // chunk info
       chunkKey,
       chunks: {
@@ -104,9 +106,9 @@ const useStore = create((set, get) => ({
       bounds,
     })
   },
-  setVariable: async (variable) => {
+  setVariable: async (variableName) => {
     set({
-      variable: { name: variable },
+      variable: { name: variableName },
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
@@ -116,17 +118,18 @@ const useStore = create((set, get) => ({
     })
 
     const { chunkKey, nullValue, northPole, coordinates } =
-      await getVariableInfo(variable, get())
+      await getVariableInfo(variableName, get())
+
+    const variable = { name: variableName, nullValue, northPole, coordinates }
 
     const { data, clim, bounds } = await getData(chunkKey, {
       ...get(),
-      coordinates,
       variable,
     })
 
     set({
       // variable info
-      variable: { name: variable, nullValue, northPole, coordinates },
+      variable,
       // chunk info
       chunkKey,
       chunks: {
@@ -156,8 +159,7 @@ const useStore = create((set, get) => ({
 
     const { data, clim, bounds } = await getData(chunkKey, {
       arrays,
-      coordinates: variable.coordinates,
-      variable: variable.name,
+      variable,
     })
 
     set({
