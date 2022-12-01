@@ -26,7 +26,7 @@ const Dataset = () => {
   const url = useStore((state) => state.url)
   const setUrl = useStore((state) => state.setUrl)
 
-  const variable = useStore((state) => state.variable)
+  const variable = useStore((state) => state.variable.name)
   const variables = useStore((state) => state.variables)
 
   const setVariable = useStore((state) => state.setVariable)

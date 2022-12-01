@@ -19,12 +19,12 @@ const Map = () => {
   const clim = useStore((state) => state.clim)
   const url = useStore((state) => state.url)
   const getMapProps = useStore((state) => state.getMapProps)
-  const data = useStore((state) => state.data)
-  const bounds = useStore((state) => state.bounds)
-  const northPole = useStore((state) => state.northPole)
-  const nullValue = useStore((state) => state.nullValue)
+  const { data, bounds } = useStore(
+    (state) => state.chunks[state.chunkKey] || {}
+  )
   const isChunked = useStore((state) => state.isChunked)
   const incrementChunk = useStore((state) => state.incrementChunk)
+  const { northPole, nullValue } = useStore((state) => state.variable)
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {

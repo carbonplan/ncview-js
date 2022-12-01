@@ -15,10 +15,13 @@ const getRange = (arr, { nullValue }) => {
     )
 }
 
-const getChunkBounds = (chunkKey, { coordinates, chunk, shape, nullValue }) => {
+const getChunkBounds = (
+  chunkKeyArray,
+  { coordinates, chunk, shape, nullValue }
+) => {
   return coordinates.map((coord, i) => {
-    if (chunkKey.length > 0 && chunk[i] < shape[i]) {
-      const start = chunkKey[i] * chunk[i]
+    if (chunkKeyArray.length > 0 && chunk[i] < shape[i]) {
+      const start = chunkKeyArray[i] * chunk[i]
       return getRange(coord.data.slice(start, start + chunk[i]), { nullValue })
     } else {
       return getRange(coord.data, { nullValue })
@@ -33,6 +36,21 @@ const getNullValue = (dataArray) => {
   }
 
   return nullValue
+}
+
+const toKeyString = (chunkKeyArray, { variable, arrays }) => {
+  if (chunkKeyArray.length === 0) {
+    return ''
+  }
+
+  return chunkKeyArray.join(arrays[variable].chunk_separator)
+}
+const toKeyArray = (chunkKey, { variable, arrays }) => {
+  if (chunkKey.length === 0) {
+    return []
+  }
+
+  return chunkKey.split(arrays[variable].chunk_separator).map(Number)
 }
 
 export const getMetadata = async (url) => {
@@ -102,7 +120,7 @@ export const getVariableInfo = async (
   variable,
   { arrays, metadata, isChunked }
 ) => {
-  const chunkKey = isChunked ? arrays[variable].shape.map((d) => 0) : []
+  const chunkKeyArray = isChunked ? arrays[variable].shape.map((d) => 0) : []
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
 
   const gridMapping = zattrs.grid_mapping
@@ -113,7 +131,7 @@ export const getVariableInfo = async (
   const coordinates = await Promise.all(coordArrays.map((arr) => get(arr)))
 
   return {
-    chunkKey,
+    chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
     nullValue: getNullValue(arrays[variable]),
     northPole: gridMapping
       ? [
@@ -127,9 +145,10 @@ export const getVariableInfo = async (
 
 export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
   const dataArray = arrays[variable]
-  const data = await (chunkKey.length > 0
+  const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
+  const data = await (chunkKeyArray.length > 0
     ? dataArray
-        .get_chunk(chunkKey)
+        .get_chunk(chunkKeyArray)
         .then((c) => ndarray(new Float32Array(c.data), c.shape))
     : get(dataArray))
 
@@ -159,7 +178,7 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
     }
   }
 
-  const [latRange, lonRange] = getChunkBounds(chunkKey, {
+  const [latRange, lonRange] = getChunkBounds(chunkKeyArray, {
     coordinates,
     chunk: dataArray.chunk_shape,
     shape: dataArray.shape,
@@ -194,19 +213,25 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
   return { data: normalizedData, clim, bounds, getMapProps }
 }
 
-export const getChunkKey = (offset, { chunkKey, chunk, shape }) => {
+export const getChunkKey = (
+  offset,
+  { arrays, variable, chunkKey, chunk, shape }
+) => {
   const [horizontalOffset, verticalOffset] = offset
 
   // TODO: remove assumption about lat, lon coordinate order
   const coordinateOffset = [verticalOffset, horizontalOffset]
 
-  const newChunkKey = chunkKey.map((d, i) => d + coordinateOffset[i])
+  const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
+  const newChunkKeyArray = chunkKeyArray.map((d, i) => d + coordinateOffset[i])
 
   // if new chunk key corresponds to array indices outside of the range represented
   // by `shape`, return null
-  if (newChunkKey.some((d, i) => d * chunk[i] < 0 || d * chunk[i] > shape[i])) {
+  if (
+    newChunkKeyArray.some((d, i) => d * chunk[i] < 0 || d * chunk[i] > shape[i])
+  ) {
     return null
   } else {
-    return newChunkKey
+    return toKeyString(newChunkKeyArray, { arrays, variable })
   }
 }
