@@ -5,6 +5,7 @@ import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { PROJECTIONS } from './constants'
 import useStore from './store'
+import { getMapProps } from './utils'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -18,18 +19,15 @@ const Map = () => {
   const projection = useStore((state) => state.projection)
   const clim = useStore((state) => state.clim)
   const url = useStore((state) => state.url)
-  const getMapProps = useStore((state) => state.getMapProps)
-  const { data, bounds } = useStore(
-    (state) => state.chunks[state.chunkKey] || {}
-  )
+  const data = useStore((state) => state.data)
+  const bounds = useStore((state) => state.bounds)
   const isChunked = useStore((state) => state.isChunked)
   const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {
-      // Only handle keydowns after initial map props have been set using getMapProps
-      if (getMapProps) {
+      if (data) {
         if (key.includes('Arrow')) {
           const offsets = {
             ArrowUp: [0, 1],
@@ -75,13 +73,13 @@ const Map = () => {
     return () => {
       document.removeEventListener('keydown', handler)
     }
-  }, [getMapProps, isChunked])
+  }, [data, isChunked])
 
   useEffect(() => {
-    if (getMapProps) {
-      setMapProps(getMapProps(projection))
+    if (bounds) {
+      setMapProps(getMapProps(bounds, projection))
     }
-  }, [getMapProps, projection])
+  }, [bounds, projection])
 
   return (
     <Box sx={{ width: '100%', mx: [4], mb: [3] }}>

@@ -5,7 +5,6 @@ import {
   getData,
   getMetadata,
   getVariableInfo,
-  toKeyString,
 } from './utils'
 
 const createDatasetSlice = (set, get) => ({
@@ -36,6 +35,8 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { land: true, ocean: false },
   colormap: 'cool',
   clim: null,
+  data: null,
+  bounds: null,
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
@@ -55,6 +56,9 @@ const useStore = create((set, get) => ({
       variables: [],
       variable: {},
       chunks: {},
+      data: null,
+      clim: null,
+      bounds: null,
     })
 
     if (!url) {
@@ -70,7 +74,7 @@ const useStore = create((set, get) => ({
     const { chunkKey, nullValue, northPole, coordinates } =
       await getVariableInfo(variable, { arrays, metadata, isChunked })
 
-    const { data, clim, bounds, getMapProps } = await getData(chunkKey, {
+    const { data, clim, bounds } = await getData(chunkKey, {
       arrays,
       coordinates,
       variable,
@@ -94,22 +98,27 @@ const useStore = create((set, get) => ({
       chunks: {
         [chunkKey]: { data, bounds },
       },
+      // display info
+      data,
       clim,
-      getMapProps,
+      bounds,
     })
   },
   setVariable: async (variable) => {
     set({
       variable: { name: variable },
-      data: {},
       // Null out variable-specific fields
       chunkKey: null,
+      chunks: {},
+      data: null,
+      clim: null,
+      bounds: null,
     })
 
     const { chunkKey, nullValue, northPole, coordinates } =
       await getVariableInfo(variable, get())
 
-    const { data, clim, bounds, getMapProps } = await getData(chunkKey, {
+    const { data, clim, bounds } = await getData(chunkKey, {
       ...get(),
       coordinates,
       variable,
@@ -118,14 +127,15 @@ const useStore = create((set, get) => ({
     set({
       // variable info
       variable: { name: variable, nullValue, northPole, coordinates },
+      // chunk info
       chunkKey,
       chunks: {
         [chunkKey]: { data, bounds },
       },
-
-      // chunk info
+      // display info
+      data,
       clim,
-      getMapProps,
+      bounds,
     })
   },
   setChunkKey: async (chunkKey) => {
@@ -139,19 +149,21 @@ const useStore = create((set, get) => ({
     set({
       chunkKey,
       // Null out chunk-specific fields
+      data: null,
+      bounds: null,
       clim: null,
-      getMapProps: null,
     })
 
-    const { data, clim, bounds, getMapProps } = await getData(chunkKey, {
+    const { data, clim, bounds } = await getData(chunkKey, {
       arrays,
       coordinates: variable.coordinates,
       variable: variable.name,
     })
 
     set({
+      data,
       clim,
-      getMapProps,
+      bounds,
       chunks: {
         ...chunks,
         [chunkKey]: { data, bounds },

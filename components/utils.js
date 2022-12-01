@@ -186,6 +186,10 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
   })
   const bounds = { lat: latRange, lon: lonRange }
 
+  return { data: normalizedData, clim, bounds }
+}
+
+export const getMapProps = (bounds, projection) => {
   const f = {
     type: 'Feature',
     properties: {},
@@ -198,19 +202,15 @@ export const getData = async (chunkKey, { arrays, coordinates, variable }) => {
     },
   }
 
-  const getMapProps = (projection) => {
-    const aspect = ASPECTS[projection]
-    const p = PROJECTIONS[projection]().fitSize([Math.PI * 2, Math.PI], f)
-    const scale = p.scale()
-    const translate = [
-      p.translate()[0] / Math.PI - 1,
-      ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
-    ]
+  const aspect = ASPECTS[projection]
+  const p = PROJECTIONS[projection]().fitSize([Math.PI * 2, Math.PI], f)
+  const scale = p.scale()
+  const translate = [
+    p.translate()[0] / Math.PI - 1,
+    ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
+  ]
 
-    return { scale, translate }
-  }
-
-  return { data: normalizedData, clim, bounds, getMapProps }
+  return { scale, translate }
 }
 
 export const getChunkKey = (
