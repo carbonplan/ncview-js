@@ -84,10 +84,10 @@ const useStore = create((set, get) => ({
       bounds: null,
     })
 
-    const { chunkKey, nullValue, northPole, coordinates } =
+    const { chunkKey, nullValue, northPole, coordinates, bounds } =
       await getVariableInfo(name, get())
 
-    set({ variable: { name, nullValue, northPole, coordinates } })
+    set({ variable: { name, nullValue, northPole, coordinates, bounds } })
     get().setChunkKey(chunkKey)
   },
   setChunkKey: async (chunkKey) => {

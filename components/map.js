@@ -21,6 +21,7 @@ const Map = () => {
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
+  const variableBounds = useStore((state) => state.variable.bounds)
   const isChunked = useStore((state) => state.isChunked)
   const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
@@ -76,10 +77,10 @@ const Map = () => {
   }, [data, isChunked])
 
   useEffect(() => {
-    if (bounds) {
-      setMapProps(getMapProps(bounds, projection))
+    if (variableBounds) {
+      setMapProps(getMapProps(variableBounds, projection))
     }
-  }, [bounds, projection])
+  }, [variableBounds, projection])
 
   return (
     <Box sx={{ width: '100%', mx: [4], mb: [3] }}>
