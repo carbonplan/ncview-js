@@ -68,47 +68,14 @@ const useStore = create((set, get) => ({
     const { metadata, variables, isChunked } = await getMetadata(url)
     const arrays = await getArrays(url, metadata, variables)
 
+    set({ metadata, variables, isChunked, arrays })
+
     // default to first variable
-    const variableName = variables[0]
-
-    const { chunkKey, nullValue, northPole, coordinates } =
-      await getVariableInfo(variableName, { arrays, metadata, isChunked })
-
-    const variable = {
-      name: variableName,
-      coordinates,
-      nullValue,
-      northPole,
-    }
-
-    const { data, clim, bounds } = await getData(chunkKey, {
-      arrays,
-      coordinates,
-      variable,
-    })
-
-    set({
-      // store info
-      metadata,
-      variables,
-      isChunked,
-      arrays,
-      // variable info
-      variable,
-      // chunk info
-      chunkKey,
-      chunks: {
-        [chunkKey]: { data, bounds },
-      },
-      // display info
-      data,
-      clim,
-      bounds,
-    })
+    get().setVariable(variables[0])
   },
-  setVariable: async (variableName) => {
+  setVariable: async (name) => {
     set({
-      variable: { name: variableName },
+      variable: { name },
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
@@ -118,28 +85,10 @@ const useStore = create((set, get) => ({
     })
 
     const { chunkKey, nullValue, northPole, coordinates } =
-      await getVariableInfo(variableName, get())
+      await getVariableInfo(name, get())
 
-    const variable = { name: variableName, nullValue, northPole, coordinates }
-
-    const { data, clim, bounds } = await getData(chunkKey, {
-      ...get(),
-      variable,
-    })
-
-    set({
-      // variable info
-      variable,
-      // chunk info
-      chunkKey,
-      chunks: {
-        [chunkKey]: { data, bounds },
-      },
-      // display info
-      data,
-      clim,
-      bounds,
-    })
+    set({ variable: { name, nullValue, northPole, coordinates } })
+    get().setChunkKey(chunkKey)
   },
   setChunkKey: async (chunkKey) => {
     const { variable, arrays, chunks } = get()
