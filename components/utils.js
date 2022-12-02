@@ -15,20 +15,19 @@ const getRange = (arr, { nullValue }) => {
     )
 }
 
-const getBounds = ({ coordinates, nullValue }) => {
-  return coordinates.map((coord) => getRange(coord.data, { nullValue }))
+const getBounds = (coordinates) => {
+  return coordinates.map((coord) =>
+    [coord.data[0], coord.data[coord.data.length - 1]].sort()
+  )
 }
 
-const getChunkBounds = (
-  chunkKeyArray,
-  { coordinates, chunk, shape, nullValue }
-) => {
+const getChunkBounds = (chunkKeyArray, { coordinates, chunk, shape }) => {
   return coordinates.map((coord, i) => {
     if (chunkKeyArray.length > 0 && chunk[i] < shape[i]) {
       const start = chunkKeyArray[i] * chunk[i]
-      return getRange(coord.data.slice(start, start + chunk[i]), { nullValue })
+      return [coord.data[start], coord.data[start + chunk[i]]].sort()
     } else {
-      return getRange(coord.data, { nullValue })
+      return [coord.data[0], coord.data[shape[i] - 1]].sort()
     }
   })
 }
@@ -138,10 +137,7 @@ export const getVariableInfo = async (
   const nullValue = getNullValue(dataArray)
 
   // TODO: remove assumption about lat, lon coordinate order
-  const [latRange, lonRange] = getBounds({
-    coordinates,
-    nullValue,
-  })
+  const [latRange, lonRange] = getBounds(coordinates)
   const bounds = { lat: latRange, lon: lonRange }
 
   return {
@@ -201,7 +197,6 @@ export const getData = async (
     coordinates,
     chunk: dataArray.chunk_shape,
     shape: dataArray.shape,
-    nullValue,
   })
   const bounds = { lat: latRange, lon: lonRange }
 
