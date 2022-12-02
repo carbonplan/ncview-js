@@ -21,14 +21,10 @@ const getBounds = (coordinates) => {
   )
 }
 
-const getChunkBounds = (chunkKeyArray, { coordinates, chunk, shape }) => {
+const getChunkBounds = (chunkKeyArray, { coordinates, chunk }) => {
   return coordinates.map((coord, i) => {
-    if (chunkKeyArray.length > 0 && chunk[i] < shape[i]) {
-      const start = chunkKeyArray[i] * chunk[i]
-      return [coord.data[start], coord.data[start + chunk[i]]].sort()
-    } else {
-      return [coord.data[0], coord.data[shape[i] - 1]].sort()
-    }
+    const start = chunkKeyArray[i] * chunk[i]
+    return [coord.data[start], coord.data[start + chunk[i] - 1]].sort()
   })
 }
 
@@ -54,6 +50,12 @@ const toKeyArray = (chunkKey, { variable, arrays }) => {
   }
 
   return chunkKey.split(arrays[variable].chunk_separator).map(Number)
+}
+
+const getCenterChunk = ({ arrays, variable }) => {
+  const { chunk_shape, shape } = arrays[variable]
+
+  return shape.map((d, i) => Math.floor(d / chunk_shape[i] / 2))
 }
 
 export const getMetadata = async (url) => {
@@ -119,12 +121,9 @@ export const getArrays = async (url, metadata, variables) => {
   return result
 }
 
-export const getVariableInfo = async (
-  variable,
-  { arrays, metadata, isChunked }
-) => {
+export const getVariableInfo = async (variable, { arrays, metadata }) => {
   const dataArray = arrays[variable]
-  const chunkKeyArray = isChunked ? dataArray.shape.map((d) => 0) : []
+  const chunkKeyArray = getCenterChunk({ arrays, variable })
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
 
   const gridMapping = zattrs.grid_mapping
@@ -160,11 +159,9 @@ export const getData = async (
 ) => {
   const dataArray = arrays[variable]
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
-  const data = await (chunkKeyArray.length > 0
-    ? dataArray
-        .get_chunk(chunkKeyArray)
-        .then((c) => ndarray(new Float32Array(c.data), c.shape))
-    : get(dataArray))
+  const data = await dataArray
+    .get_chunk(chunkKeyArray)
+    .then((c) => ndarray(new Float32Array(c.data), c.shape))
 
   const clim = getRange(data.data, { nullValue })
 
@@ -196,7 +193,6 @@ export const getData = async (
   const [latRange, lonRange] = getChunkBounds(chunkKeyArray, {
     coordinates,
     chunk: dataArray.chunk_shape,
-    shape: dataArray.shape,
   })
   const bounds = { lat: latRange, lon: lonRange }
 
