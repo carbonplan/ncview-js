@@ -1,7 +1,7 @@
 import create from 'zustand'
 import {
   getArrays,
-  getChunkKey,
+  getAdjacentChunk,
   getData,
   getMetadata,
   getVariableInfo,
@@ -124,7 +124,7 @@ const useStore = create((set, get) => ({
   incrementChunk: async (offset) => {
     const { chunkKey, variable, arrays, setChunkKey } = get()
     const dataArray = arrays[variable.name]
-    const newChunkKey = getChunkKey(offset, {
+    const newChunkKey = getAdjacentChunk(offset, {
       chunkKey,
       chunk: dataArray.chunk_shape,
       shape: dataArray.shape,

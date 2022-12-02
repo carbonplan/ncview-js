@@ -232,7 +232,7 @@ export const getMapProps = (bounds, projection) => {
   return { scale, translate }
 }
 
-export const getChunkKey = (
+export const getAdjacentChunk = (
   offset,
   { arrays, variable, chunkKey, chunk, shape }
 ) => {
@@ -247,7 +247,9 @@ export const getChunkKey = (
   // if new chunk key corresponds to array indices outside of the range represented
   // by `shape`, return null
   if (
-    newChunkKeyArray.some((d, i) => d * chunk[i] < 0 || d * chunk[i] > shape[i])
+    newChunkKeyArray.some(
+      (d, i) => d * chunk[i] < 0 || d * chunk[i] >= shape[i]
+    )
   ) {
     return null
   } else {
