@@ -28,7 +28,7 @@ const Map = () => {
 
   useEffect(() => {
     const handler = ({ key, keyCode, metaKey }) => {
-      if (data) {
+      if (!!data) {
         if (key.includes('Arrow')) {
           const offsets = {
             ArrowUp: [0, 1],
@@ -72,9 +72,9 @@ const Map = () => {
     window.addEventListener('keydown', handler)
 
     return () => {
-      document.removeEventListener('keydown', handler)
+      window.removeEventListener('keydown', handler)
     }
-  }, [data, isChunked])
+  }, [!!data, isChunked])
 
   useEffect(() => {
     if (variableBounds) {
