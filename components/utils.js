@@ -24,7 +24,11 @@ const getBounds = (coordinates) => {
 const getChunkBounds = (chunkKeyArray, { coordinates, chunk }) => {
   return coordinates.map((coord, i) => {
     const start = chunkKeyArray[i] * chunk[i]
-    return [coord.data[start], coord.data[start + chunk[i] - 1]].sort()
+    const end = start + chunk[i] - 1
+    return [
+      coord.data[start],
+      coord.data[Math.min(end, coord.data.length - 1)],
+    ].sort()
   })
 }
 
