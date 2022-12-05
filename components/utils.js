@@ -2,6 +2,8 @@ import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import { get } from 'zarrita/ndarray'
 import ndarray from 'ndarray'
+import concatColumns from 'ndarray-concat-cols'
+import concatRows from 'ndarray-concat-rows'
 
 import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { PROJECTIONS, ASPECTS } from './constants'
@@ -249,5 +251,117 @@ export const getAdjacentChunk = (
     return null
   } else {
     return toKeyString(newChunkKeyArray, { arrays, variable })
+  }
+}
+
+const getActiveChunkKeys = (chunkKey, { arrays, variable }) => {
+  const { chunk_shape, shape } = arrays[variable]
+
+  return [
+    [-1, -1],
+    [0, -1],
+    [1, -1],
+    [-1, 0],
+    [0, 0],
+    [1, 0],
+    [-1, 1],
+    [0, 1],
+    [1, 1],
+  ]
+    .map((offset) =>
+      getAdjacentChunk(offset, {
+        arrays,
+        variable,
+        chunkKey,
+        chunk: chunk_shape,
+        shape,
+      })
+    )
+    .filter(Boolean)
+}
+export const getAllData = async (
+  chunkKey,
+  { arrays, chunks, variable: { coordinates, name: variable, nullValue } }
+) => {
+  const activeChunkKeys = getActiveChunkKeys(chunkKey, { arrays, variable })
+  const activeChunks = {}
+  const allChunks = await Promise.all(
+    activeChunkKeys.map(async (key) => {
+      if (chunks[key]) {
+        activeChunks[key] = chunks[key]
+        return chunks[key]
+      } else {
+        const chunk = await getData(key, {
+          arrays,
+          variable: { coordinates, name: variable, nullValue },
+        })
+        activeChunks[key] = chunk
+        return chunk
+      }
+    })
+  )
+
+  const combinedBounds = allChunks.reduce(
+    (prev, { bounds: { lat, lon } }) => ({
+      lat: [Math.min(lat[0], prev.lat[0]), Math.max(lat[1], prev.lat[1])],
+      lon: [Math.min(lon[0], prev.lon[0]), Math.max(lon[1], prev.lon[1])],
+    }),
+    { lat: [Infinity, -Infinity], lon: [Infinity, -Infinity] }
+  )
+
+  const combinedClim = allChunks.reduce(
+    (prev, { clim: [min, max] }) => [
+      Math.min(min, prev[0]),
+      Math.max(max, prev[1]),
+    ],
+    [Infinity, -Infinity]
+  )
+
+  // TODO: remove assumption about lat, lon coordinate order
+
+  // const shape = activeChunkKeys.reduce(
+  //   (accum, key) => accum.map((d, i) => d + activeChunks[key].data.shape[i]),
+  //   arrays[variable].shape.map(() => 0)
+  // )
+  // const size = shape.reduce((a, d) => a * d, 1)
+
+  const separator = arrays[variable].chunk_separator
+  // stitch together chunks in order dictated by chunk keys, flipping if required by bounds + coordinates?
+  // if chunks not continuous, use chunk size to slot in null values
+
+  const data = activeChunkKeys
+    // sort by columns
+    .sort(
+      (a, b) => Number(a.split(separator)[1]) - Number(b.split(separator)[1])
+    )
+    // sort by rows
+    .sort(
+      (a, b) => Number(a.split(separator)[0]) - Number(b.split(separator)[0])
+    )
+    .reduce((columns, chunkKey) => {
+      const columnNumber = chunkKey.split(separator)[0]
+      const column = columns.find((column) => columnNumber === column[0])
+      if (column) {
+        column[1] = concatColumns([column[1], activeChunks[chunkKey].data], {
+          dtype: 'float32',
+        })
+      } else {
+        columns.push([columnNumber, activeChunks[chunkKey].data])
+      }
+      return columns
+    }, [])
+    .reduce((rows, row) => {
+      if (!rows) {
+        return row[1]
+      } else {
+        return concatRows([rows, row[1]], { dtype: 'float32' })
+      }
+    }, null)
+
+  return {
+    bounds: combinedBounds,
+    clim: combinedClim,
+    data,
+    chunks: activeChunks,
   }
 }

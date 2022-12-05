@@ -1,5 +1,6 @@
 import create from 'zustand'
 import {
+  getAllData,
   getArrays,
   getAdjacentChunk,
   getData,
@@ -106,7 +107,18 @@ const useStore = create((set, get) => ({
       clim: null,
     })
 
-    const { data, clim, bounds } = await getData(chunkKey, {
+    const { data: oldData } = await getData(chunkKey, {
+      arrays,
+      variable,
+    })
+
+    const {
+      data,
+      bounds,
+      clim,
+      chunks: newChunks,
+    } = await getAllData(chunkKey, {
+      chunks,
       arrays,
       variable,
     })
@@ -117,14 +129,14 @@ const useStore = create((set, get) => ({
       bounds,
       chunks: {
         ...chunks,
-        [chunkKey]: { data, bounds },
+        ...newChunks,
       },
     })
   },
-  incrementChunk: async (offset) => {
+  incrementChunk: async ([offsetX, offsetY]) => {
     const { chunkKey, variable, arrays, setChunkKey } = get()
     const dataArray = arrays[variable.name]
-    const newChunkKey = getAdjacentChunk(offset, {
+    const newChunkKey = getAdjacentChunk([offsetX * -1, offsetY * -1], {
       chunkKey,
       chunk: dataArray.chunk_shape,
       shape: dataArray.shape,
