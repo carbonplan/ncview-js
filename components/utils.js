@@ -379,5 +379,6 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
     }
   })
 
+  // See https://github.com/scijs/ndarray/issues/24 for detailed explanation of .hi()
   return data.hi(...truncatedShape)
 }
