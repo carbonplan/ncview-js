@@ -319,15 +319,10 @@ export const getAllData = async (
 
   // TODO: remove assumption about lat, lon coordinate order
 
-  // const shape = activeChunkKeys.reduce(
-  //   (accum, key) => accum.map((d, i) => d + activeChunks[key].data.shape[i]),
-  //   arrays[variable].shape.map(() => 0)
-  // )
-  // const size = shape.reduce((a, d) => a * d, 1)
-
   const separator = arrays[variable].chunk_separator
-  // stitch together chunks in order dictated by chunk keys, flipping if required by bounds + coordinates?
-  // if chunks not continuous, use chunk size to slot in null values
+  // stitch together chunks in order dictated by chunk keys
+  // TODO: reverse column/row order if required by bounds + coordinates?
+  // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
 
   const data = activeChunkKeys
     // sort by columns
@@ -338,23 +333,27 @@ export const getAllData = async (
     .sort(
       (a, b) => Number(a.split(separator)[0]) - Number(b.split(separator)[0])
     )
-    .reduce((columns, chunkKey) => {
-      const columnNumber = chunkKey.split(separator)[0]
-      const column = columns.find((column) => columnNumber === column[0])
-      if (column) {
-        column[1] = concatColumns([column[1], activeChunks[chunkKey].data], {
+    .reduce((rows, chunkKey) => {
+      const rowNumber = chunkKey.split(separator)[0]
+      const row = rows.find((row) => rowNumber === row[0])
+      const filteredData = filterData(chunkKey, activeChunks[chunkKey].data, {
+        arrays,
+        variable,
+      })
+      if (row) {
+        row[1] = concatColumns([row[1], filteredData], {
           dtype: 'float32',
         })
       } else {
-        columns.push([columnNumber, activeChunks[chunkKey].data])
+        rows.push([rowNumber, filteredData])
       }
-      return columns
+      return rows
     }, [])
-    .reduce((rows, row) => {
-      if (!rows) {
-        return row[1]
+    .reduce((columns, column) => {
+      if (!columns) {
+        return column[1]
       } else {
-        return concatRows([rows, row[1]], { dtype: 'float32' })
+        return concatRows([columns, column[1]], { dtype: 'float32' })
       }
     }, null)
 
@@ -364,4 +363,21 @@ export const getAllData = async (
     data,
     chunks: activeChunks,
   }
+}
+
+const filterData = (chunkKey, data, { arrays, variable }) => {
+  const separator = arrays[variable].chunk_separator
+  const indices = chunkKey.split(separator).map(Number)
+  const { chunk_shape, shape } = arrays[variable]
+
+  const truncatedShape = indices.map((index, i) => {
+    const impliedShape = (index + 1) * chunk_shape[i]
+    if (impliedShape > shape[i]) {
+      return shape[i] % chunk_shape[i]
+    } else {
+      return chunk_shape[i]
+    }
+  })
+
+  return data.hi(...truncatedShape)
 }
