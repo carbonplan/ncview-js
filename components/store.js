@@ -92,12 +92,11 @@ const useStore = create((set, get) => ({
     get().setChunkKey(chunkKey)
   },
   setChunkKey: async (chunkKey) => {
-    const { variable, arrays, chunks } = get()
-
-    if (chunks[chunkKey]) {
-      set({ chunkKey })
+    if (get().chunkKey === chunkKey) {
       return
     }
+
+    const { variable, arrays, chunks } = get()
 
     set({
       chunkKey,
@@ -105,11 +104,6 @@ const useStore = create((set, get) => ({
       data: null,
       bounds: null,
       clim: null,
-    })
-
-    const { data: oldData } = await getData(chunkKey, {
-      arrays,
-      variable,
     })
 
     const {
@@ -133,10 +127,10 @@ const useStore = create((set, get) => ({
       },
     })
   },
-  incrementChunk: async ([offsetX, offsetY]) => {
+  incrementChunk: async (offset) => {
     const { chunkKey, variable, arrays, setChunkKey } = get()
     const dataArray = arrays[variable.name]
-    const newChunkKey = getAdjacentChunk([offsetX * -1, offsetY * -1], {
+    const newChunkKey = getAdjacentChunk(offset, {
       chunkKey,
       chunk: dataArray.chunk_shape,
       shape: dataArray.shape,
