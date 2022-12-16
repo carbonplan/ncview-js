@@ -3,7 +3,6 @@ import {
   getAllData,
   getArrays,
   getAdjacentChunk,
-  getData,
   getMetadata,
   getVariableInfo,
 } from './utils'

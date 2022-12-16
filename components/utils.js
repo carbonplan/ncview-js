@@ -159,7 +159,7 @@ export const getVariableInfo = async (variable, { arrays, metadata }) => {
   }
 }
 
-export const getData = async (
+const getData = async (
   chunkKey,
   { arrays, variable: { coordinates, name: variable, nullValue } }
 ) => {
