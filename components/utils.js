@@ -17,21 +17,27 @@ const getRange = (arr, { nullValue }) => {
     )
 }
 
-const getBounds = (coordinates) => {
-  return coordinates.map((coord) =>
-    [coord.data[0], coord.data[coord.data.length - 1]].sort()
-  )
+const getBounds = (coord) => {
+  return [coord.data[0], coord.data[coord.data.length - 1]].sort()
 }
 
-const getChunkBounds = (chunkKeyArray, { coordinates, chunk }) => {
-  return coordinates.map((coord, i) => {
-    const start = chunkKeyArray[i] * chunk[i]
-    const end = start + chunk[i] - 1
-    return [
-      coord.data[start],
-      coord.data[Math.min(end, coord.data.length - 1)],
-    ].sort()
-  })
+const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
+  return Object.keys(axes).reduce((accum, key) => {
+    const { array, index } = axes[key]
+    if (!array) {
+      return accum
+    }
+    const start = chunkKeyArray[index] * chunk_shape[index]
+    const end = start + chunk_shape[index] - 1
+
+    return {
+      ...accum,
+      [key]: [
+        array.data[start],
+        array.data[Math.min(end, array.data.length - 1)],
+      ].sort(),
+    }
+  }, {})
 }
 
 const getNullValue = (dataArray) => {
@@ -127,7 +133,10 @@ export const getArrays = async (url, metadata, variables) => {
   return result
 }
 
-export const getVariableInfo = async (variable, { arrays, metadata }) => {
+export const getVariableInfo = async (
+  variable,
+  { arrays, metadata, apiMetadata }
+) => {
   const dataArray = arrays[variable]
   const chunkKeyArray = getCenterChunk({ arrays, variable })
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
@@ -135,15 +144,26 @@ export const getVariableInfo = async (variable, { arrays, metadata }) => {
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
     : null
-  const coordArrays = zattrs['_ARRAY_DIMENSIONS'].map((coord) => arrays[coord])
-
-  const coordinates = await Promise.all(coordArrays.map((arr) => get(arr)))
+  const dimensions = zattrs['_ARRAY_DIMENSIONS']
+  const coordinates = await Promise.all(
+    dimensions.map((coord) => arrays[coord]).map((arr) => get(arr))
+  )
 
   const nullValue = getNullValue(dataArray)
 
-  // TODO: remove assumption about lat, lon coordinate order
-  const [latRange, lonRange] = getBounds(coordinates)
-  const bounds = { lat: latRange, lon: lonRange }
+  const axes = Object.keys(apiMetadata[variable]).reduce((accum, key) => {
+    const index = dimensions.indexOf(apiMetadata[variable][key])
+
+    return {
+      ...accum,
+      [key]: { array: coordinates[index], index },
+    }
+  }, {})
+
+  const bounds = {
+    lon: getBounds(axes.X.array),
+    lat: getBounds(axes.Y.array),
+  }
 
   return {
     chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
@@ -154,14 +174,14 @@ export const getVariableInfo = async (variable, { arrays, metadata }) => {
           gridMapping.grid_north_pole_latitude,
         ]
       : undefined,
-    coordinates,
+    axes,
     bounds,
   }
 }
 
 const getData = async (
   chunkKey,
-  { arrays, variable: { coordinates, name: variable, nullValue } }
+  { arrays, variable: { axes, name: variable, nullValue } }
 ) => {
   const dataArray = arrays[variable]
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
@@ -173,12 +193,15 @@ const getData = async (
 
   let normalizedData = ndarray(new Float32Array(data.data), data.shape)
 
-  // TODO: remove assumption about lat, lon coordinate order
-  const [lat, lon] = coordinates
+  const {
+    X: { array: lon },
+    Y: { array: lat },
+  } = axes
 
   const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
   const lonsReversed = lon.data[0] > lon.data[lon.data.length - 1]
 
+  // TODO: handle extra dimensions
   if (latsReversed || lonsReversed) {
     normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
     for (let i = 0; i < data.shape[0]; i++) {
@@ -195,12 +218,14 @@ const getData = async (
     }
   }
 
-  // TODO: remove assumption about lat, lon coordinate order
-  const [latRange, lonRange] = getChunkBounds(chunkKeyArray, {
-    coordinates,
-    chunk: dataArray.chunk_shape,
+  const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
+    axes,
+    chunk_shape: dataArray.chunk_shape,
   })
-  const bounds = { lat: latRange, lon: lonRange }
+  const bounds = {
+    lat: latRange,
+    lon: lonRange,
+  }
 
   return { data: normalizedData, clim, bounds }
 }
@@ -231,12 +256,19 @@ export const getMapProps = (bounds, projection) => {
 
 export const getAdjacentChunk = (
   offset,
-  { arrays, variable, chunkKey, chunk, shape }
+  { arrays, axes, variable, chunkKey, chunk, shape }
 ) => {
   const [horizontalOffset, verticalOffset] = offset
 
-  // TODO: remove assumption about lat, lon coordinate order
-  const coordinateOffset = [verticalOffset, horizontalOffset]
+  const coordinateOffset = shape.map((d, i) => {
+    if (axes.X.index === i) {
+      return horizontalOffset
+    } else if (axes.Y.index === i) {
+      return verticalOffset
+    } else {
+      return 0
+    }
+  })
 
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
   const newChunkKeyArray = chunkKeyArray.map((d, i) => d + coordinateOffset[i])
@@ -254,7 +286,7 @@ export const getAdjacentChunk = (
   }
 }
 
-const getActiveChunkKeys = (chunkKey, { arrays, variable }) => {
+const getActiveChunkKeys = (chunkKey, { axes, arrays, variable }) => {
   const { chunk_shape, shape } = arrays[variable]
 
   return [
@@ -270,6 +302,7 @@ const getActiveChunkKeys = (chunkKey, { arrays, variable }) => {
   ]
     .map((offset) =>
       getAdjacentChunk(offset, {
+        axes,
         arrays,
         variable,
         chunkKey,
@@ -281,9 +314,13 @@ const getActiveChunkKeys = (chunkKey, { arrays, variable }) => {
 }
 export const getAllData = async (
   chunkKey,
-  { arrays, chunks, variable: { coordinates, name: variable, nullValue } }
+  { arrays, chunks, variable: { axes, name: variable, nullValue } }
 ) => {
-  const activeChunkKeys = getActiveChunkKeys(chunkKey, { arrays, variable })
+  const activeChunkKeys = getActiveChunkKeys(chunkKey, {
+    axes,
+    arrays,
+    variable,
+  })
   const activeChunks = {}
   const allChunks = await Promise.all(
     activeChunkKeys.map(async (key) => {
@@ -293,7 +330,7 @@ export const getAllData = async (
       } else {
         const chunk = await getData(key, {
           arrays,
-          variable: { coordinates, name: variable, nullValue },
+          variable: { axes, name: variable, nullValue },
         })
         activeChunks[key] = chunk
         return chunk
@@ -317,8 +354,6 @@ export const getAllData = async (
     [Infinity, -Infinity]
   )
 
-  // TODO: remove assumption about lat, lon coordinate order
-
   const separator = arrays[variable].chunk_separator
   // stitch together chunks in order dictated by chunk keys
   // TODO: reverse column/row order if required by bounds + coordinates?
@@ -327,11 +362,15 @@ export const getAllData = async (
   const data = activeChunkKeys
     // sort by columns
     .sort(
-      (a, b) => Number(a.split(separator)[1]) - Number(b.split(separator)[1])
+      (a, b) =>
+        Number(a.split(separator)[axes.X.index]) -
+        Number(b.split(separator)[axes.X.index])
     )
     // sort by rows
     .sort(
-      (a, b) => Number(a.split(separator)[0]) - Number(b.split(separator)[0])
+      (a, b) =>
+        Number(a.split(separator)[axes.Y.index]) -
+        Number(b.split(separator)[axes.Y.index])
     )
     .reduce((rows, chunkKey) => {
       const rowNumber = chunkKey.split(separator)[0]

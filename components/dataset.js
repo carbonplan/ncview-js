@@ -11,7 +11,21 @@ const DATASETS = [
   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
 ]
+
+const API_METADATA = {
+  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr':
+    { air: { X: 'lon', Y: 'lat', T: null } },
+  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr':
+    { tasmax: { X: 'lon', Y: 'lat', T: null } },
+  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr':
+    { tas: { X: 'rlon', Y: 'rlat', T: null } },
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr':
+    { precip: { X: 'longitude', Y: 'latitude', T: null } },
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr':
+    { precip: { X: 'lon', Y: 'lat', T: null } },
+}
 
 const sx = {
   select: {
@@ -36,7 +50,7 @@ const Dataset = () => {
       <Label value='Dataset' htmlFor='dataset' direction='vertical'>
         <Select
           value={url ?? undefined}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) => setUrl(e.target.value, API_METADATA[e.target.value])}
           id='dataset'
           sx={sx.select}
         >

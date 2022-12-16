@@ -11,6 +11,7 @@ const createDatasetSlice = (set, get) => ({
   // dataset
   url: null,
   metadata: null,
+  apiMetadata: null,
   isChunked: null,
   variables: [],
   arrays: {},
@@ -18,7 +19,7 @@ const createDatasetSlice = (set, get) => ({
   // variable
   variable: {
     name: null,
-    coordinates: [],
+    axes: {},
     nullValue: null,
     northPole: null,
   },
@@ -47,9 +48,10 @@ const createDisplaySlice = (set, get) => ({
 const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
-  setUrl: async (url) => {
+  setUrl: async (url, apiMetadata) => {
     set({
       url,
+      apiMetadata, // TODO: actually fetch this from the API
       // Null out all dataset-related fields
       metadata: null,
       isChunked: null,
@@ -84,10 +86,12 @@ const useStore = create((set, get) => ({
       bounds: null,
     })
 
-    const { chunkKey, nullValue, northPole, coordinates, bounds } =
+    const { chunkKey, nullValue, northPole, axes, bounds } =
       await getVariableInfo(name, get())
 
-    set({ variable: { name, nullValue, northPole, coordinates, bounds } })
+    set({
+      variable: { name, nullValue, northPole, axes, bounds },
+    })
     get().setChunkKey(chunkKey)
   },
   setChunkKey: async (chunkKey) => {
