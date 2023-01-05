@@ -1,5 +1,5 @@
 import { Input, Select } from '@carbonplan/components'
-import { Flex } from 'theme-ui'
+import { Box, Flex } from 'theme-ui'
 import { useCallback, useEffect, useState } from 'react'
 import Label from './label'
 import { TooltipContent, TooltipWrapper } from './tooltip'
@@ -81,6 +81,7 @@ const Dataset = () => {
   const [url, setUrl] = useState('')
   const [dataset, setDataset] = useState(null)
   const [completedRun, setCompletedRun] = useState(null)
+  const [errorMessage, setErrorMessage] = useState(null)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
   const variables = useStore((state) => state.variables)
@@ -92,14 +93,21 @@ const Dataset = () => {
       e.preventDefault()
       setDataset(null)
       setCompletedRun(null)
+      setErrorMessage(null)
+      if (!url) {
+        setErrorMessage('Please enter a URL')
+        return
+      }
       const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
         // todo: set interval + number of polls based on dataset size
         pollForCompletedRun(d.id, setCompletedRun)
+      } else if (d.detail?.length > 0) {
+        setErrorMessage(d.detail[0].msg)
+      } else {
+        setErrorMessage('Unable to process dataset')
       }
-
-      // show error
     },
     [url]
   )
@@ -108,6 +116,14 @@ const Dataset = () => {
     if (dataset && completedRun) {
       if (completedRun.outcome === 'success') {
         setStoreUrl(completedRun.rechunked_dataset, dataset.cf_axes)
+      } else if (completedRun.error_message) {
+        setErrorMessage(completedRun.error_message)
+      } else {
+        setErrorMessage(
+          completedRun.outcome === 'timed_out'
+            ? 'Dataset processing timed out. Please try again with a smaller dataset.'
+            : 'Dataset processing failed'
+        )
       }
     }
   }, [dataset, completedRun])
@@ -122,6 +138,15 @@ const Dataset = () => {
             value={url}
             sx={{ width: '100%' }}
           />
+          <Box
+            sx={{
+              fontSize: 1,
+              mt: 2,
+              color: 'secondary',
+            }}
+          >
+            {errorMessage}
+          </Box>
         </Label>
       </form>
 
