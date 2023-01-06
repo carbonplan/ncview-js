@@ -1,6 +1,8 @@
 import { Input, Select } from '@carbonplan/components'
 import { Box, Flex } from 'theme-ui'
 import { useCallback, useEffect, useState } from 'react'
+import { Right } from '@carbonplan/icons'
+
 import Label from './label'
 import { TooltipContent, TooltipWrapper } from './tooltip'
 import useStore from './store'
@@ -82,6 +84,7 @@ const Dataset = () => {
   const [dataset, setDataset] = useState(null)
   const [completedRun, setCompletedRun] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
+  const [focused, setFocused] = useState(false)
   const setLoading = useStore((state) => state.setLoading)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
@@ -140,12 +143,34 @@ const Dataset = () => {
     <Flex sx={{ flexDirection: 'column', gap: 3 }}>
       <form onSubmit={handleSubmit}>
         <Label value='Dataset' htmlFor='dataset' direction='vertical'>
-          <Input
-            id='dataset'
-            onChange={(e) => setUrl(e.target.value)}
-            value={url}
-            sx={{ width: '100%' }}
-          />
+          <Flex
+            sx={{
+              gap: 2,
+              position: 'relative',
+              borderColor: focused ? 'primary' : 'secondary',
+              borderStyle: 'solid',
+              borderWidth: '0px',
+              borderBottomWidth: '1px',
+              transition: 'border 0.15s',
+            }}
+          >
+            <Input
+              id='dataset'
+              onChange={(e) => setUrl(e.target.value)}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              value={url}
+              sx={{ width: '100%', borderBottomWidth: 0 }}
+            />
+            <Right
+              sx={{
+                fill: 'secondary',
+                height: [15, 15, 15, 20],
+                width: [15, 15, 15, 20],
+                mt: '5px',
+              }}
+            />
+          </Flex>
           <Box
             sx={{
               fontSize: 1,
