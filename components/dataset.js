@@ -82,6 +82,7 @@ const Dataset = () => {
   const [dataset, setDataset] = useState(null)
   const [completedRun, setCompletedRun] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
+  const setLoading = useStore((state) => state.setLoading)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
   const variables = useStore((state) => state.variables)
@@ -98,12 +99,18 @@ const Dataset = () => {
         setErrorMessage('Please enter a URL')
         return
       }
+
+      setLoading(true)
       const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
         // todo: set interval + number of polls based on dataset size
         pollForCompletedRun(d.id, setCompletedRun)
-      } else if (d.detail?.length > 0) {
+        return
+      }
+      setLoading(false)
+
+      if (d.detail?.length > 0) {
         setErrorMessage(d.detail[0].msg)
       } else {
         setErrorMessage('Unable to process dataset')
@@ -126,6 +133,7 @@ const Dataset = () => {
         )
       }
     }
+    setLoading(false)
   }, [dataset, completedRun])
 
   return (

@@ -8,6 +8,8 @@ import {
 } from './utils'
 
 const createDatasetSlice = (set, get) => ({
+  loading: false,
+
   // dataset
   url: null,
   metadata: null,
@@ -29,6 +31,8 @@ const createDatasetSlice = (set, get) => ({
 
   // active chunk
   chunkKey: null,
+
+  setLoading: (loading) => set({ loading }),
 })
 
 const createDisplaySlice = (set, get) => ({
