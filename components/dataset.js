@@ -150,7 +150,7 @@ const Dataset = () => {
             sx={{
               fontSize: 1,
               mt: 2,
-              color: 'secondary',
+              color: 'red',
             }}
           >
             {errorMessage}
