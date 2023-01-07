@@ -135,8 +135,8 @@ const Dataset = () => {
             : 'Dataset processing failed'
         )
       }
+      setLoading(false)
     }
-    setLoading(false)
   }, [dataset, completedRun])
 
   return (
