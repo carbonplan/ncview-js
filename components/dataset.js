@@ -103,6 +103,7 @@ const Dataset = () => {
         return
       }
 
+      setStoreUrl()
       setLoading(true)
       const d = await createDataset(url)
       if (d.id) {

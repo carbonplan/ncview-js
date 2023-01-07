@@ -55,7 +55,7 @@ const useStore = create((set, get) => ({
   setUrl: async (url, apiMetadata) => {
     set({
       url,
-      apiMetadata, // TODO: actually fetch this from the API
+      apiMetadata,
       // Null out all dataset-related fields
       metadata: null,
       isChunked: null,
@@ -67,8 +67,9 @@ const useStore = create((set, get) => ({
       bounds: null,
     })
 
+    // handle clearing url
     if (!url) {
-      throw new Error('Tried to initializeStore, but no url provided')
+      return
     }
 
     const { metadata, variables, isChunked } = await getMetadata(url)
