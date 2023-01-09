@@ -1,11 +1,21 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Box } from 'theme-ui'
 
-const MapContainer = ({ sx, children, onDrag }) => {
+const MapContainer = ({ sx, children, onDrag, onScroll }) => {
   const container = useRef(null)
   const moveListener = useRef(null)
   const [cursor, setCursor] = useState('grab')
+
+  useEffect(() => {
+    const wheelListener = document.addEventListener('wheel', (event) => {
+      onScroll(event.deltaY / -48)
+    })
+
+    return () => {
+      document.removeEventListener('wheel', wheelListener)
+    }
+  }, [])
 
   const handleMouseDown = useCallback(() => {
     const height = container.current.clientHeight

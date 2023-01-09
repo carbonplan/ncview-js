@@ -37,6 +37,17 @@ const Map = () => {
     }))
   }, [])
 
+  const zoomMap = useCallback((delta) => {
+    setMapProps((prev) => {
+      const updatedScale =
+        prev.scale + delta < 0 ? prev.scale : prev.scale + delta
+      return {
+        scale: updatedScale,
+        translate: prev.translate.map((d) => (d / prev.scale) * updatedScale),
+      }
+    })
+  }, [])
+
   const handler = useCallback(
     ({ key, keyCode, metaKey }) => {
       if (!!data) {
@@ -60,20 +71,10 @@ const Map = () => {
           }
         } else if (key === '=') {
           // zoom in
-          setMapProps((prev) => ({
-            scale: prev.scale + 1,
-            translate: prev.translate.map(
-              (d) => (d / prev.scale) * (prev.scale + 1)
-            ),
-          }))
+          zoomMap(1)
         } else if (key === '-') {
           // zoom out
-          setMapProps((prev) => ({
-            scale: prev.scale - 1,
-            translate: prev.translate.map(
-              (d) => (d / prev.scale) * (prev.scale - 1)
-            ),
-          }))
+          zoomMap(-1)
         }
       }
     },
@@ -95,7 +96,11 @@ const Map = () => {
   }, [variableBounds, projection])
 
   return (
-    <MapContainer sx={{ width: '100%', mx: [4], mb: [3] }} onDrag={panMap}>
+    <MapContainer
+      sx={{ width: '100%', mx: [4], mb: [3] }}
+      onDrag={panMap}
+      onScroll={zoomMap}
+    >
       {data && bounds && clim && (
         <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
           {basemaps.ocean && (
@@ -150,10 +155,7 @@ const Map = () => {
             : 'Provide a Zarr link to explore data'}
         </Box>
       ) : null}
-      <Zoom
-        zoomOut={() => handler({ key: '-' })}
-        zoomIn={() => handler({ key: '=' })}
-      />
+      <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />
     </MapContainer>
   )
 }
