@@ -144,6 +144,7 @@ const useStore = create((set, get) => ({
       shape: dataArray.shape,
       arrays,
       variable: variable.name,
+      axes: variable.axes,
     })
 
     if (newChunkKey) {
