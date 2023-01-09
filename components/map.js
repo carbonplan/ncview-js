@@ -1,11 +1,13 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
+
 import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
+import Zoom from './zoom'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -27,8 +29,8 @@ const Map = () => {
   const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
 
-  useEffect(() => {
-    const handler = ({ key, keyCode, metaKey }) => {
+  const handler = useCallback(
+    ({ key, keyCode, metaKey }) => {
       if (!!data) {
         if (key.includes('Arrow')) {
           const offsets = {
@@ -69,13 +71,17 @@ const Map = () => {
           }))
         }
       }
-    }
+    },
+    [!!data, isChunked]
+  )
+
+  useEffect(() => {
     window.addEventListener('keydown', handler)
 
     return () => {
       window.removeEventListener('keydown', handler)
     }
-  }, [!!data, isChunked])
+  }, [handler])
 
   useEffect(() => {
     if (variableBounds) {
@@ -139,6 +145,10 @@ const Map = () => {
             : 'Provide a Zarr link to explore data'}
         </Box>
       ) : null}
+      <Zoom
+        zoomOut={() => handler({ key: '-' })}
+        zoomIn={() => handler({ key: '=' })}
+      />
     </Box>
   )
 }
