@@ -16,6 +16,10 @@ const Display = () => {
   const setClim = useStore((state) => state.setClim)
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
+  const variable = useStore((state) => state.variable?.name)
+  const units = useStore(
+    (state) => variable && state.metadata?.metadata[`${variable}/.zattrs`].units
+  )
   const colormap = useThemedColormap(loading ? 'greys' : colormapName, {
     count: 255,
     format: 'rgb',
@@ -74,16 +78,22 @@ const Display = () => {
           ))}
         </Select>
       </Label>
-
-      <Colorbar
-        colormap={colormap}
-        clim={clim}
-        setClim={clim ? (setter) => setClim(setter(clim)) : null}
-        format={format('.1f')}
-        width='100%'
-        horizontal
-        bottom
-      />
+      <Label
+        value={variable && units ? `${variable} (${units})` : ''}
+        htmlFor='colorRange'
+        direction='vertical'
+      >
+        <Colorbar
+          id='colorRange'
+          colormap={colormap}
+          clim={clim}
+          setClim={clim ? (setter) => setClim(setter(clim)) : null}
+          format={format('.1f')}
+          width='100%'
+          horizontal
+          bottom
+        />
+      </Label>
     </Flex>
   )
 }
