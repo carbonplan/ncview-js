@@ -7,8 +7,7 @@ import useStore from './store'
 import Label from './label'
 
 const Display = () => {
-  const url = useStore((state) => state.url)
-  const loading = !url
+  const loading = useStore((state) => state.loading)
   const basemaps = useStore((state) => state.basemaps)
   const setBasemaps = useStore((state) => state.setBasemaps)
   const projection = useStore((state) => state.projection)

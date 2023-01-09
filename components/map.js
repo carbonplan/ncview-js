@@ -18,6 +18,7 @@ const Map = () => {
   const basemaps = useStore((state) => state.basemaps)
   const projection = useStore((state) => state.projection)
   const clim = useStore((state) => state.clim)
+  const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
@@ -133,7 +134,9 @@ const Map = () => {
             color: 'secondary',
           }}
         >
-          {url ? 'Loading...' : 'Provide a Zarr link to explore data'}
+          {loading || url
+            ? 'Loading...'
+            : 'Provide a Zarr link to explore data'}
         </Box>
       ) : null}
     </Box>
