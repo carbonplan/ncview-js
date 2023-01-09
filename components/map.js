@@ -8,6 +8,7 @@ import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
 import Zoom from './zoom'
+import MapContainer from './map-container'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -29,6 +30,13 @@ const Map = () => {
   const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
 
+  const panMap = useCallback((offset) => {
+    setMapProps((prev) => ({
+      scale: prev.scale,
+      translate: prev.translate.map((d, i) => d + offset[i]),
+    }))
+  }, [])
+
   const handler = useCallback(
     ({ key, keyCode, metaKey }) => {
       if (!!data) {
@@ -48,10 +56,7 @@ const Map = () => {
           if (isChunked) {
             incrementChunk(offset)
           } else {
-            setMapProps((prev) => ({
-              scale: prev.scale,
-              translate: prev.translate.map((d, i) => d + offset[i]),
-            }))
+            panMap(offset)
           }
         } else if (key === '=') {
           // zoom in
@@ -90,7 +95,7 @@ const Map = () => {
   }, [variableBounds, projection])
 
   return (
-    <Box sx={{ width: '100%', mx: [4], mb: [3] }}>
+    <MapContainer sx={{ width: '100%', mx: [4], mb: [3] }} onDrag={panMap}>
       {data && bounds && clim && (
         <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
           {basemaps.ocean && (
@@ -149,7 +154,7 @@ const Map = () => {
         zoomOut={() => handler({ key: '-' })}
         zoomIn={() => handler({ key: '=' })}
       />
-    </Box>
+    </MapContainer>
   )
 }
 
