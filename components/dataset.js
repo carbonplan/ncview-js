@@ -31,6 +31,8 @@ const sx = {
     strokeWidth: '2px',
   },
   checkbox: (checked) => ({
+    height: 20,
+    width: 20,
     cursor: 'pointer',
     color: 'muted',
     transition: 'color 0.15s',
