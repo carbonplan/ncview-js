@@ -17,6 +17,8 @@
 [actions]: https://github.com/carbonplan/ncview-js/actions/workflows/main.yaml
 [mit license]: https://badgen.net/badge/license/MIT/blue
 
+This repository contains the prototype for tool to visualize and explore arbitrary cloud-stored Zarr datasets, loosely inspired by [`Ncview`](http://meteora.ucsd.edu/~pierce/ncview_home_page.html). Pre-processing is performed via a rechunking service ([code](https://github.com/carbonplan/ncviewjs-backend), [docs](https://ncview-backend.fly.dev/docs)).
+
 ## to build the site locally
 
 Assuming you already have `Node.js` installed, you can install the build dependencies as:
