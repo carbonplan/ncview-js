@@ -9,6 +9,7 @@ import useStore from './store'
 import { getMapProps } from './utils'
 import Zoom from './zoom'
 import MapContainer from './map-container'
+import Loading from './loading'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -150,9 +151,7 @@ const Map = () => {
             color: 'secondary',
           }}
         >
-          {loading || url
-            ? 'Loading...'
-            : 'Provide a Zarr link to explore data'}
+          {loading || url ? <Loading /> : 'Provide a Zarr link to explore data'}
         </Box>
       ) : null}
       <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />
