@@ -15,6 +15,7 @@ const DATASETS = [
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
+  's3://carbonplan-data-viewer/demo/MURSST.zarr',
 ]
 
 const sx = {
@@ -86,6 +87,11 @@ const pollForCompletedRun = async (
       () => pollForCompletedRun(id, setCompletedRun, interval, polls - 1),
       interval
     )
+  } else {
+    setCompletedRun({
+      error_message:
+        'Dataset processing still in-progress. Try submitting the dataset again to continue receiving updates, or come back later.',
+    })
   }
 }
 
@@ -210,7 +216,7 @@ const Dataset = () => {
           <Box
             sx={{
               fontSize: 1,
-              mt: 2,
+              my: 2,
               color: 'red',
             }}
           >
