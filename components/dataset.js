@@ -1,7 +1,7 @@
 import { Input, Select } from '@carbonplan/components'
-import { Box, Flex } from 'theme-ui'
+import { Box, Flex, IconButton } from 'theme-ui'
 import { useCallback, useEffect, useState } from 'react'
-import { Right } from '@carbonplan/icons'
+import { Right, X } from '@carbonplan/icons'
 
 import Label from './label'
 import { TooltipContent, TooltipWrapper } from './tooltip'
@@ -14,6 +14,7 @@ const DATASETS = [
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
 ]
 
 const API_METADATA = {
@@ -163,14 +164,46 @@ const Dataset = () => {
               value={url}
               sx={{ width: '100%', borderBottomWidth: 0 }}
             />
-            <Right
+            <IconButton
               sx={{
-                fill: 'secondary',
-                height: [15, 15, 15, 20],
-                width: [15, 15, 15, 20],
-                mt: '5px',
+                cursor: 'pointer',
+                fill: 'none',
+                strokeWidth: '2px',
+                stroke: 'text',
+                color: 'secondary',
               }}
-            />
+              aria-label={dataset ? 'Clear URL' : 'Submit URL'}
+              type={dataset ? 'button' : 'submit'}
+              onClick={(e) => {
+                if (dataset) {
+                  e.preventDefault()
+                  setUrl('')
+                  setDataset(null)
+                  setCompletedRun(null)
+                  setErrorMessage(null)
+                  setStoreUrl(null)
+                }
+              }}
+            >
+              {dataset ? (
+                <X
+                  sx={{
+                    height: [15, 15, 15, 20],
+                    width: [15, 15, 15, 20],
+                    mt: '5px',
+                    strokeWidth: '2px',
+                  }}
+                />
+              ) : (
+                <Right
+                  sx={{
+                    height: [15, 15, 15, 20],
+                    width: [15, 15, 15, 20],
+                    mt: '5px',
+                  }}
+                />
+              )}
+            </IconButton>
           </Flex>
           <Box
             sx={{
