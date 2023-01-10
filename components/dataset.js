@@ -127,7 +127,15 @@ const Dataset = () => {
   useEffect(() => {
     if (dataset && completedRun) {
       if (completedRun.outcome === 'success') {
-        setStoreUrl(completedRun.rechunked_dataset, dataset.cf_axes)
+        setStoreUrl(completedRun.rechunked_dataset, dataset.cf_axes).then(
+          (error) => {
+            if (error) {
+              setErrorMessage(error)
+              setLoading(false)
+              setStoreUrl(null)
+            }
+          }
+        )
       } else if (completedRun.error_message) {
         setErrorMessage(completedRun.error_message)
       } else {

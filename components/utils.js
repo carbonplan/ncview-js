@@ -80,7 +80,7 @@ export const getMetadata = async (url) => {
     .filter(Boolean)
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
-    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
+    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length === 2) // TODO: update to `>= 2` once non-spatial dimensions are supported
     .filter((d) =>
       metadata.metadata[`${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
         (dim) => metadata.metadata[`${dim}/.zarray`]

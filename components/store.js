@@ -73,6 +73,9 @@ const useStore = create((set, get) => ({
     }
 
     const { metadata, variables, isChunked } = await getMetadata(url)
+    if (variables.length === 0) {
+      return 'No viewable variables found. Please provide a dataset with 2D data arrays.'
+    }
     const arrays = await getArrays(url, metadata, variables)
 
     set({ metadata, variables, isChunked, arrays })
