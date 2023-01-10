@@ -3,27 +3,19 @@
   height='48'
 />
 
-# carbonplan / article template
+# carbonplan / ncview-js
 
-**template repository for carbonplan articles**
+**interactive tool for visualizing Zarr datasets**
 
 [![GitHub][github-badge]][github]
 [![Build Status]][actions]
 ![MIT License][]
 
-[github]: https://github.com/carbonplan/article-template
+[github]: https://github.com/carbonplan/ncview-js
 [github-badge]: https://badgen.net/badge/-/github?icon=github&label
-[build status]: https://github.com/carbonplan/article-template/actions/workflows/main.yml/badge.svg
-[actions]: https://github.com/carbonplan/article-template/actions/workflows/main.yaml
+[build status]: https://github.com/carbonplan/ncview-js/actions/workflows/main.yml/badge.svg
+[actions]: https://github.com/carbonplan/ncview-js/actions/workflows/main.yaml
 [mit license]: https://badgen.net/badge/license/MIT/blue
-
-This repository contains a template for developing an article to be included on our research site at [carbonplan.org/research](https://carbonplan.org/research).
-
-This is basically a mini [Next.js](https://nextjs.org/) app that wraps your article content with our layout for development purposes.
-
-To start working on a new article click the [Use this template](https://github.com/carbonplan/article-template/generate) button, or clone this repo. You'll want to do all writing and development in the top-level `article` folder, which should include an `index.md` file for primary markdown content and a `components` folder for custom React components that you can import inside `index.md`. You should also update `contents.js` with the metadata for your article, like `authors` and `tags`. You shouldn't need to touch anything else.
-
-When an article is finished, we publish it by copying the contents of the `article` folder into a folder named with the article `id` in the `articles` folder in our the main [research](https://github.org/carbonplan/research) site. We also update the index listing. That's it!
 
 ## to build the site locally
 
@@ -47,4 +39,4 @@ All the code in this repository is [MIT](https://choosealicense.com/licenses/mit
 
 ## about us
 
-CarbonPlan is a non-profit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/leap-viewer/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
+CarbonPlan is a non-profit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/ncview-js/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
