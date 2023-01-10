@@ -1,5 +1,5 @@
 import { Input, Select } from '@carbonplan/components'
-import { Box, Flex, IconButton } from 'theme-ui'
+import { Box, Checkbox, Flex, IconButton } from 'theme-ui'
 import { useCallback, useEffect, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
 
@@ -37,16 +37,37 @@ const sx = {
       overflow: 'hidden',
     },
   },
+  icon: {
+    height: [15, 15, 15, 20],
+    width: [15, 15, 15, 20],
+    mt: '5px',
+    strokeWidth: '2px',
+  },
+  checkbox: (checked) => ({
+    cursor: 'pointer',
+    color: 'muted',
+    transition: 'color 0.15s',
+    'input:active ~ &': { bg: 'background', color: 'primary' },
+    'input:focus ~ &': {
+      bg: 'background',
+      color: checked ? 'primary' : 'muted',
+    },
+    'input:hover ~ &': { bg: 'background', color: 'primary' },
+    'input:focus-visible ~ &': {
+      outline: 'dashed 1px rgb(110, 110, 110, 0.625)',
+      background: 'rgb(110, 110, 110, 0.625)',
+    },
+  }),
 }
 
-const createDataset = async (url) => {
+const createDataset = async (url, force) => {
   const res = await fetch('https://ncview-backend.fly.dev/datasets/', {
     method: 'POST',
     mode: 'cors',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ url, force: false }),
+    body: JSON.stringify({ url, force }),
   })
   return res.json()
 }
@@ -86,6 +107,7 @@ const Dataset = () => {
   const [completedRun, setCompletedRun] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
+  const [forceRerun, setForceRerun] = useState(false)
   const setLoading = useStore((state) => state.setLoading)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
@@ -106,7 +128,7 @@ const Dataset = () => {
 
       setStoreUrl()
       setLoading(true)
-      const d = await createDataset(url)
+      const d = await createDataset(url, forceRerun)
       if (d.id) {
         setDataset(d)
         // todo: set interval + number of polls based on dataset size
@@ -121,7 +143,7 @@ const Dataset = () => {
         setErrorMessage('Unable to process dataset')
       }
     },
-    [url]
+    [url, forceRerun]
   )
 
   useEffect(() => {
@@ -193,24 +215,7 @@ const Dataset = () => {
                 }
               }}
             >
-              {dataset ? (
-                <X
-                  sx={{
-                    height: [15, 15, 15, 20],
-                    width: [15, 15, 15, 20],
-                    mt: '5px',
-                    strokeWidth: '2px',
-                  }}
-                />
-              ) : (
-                <Right
-                  sx={{
-                    height: [15, 15, 15, 20],
-                    width: [15, 15, 15, 20],
-                    mt: '5px',
-                  }}
-                />
-              )}
+              {dataset ? <X sx={sx.icon} /> : <Right sx={sx.icon} />}
             </IconButton>
           </Flex>
           <Box
@@ -223,6 +228,27 @@ const Dataset = () => {
             {errorMessage}
           </Box>
         </Label>
+
+        <Box
+          as='label'
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1,
+            color: 'secondary',
+            fontFamily: 'mono',
+            letterSpacing: 'mono',
+            textTransform: 'uppercase',
+            fontSize: 1,
+          }}
+        >
+          <Checkbox
+            sx={sx.checkbox(forceRerun)}
+            checked={forceRerun}
+            onChange={() => setForceRerun(!forceRerun)}
+          />
+          Force rerun
+        </Box>
       </form>
 
       {variable && (
