@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
@@ -26,10 +26,10 @@ const Map = () => {
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
-  const variableBounds = useStore((state) => state.variable.bounds)
   const isChunked = useStore((state) => state.isChunked)
   const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
+  const mapPropsInitialized = useRef(false)
 
   const panMap = useCallback((offset) => {
     setMapProps((prev) => ({
@@ -91,10 +91,11 @@ const Map = () => {
   }, [handler])
 
   useEffect(() => {
-    if (variableBounds) {
-      setMapProps(getMapProps(variableBounds, projection))
+    if (!mapPropsInitialized.current && bounds) {
+      setMapProps(getMapProps(bounds, projection))
+      mapPropsInitialized.current = true
     }
-  }, [variableBounds, projection])
+  }, [!!bounds, projection])
 
   return (
     <MapContainer
