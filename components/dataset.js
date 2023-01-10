@@ -17,19 +17,6 @@ const DATASETS = [
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
 ]
 
-const API_METADATA = {
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr':
-    { air: { X: 'lon', Y: 'lat', T: null } },
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr':
-    { tasmax: { X: 'lon', Y: 'lat', T: null } },
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr':
-    { tas: { X: 'rlon', Y: 'rlat', T: null } },
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr':
-    { precip: { X: 'longitude', Y: 'latitude', T: null } },
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr':
-    { precip: { X: 'lon', Y: 'lat', T: null } },
-}
-
 const sx = {
   select: {
     '& select': {
