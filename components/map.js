@@ -10,6 +10,7 @@ import { getMapProps } from './utils'
 import Zoom from './zoom'
 import MapContainer from './map-container'
 import Loading from './loading'
+import MinimapListener from './minimap-listener'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -26,8 +27,6 @@ const Map = () => {
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
-  const isChunked = useStore((state) => state.isChunked)
-  const incrementChunk = useStore((state) => state.incrementChunk)
   const { northPole, nullValue } = useStore((state) => state.variable)
   const mapPropsInitialized = useRef(false)
 
@@ -65,11 +64,7 @@ const Map = () => {
             throw new Error(`Unexpected arrow key: ${key}`)
           }
 
-          if (isChunked) {
-            incrementChunk(offset)
-          } else {
-            panMap(offset)
-          }
+          panMap(offset)
         } else if (key === '=') {
           // zoom in
           zoomMap(1)
@@ -79,7 +74,7 @@ const Map = () => {
         }
       }
     },
-    [!!data, isChunked]
+    [!!data]
   )
 
   useEffect(() => {
@@ -105,6 +100,7 @@ const Map = () => {
     >
       {data && bounds && clim && (
         <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
+          <MinimapListener />
           {basemaps.ocean && (
             <Path
               fill={theme.colors.background}
