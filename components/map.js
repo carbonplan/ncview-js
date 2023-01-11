@@ -27,6 +27,7 @@ const Map = () => {
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
+  const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
   const { northPole, nullValue } = useStore((state) => state.variable)
   const mapPropsInitialized = useRef(false)
 
@@ -86,11 +87,11 @@ const Map = () => {
   }, [handler])
 
   useEffect(() => {
-    if (!mapPropsInitialized.current && bounds) {
-      setMapProps(getMapProps(bounds, projection))
+    if (!mapPropsInitialized.current && chunkBounds) {
+      setMapProps(getMapProps(chunkBounds, projection))
       mapPropsInitialized.current = true
     }
-  }, [!!bounds, projection])
+  }, [!!chunkBounds, projection])
 
   useEffect(() => {
     if (!url) {

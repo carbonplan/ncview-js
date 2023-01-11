@@ -99,9 +99,9 @@ const useStore = create((set, get) => ({
     set({
       variable: { name, nullValue, northPole, axes, bounds },
     })
-    get().setChunkKey(chunkKey)
+    get().setChunkKey(chunkKey, true)
   },
-  setChunkKey: async (chunkKey) => {
+  setChunkKey: async (chunkKey, overrideClim = false) => {
     if (get().chunkKey === chunkKey) {
       return
     }
@@ -113,7 +113,7 @@ const useStore = create((set, get) => ({
       // Null out chunk-specific fields
       data: null,
       bounds: null,
-      clim: null,
+      ...(overrideClim ? { clim: null } : {}),
     })
 
     const {
@@ -129,12 +129,12 @@ const useStore = create((set, get) => ({
 
     set({
       data,
-      clim,
       bounds,
       chunks: {
         ...chunks,
         ...newChunks,
       },
+      ...(overrideClim ? { clim } : {}),
     })
   },
   resetCenterChunk: (centerPoint) => {
