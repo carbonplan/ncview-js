@@ -340,8 +340,14 @@ export const getAllData = async (
 
   const combinedBounds = allChunks.reduce(
     (prev, { bounds: { lat, lon } }) => ({
-      lat: [Math.min(lat[0], prev.lat[0]), Math.max(lat[1], prev.lat[1])],
-      lon: [Math.min(lon[0], prev.lon[0]), Math.max(lon[1], prev.lon[1])],
+      lat: [
+        Math.min(Math.min(...lat), prev.lat[0]),
+        Math.max(Math.max(...lat), prev.lat[1]),
+      ],
+      lon: [
+        Math.min(Math.min(...lon), prev.lon[0]),
+        Math.max(Math.max(...lon), prev.lon[1]),
+      ],
     }),
     { lat: [Infinity, -Infinity], lon: [Infinity, -Infinity] }
   )
