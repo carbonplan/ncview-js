@@ -87,12 +87,7 @@ export const getMetadata = async (url) => {
       )
     )
 
-  const isChunked = variables.some((v) => {
-    const zarray = metadata.metadata[`${v}/.zarray`]
-    return zarray.chunks.some((d, i) => d !== zarray.shape[i])
-  })
-
-  return { metadata, variables, isChunked }
+  return { metadata, variables }
 }
 
 const COMPRESSORS = {
@@ -426,4 +421,53 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
 
   // See https://github.com/scijs/ndarray/issues/24 for detailed explanation of .hi()
   return data.hi(...truncatedShape)
+}
+
+export const pointToChunkKey = (
+  [lon, lat],
+  {
+    arrays,
+    variable: {
+      name,
+      // nullValue,
+      // northPole,
+      axes,
+    },
+  }
+) => {
+  const { chunk_shape, shape } = arrays[name]
+
+  const chunkKey = shape.map((d, i) => {
+    if (axes.X.index === i) {
+      return getAxisIndex(lon, { axis: axes.X, chunk_shape, shape })
+    } else if (axes.Y.index === i) {
+      return getAxisIndex(lat, { axis: axes.Y, chunk_shape, shape })
+    } else {
+      // TODO: properly handle selected non-spatial dimension
+      return 0
+    }
+  })
+
+  if (chunkKey.every((d) => d >= 0)) {
+    return toKeyString(chunkKey, { variable: name, arrays })
+  }
+}
+
+const getAxisIndex = (value, { axis, chunk_shape, shape }) => {
+  const { array, index } = axis
+  const start = array.data[0]
+  const end = array.data[array.data.length - 1]
+
+  // if value is outside range,
+  if ((value < start && value < end) || (value > start && value > end)) {
+    // return whichever side of range is closer to value.
+    return Math.abs(start - value) < Math.abs(end - value)
+      ? 0
+      : Math.ceil(shape / chunk_shape)
+  }
+
+  const step = (end - start) / shape[index]
+  const chunkStep = step * chunk_shape[index]
+
+  return Math.floor((value - start) / chunkStep)
 }

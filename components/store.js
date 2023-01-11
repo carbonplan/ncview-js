@@ -5,6 +5,7 @@ import {
   getAdjacentChunk,
   getMetadata,
   getVariableInfo,
+  pointToChunkKey,
 } from './utils'
 
 const createDatasetSlice = (set, get) => ({
@@ -14,7 +15,6 @@ const createDatasetSlice = (set, get) => ({
   url: null,
   metadata: null,
   apiMetadata: null,
-  isChunked: null,
   variables: [],
   arrays: {},
 
@@ -58,7 +58,6 @@ const useStore = create((set, get) => ({
       apiMetadata,
       // Null out all dataset-related fields
       metadata: null,
-      isChunked: null,
       variables: [],
       variable: {},
       chunks: {},
@@ -72,13 +71,13 @@ const useStore = create((set, get) => ({
       return
     }
 
-    const { metadata, variables, isChunked } = await getMetadata(url)
+    const { metadata, variables } = await getMetadata(url)
     if (variables.length === 0) {
       return 'No viewable variables found. Please provide a dataset with 2D data arrays.'
     }
     const arrays = await getArrays(url, metadata, variables)
 
-    set({ metadata, variables, isChunked, arrays })
+    set({ metadata, variables, arrays })
 
     // default to first variable
     get().setVariable(variables[0])
@@ -138,17 +137,10 @@ const useStore = create((set, get) => ({
       },
     })
   },
-  incrementChunk: async (offset) => {
-    const { chunkKey, variable, arrays, setChunkKey } = get()
-    const dataArray = arrays[variable.name]
-    const newChunkKey = getAdjacentChunk(offset, {
-      chunkKey,
-      chunk: dataArray.chunk_shape,
-      shape: dataArray.shape,
-      arrays,
-      variable: variable.name,
-      axes: variable.axes,
-    })
+  resetCenterChunk: (centerPoint) => {
+    const { variable, arrays, setChunkKey } = get()
+
+    const newChunkKey = pointToChunkKey(centerPoint, { arrays, variable })
 
     if (newChunkKey) {
       setChunkKey(newChunkKey)

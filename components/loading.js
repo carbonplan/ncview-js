@@ -26,6 +26,8 @@ const Loading = () => {
         letterSpacing: 'mono',
         color: 'secondary',
         position: 'relative',
+        pointerEvents: 'none',
+        userSelect: 'none',
       }}
     >
       Loading
