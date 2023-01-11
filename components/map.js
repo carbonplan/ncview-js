@@ -92,6 +92,12 @@ const Map = () => {
     }
   }, [!!bounds, projection])
 
+  useEffect(() => {
+    if (!url) {
+      mapPropsInitialized.current = false
+    }
+  }, [url])
+
   return (
     <MapContainer
       sx={{ width: '100%', mx: [4], mb: [3] }}
