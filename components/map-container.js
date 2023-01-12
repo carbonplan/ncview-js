@@ -12,7 +12,7 @@ const MapContainer = ({ sx, children, setMapProps }) => {
 
   const panMap = useCallback((offset) => {
     setMapProps((prev) => ({
-      scale: prev.scale,
+      ...prev,
       translate: prev.translate.map((d, i) => d + offset[i]),
     }))
   }, [])
@@ -22,6 +22,7 @@ const MapContainer = ({ sx, children, setMapProps }) => {
       const updatedScale =
         prev.scale + delta < 0 ? prev.scale : prev.scale + delta
       return {
+        ...prev,
         scale: updatedScale,
         translate: prev.translate.map((d) => (d / prev.scale) * updatedScale),
       }

@@ -18,9 +18,8 @@ const Map = () => {
     count: 255,
     format: 'rgb',
   })
-  const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
   const basemaps = useStore((state) => state.basemaps)
-  const projection = useStore((state) => state.projection)
+  const projectionName = useStore((state) => state.projection)
   const clim = useStore((state) => state.clim)
   const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
@@ -28,14 +27,23 @@ const Map = () => {
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
   const { northPole, nullValue } = useStore((state) => state.variable)
+  const [mapProps, setMapProps] = useState({
+    projection: PROJECTIONS[projectionName],
+    scale: 1,
+    translate: [0, 0],
+  })
   const mapPropsInitialized = useRef(false)
 
   useEffect(() => {
+    mapPropsInitialized.current = false
+  }, [projectionName])
+
+  useEffect(() => {
     if (!mapPropsInitialized.current && chunkBounds) {
-      setMapProps(getMapProps(chunkBounds, projection))
+      setMapProps(getMapProps(chunkBounds, projectionName))
       mapPropsInitialized.current = true
     }
-  }, [!!chunkBounds, projection])
+  }, [!!chunkBounds, projectionName])
 
   useEffect(() => {
     if (!url) {
@@ -49,7 +57,7 @@ const Map = () => {
       setMapProps={setMapProps}
     >
       {clim && (
-        <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
+        <Minimap {...mapProps}>
           <MinimapListener />
           {basemaps.oceanMask && (
             <Path
