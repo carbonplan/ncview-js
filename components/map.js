@@ -108,7 +108,7 @@ const Map = () => {
       {clim && (
         <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
           <MinimapListener />
-          {basemaps.ocean && (
+          {basemaps.oceanMask && (
             <Path
               fill={theme.colors.background}
               opacity={1}
@@ -119,7 +119,18 @@ const Map = () => {
             />
           )}
 
-          {basemaps.land && (
+          {basemaps.landMask && (
+            <Path
+              fill={theme.colors.background}
+              source={
+                'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
+              }
+              feature={'land'}
+              opacity={1}
+            />
+          )}
+
+          {basemaps.landBoundaries && (
             <Path
               stroke={theme.colors.primary}
               source={

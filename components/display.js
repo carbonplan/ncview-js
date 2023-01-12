@@ -42,23 +42,35 @@ const Display = () => {
       </Label>
 
       <Box>
-        <Label value='Basemaps' htmlFor='land'>
+        <Label value='Basemaps' htmlFor='landBoundaries'>
           <Flex sx={{ gap: 2 }}>
-            Land
+            Land boundaries
             <Toggle
-              id='land'
-              value={basemaps.land}
-              onClick={() => setBasemaps({ land: !basemaps.land })}
+              id='landBoundaries'
+              value={basemaps.landBoundaries}
+              onClick={() =>
+                setBasemaps({ landBoundaries: !basemaps.landBoundaries })
+              }
             />
           </Flex>
         </Label>
 
         <Label>
           <Flex sx={{ gap: 2 }}>
-            Ocean
+            Land mask
             <Toggle
-              value={basemaps.ocean}
-              onClick={() => setBasemaps({ ocean: !basemaps.ocean })}
+              value={basemaps.landMask}
+              onClick={() => setBasemaps({ landMask: !basemaps.landMask })}
+            />
+          </Flex>
+        </Label>
+
+        <Label>
+          <Flex sx={{ gap: 2 }}>
+            Ocean mask
+            <Toggle
+              value={basemaps.oceanMask}
+              onClick={() => setBasemaps({ oceanMask: !basemaps.oceanMask })}
             />
           </Flex>
         </Label>
