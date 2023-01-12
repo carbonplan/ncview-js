@@ -105,7 +105,7 @@ const Map = () => {
       onDrag={panMap}
       onScroll={zoomMap}
     >
-      {data && bounds && clim && (
+      {clim && (
         <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
           <MinimapListener />
           {basemaps.ocean && (
@@ -132,15 +132,17 @@ const Map = () => {
 
           <Sphere fill={theme.colors.background} />
 
-          <Raster
-            source={data}
-            bounds={bounds}
-            northPole={northPole}
-            colormap={colormap}
-            mode={'lut'}
-            clim={clim}
-            nullValue={nullValue}
-          />
+          {data && bounds && (
+            <Raster
+              source={data}
+              bounds={bounds}
+              northPole={northPole}
+              colormap={colormap}
+              mode={'lut'}
+              clim={clim}
+              nullValue={nullValue}
+            />
+          )}
         </Minimap>
       )}
 
