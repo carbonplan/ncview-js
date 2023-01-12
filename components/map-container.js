@@ -88,7 +88,7 @@ const MapContainer = ({ sx, children, setMapProps }) => {
       container.current.removeEventListener('mousemove', moveListener.current)
     }
     moveListener.current = (event) => {
-      panMap([event.movementX / width, event.movementY / height])
+      panMap([(event.movementX / width) * 2, (event.movementY / height) * 2])
     }
 
     container.current.addEventListener('mousemove', moveListener.current)
