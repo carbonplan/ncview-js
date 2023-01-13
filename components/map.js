@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
-import { Flex, Spinner } from 'theme-ui'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
+import { alpha } from '@theme-ui/color'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
-import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
 import { PROJECTIONS } from './constants'
@@ -9,7 +9,7 @@ import useStore from './store'
 import { getMapProps } from './utils'
 import MapContainer from './map-container'
 import MinimapListener from './minimap-listener'
-import { alpha } from '@theme-ui/color'
+import Nav from './nav'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -26,13 +26,15 @@ const Map = () => {
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
-  const { northPole, nullValue } = useStore((state) => state.variable)
+  const { northPole, nullValue, lockZoom } = useStore((state) => state.variable)
+  const resetCenterChunk = useStore((state) => state.resetCenterChunk)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
     scale: 1,
     translate: [0, 0],
   })
   const mapPropsInitialized = useRef(false)
+  const [minimap, setMinimap] = useState(null)
 
   useEffect(() => {
     mapPropsInitialized.current = false
@@ -51,6 +53,16 @@ const Map = () => {
     }
   }, [url])
 
+  const handleMinimapChange = useCallback((values) => {
+    setMinimap(values)
+    const { projection, height, width } = values
+    const centerPoint = projection.invert([
+      Math.round(height / 2),
+      Math.round(width / 2),
+    ])
+    resetCenterChunk(centerPoint)
+  }, [])
+
   return (
     <Flex
       sx={{
@@ -65,7 +77,7 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {clim && (
             <Minimap {...mapProps}>
-              <MinimapListener />
+              <MinimapListener setter={handleMinimapChange} />
               {basemaps.oceanMask && (
                 <Path
                   fill={theme.colors.background}
@@ -125,6 +137,13 @@ const Map = () => {
             >
               <Spinner duration={750} size={32} />
             </Box>
+          )}
+          {clim && lockZoom && (
+            <Nav
+              map={minimap}
+              setMapProps={setMapProps}
+              sx={{ position: 'absolute', bottom: 0, right: 0 }}
+            />
           )}
         </MapContainer>
       ) : (
