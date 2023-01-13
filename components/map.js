@@ -1,16 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { Flex, Spinner } from 'theme-ui'
+import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
+import { alpha } from '@theme-ui/color'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
-import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
 import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
 import MapContainer from './map-container'
-import Loading from './loading'
 import MinimapListener from './minimap-listener'
-import { alpha } from '@theme-ui/color'
+import Nav from './nav'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -34,6 +33,7 @@ const Map = () => {
     translate: [0, 0],
   })
   const mapPropsInitialized = useRef(false)
+  const [minimap, setMinimap] = useState(null)
 
   useEffect(() => {
     mapPropsInitialized.current = false
@@ -66,7 +66,7 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {clim && (
             <Minimap {...mapProps}>
-              <MinimapListener />
+              <MinimapListener setter={setMinimap} />
               {basemaps.oceanMask && (
                 <Path
                   fill={theme.colors.background}
@@ -141,6 +141,7 @@ const Map = () => {
           Provide a Zarr link to explore data
         </Box>
       )}
+      {clim && <Nav map={minimap} />}
     </Flex>
   )
 }
