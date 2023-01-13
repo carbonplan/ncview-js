@@ -246,7 +246,7 @@ export const getMapProps = (bounds, projection) => {
     ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
   ]
 
-  return { scale, translate }
+  return { scale, translate, projection: PROJECTIONS[projection] }
 }
 
 export const getAdjacentChunk = (

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
@@ -7,7 +7,6 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
-import Zoom from './zoom'
 import MapContainer from './map-container'
 import Loading from './loading'
 import MinimapListener from './minimap-listener'
@@ -19,9 +18,8 @@ const Map = () => {
     count: 255,
     format: 'rgb',
   })
-  const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
   const basemaps = useStore((state) => state.basemaps)
-  const projection = useStore((state) => state.projection)
+  const projectionName = useStore((state) => state.projection)
   const clim = useStore((state) => state.clim)
   const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
@@ -29,69 +27,23 @@ const Map = () => {
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
   const { northPole, nullValue } = useStore((state) => state.variable)
+  const [mapProps, setMapProps] = useState({
+    projection: PROJECTIONS[projectionName],
+    scale: 1,
+    translate: [0, 0],
+  })
   const mapPropsInitialized = useRef(false)
 
-  const panMap = useCallback((offset) => {
-    setMapProps((prev) => ({
-      scale: prev.scale,
-      translate: prev.translate.map((d, i) => d + offset[i]),
-    }))
-  }, [])
-
-  const zoomMap = useCallback((delta) => {
-    setMapProps((prev) => {
-      const updatedScale =
-        prev.scale + delta < 0 ? prev.scale : prev.scale + delta
-      return {
-        scale: updatedScale,
-        translate: prev.translate.map((d) => (d / prev.scale) * updatedScale),
-      }
-    })
-  }, [])
-
-  const handler = useCallback(
-    ({ key, keyCode, metaKey }) => {
-      if (!!data) {
-        if (key.includes('Arrow')) {
-          const offsets = {
-            ArrowUp: [0, 1],
-            ArrowRight: [-1, 0],
-            ArrowDown: [0, -1],
-            ArrowLeft: [1, 0],
-          }
-          const offset = offsets[key]
-
-          if (!offset) {
-            throw new Error(`Unexpected arrow key: ${key}`)
-          }
-
-          panMap(offset)
-        } else if (key === '=') {
-          // zoom in
-          zoomMap(1)
-        } else if (key === '-') {
-          // zoom out
-          zoomMap(-1)
-        }
-      }
-    },
-    [!!data]
-  )
-
   useEffect(() => {
-    window.addEventListener('keydown', handler)
-
-    return () => {
-      window.removeEventListener('keydown', handler)
-    }
-  }, [handler])
+    mapPropsInitialized.current = false
+  }, [projectionName])
 
   useEffect(() => {
     if (!mapPropsInitialized.current && chunkBounds) {
-      setMapProps(getMapProps(chunkBounds, projection))
+      setMapProps(getMapProps(chunkBounds, projectionName))
       mapPropsInitialized.current = true
     }
-  }, [!!chunkBounds, projection])
+  }, [!!chunkBounds, projectionName])
 
   useEffect(() => {
     if (!url) {
@@ -102,11 +54,10 @@ const Map = () => {
   return (
     <MapContainer
       sx={{ width: '100%', mx: [4], mb: [3] }}
-      onDrag={panMap}
-      onScroll={zoomMap}
+      setMapProps={setMapProps}
     >
       {clim && (
-        <Minimap {...mapProps} projection={PROJECTIONS[projection]}>
+        <Minimap {...mapProps}>
           <MinimapListener />
           {basemaps.oceanMask && (
             <Path
@@ -171,7 +122,6 @@ const Map = () => {
           {loading || url ? <Loading /> : 'Provide a Zarr link to explore data'}
         </Box>
       ) : null}
-      <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />
     </MapContainer>
   )
 }
