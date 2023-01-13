@@ -8,7 +8,6 @@ import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
 import MapContainer from './map-container'
-import Loading from './loading'
 import MinimapListener from './minimap-listener'
 import { alpha } from '@theme-ui/color'
 
