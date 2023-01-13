@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Box } from 'theme-ui'
+import { Box, Flex } from 'theme-ui'
 
 import useStore from './store'
 import Zoom from './zoom'
 
-const MapContainer = ({ sx, children, setMapProps }) => {
+const MapContainer = ({ children, setMapProps, showBorder }) => {
   const container = useRef(null)
   const moveListener = useRef(null)
   const [cursor, setCursor] = useState('grab')
@@ -112,12 +112,22 @@ const MapContainer = ({ sx, children, setMapProps }) => {
 
   return (
     <Box
-      sx={{ cursor, '&:focus, &:focus-visible': { outline: 'none' }, ...sx }}
+      sx={{
+        width: '100%',
+        height: 'fit-content',
+        position: 'relative',
+        borderWidth: showBorder ? 1 : 0,
+        borderColor: 'secondary',
+        borderStyle: 'solid',
+        cursor,
+        '&:focus, &:focus-visible': { outline: 'none' },
+      }}
       ref={container}
       tabIndex={0}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
+      id='container'
     >
       {children}
       <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />

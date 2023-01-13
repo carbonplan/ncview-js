@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-
+import { Flex, Spinner } from 'theme-ui'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemeUI, Box } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
@@ -52,77 +52,96 @@ const Map = () => {
   }, [url])
 
   return (
-    <MapContainer
-      sx={{ width: '100%', mx: [4], mb: [3] }}
-      setMapProps={setMapProps}
+    <Flex
+      sx={{
+        height: 'calc(100vh - 56px)',
+        flexDirection: 'column',
+        justifyContent: 'center',
+      }}
     >
-      {clim && (
-        <Minimap {...mapProps}>
-          <MinimapListener />
-          {basemaps.oceanMask && (
-            <Path
-              fill={theme.colors.background}
-              opacity={1}
-              source={
-                'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
-              }
-              feature={'ocean'}
-            />
+      {url ? (
+        <MapContainer
+          setMapProps={setMapProps}
+          showBorder={mapPropsInitialized.current}
+        >
+          {clim && (
+            <Minimap {...mapProps}>
+              <MinimapListener />
+              {basemaps.oceanMask && (
+                <Path
+                  fill={theme.colors.background}
+                  opacity={1}
+                  source={
+                    'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
+                  }
+                  feature={'ocean'}
+                />
+              )}
+
+              {basemaps.landMask && (
+                <Path
+                  fill={theme.colors.background}
+                  source={
+                    'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
+                  }
+                  feature={'land'}
+                  opacity={1}
+                />
+              )}
+
+              {basemaps.landBoundaries && (
+                <Path
+                  stroke={theme.colors.primary}
+                  source={
+                    'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
+                  }
+                  feature={'land'}
+                  opacity={1}
+                />
+              )}
+
+              <Sphere fill={theme.colors.background} />
+
+              {data && bounds && (
+                <Raster
+                  source={data}
+                  bounds={bounds}
+                  northPole={northPole}
+                  colormap={colormap}
+                  mode={'lut'}
+                  clim={clim}
+                  nullValue={nullValue}
+                />
+              )}
+            </Minimap>
           )}
-
-          {basemaps.landMask && (
-            <Path
-              fill={theme.colors.background}
-              source={
-                'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
-              }
-              feature={'land'}
-              opacity={1}
-            />
+          {(!data || loading) && (
+            <Box
+              sx={{
+                width: '100%',
+                position: 'absolute',
+                top: 1,
+                left: 1,
+              }}
+            >
+              <Spinner duration={750} size={32} />
+            </Box>
           )}
-
-          {basemaps.landBoundaries && (
-            <Path
-              stroke={theme.colors.primary}
-              source={
-                'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
-              }
-              feature={'land'}
-              opacity={1}
-            />
-          )}
-
-          <Sphere fill={theme.colors.background} />
-
-          {data && bounds && (
-            <Raster
-              source={data}
-              bounds={bounds}
-              northPole={northPole}
-              colormap={colormap}
-              mode={'lut'}
-              clim={clim}
-              nullValue={nullValue}
-            />
-          )}
-        </Minimap>
-      )}
-
-      {!data ? (
+        </MapContainer>
+      ) : (
         <Box
           sx={{
             width: '100%',
-            mt: '30vh',
             textAlign: 'center',
             fontFamily: 'mono',
             letterSpacing: 'mono',
             color: 'secondary',
           }}
         >
-          {loading || url ? <Loading /> : 'Provide a Zarr link to explore data'}
+          Provide a Zarr link to explore data
         </Box>
-      ) : null}
-    </MapContainer>
+      )}
+    </Flex>
   )
 }
 
