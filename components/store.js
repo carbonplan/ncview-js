@@ -113,7 +113,6 @@ const useStore = create((set, get) => ({
       // Null out chunk-specific fields
       data: null,
       bounds: null,
-      ...(overrideClim ? { clim: null } : {}),
     })
 
     const {
@@ -143,7 +142,7 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, { arrays, variable })
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey)
+      setChunkKey(newChunkKey, true)
     }
   },
 }))
