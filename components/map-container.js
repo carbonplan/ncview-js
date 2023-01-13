@@ -4,7 +4,7 @@ import { Box, Flex } from 'theme-ui'
 import useStore from './store'
 import Zoom from './zoom'
 
-const MapContainer = ({ children, setMapProps, showBorder }) => {
+const MapContainer = ({ children, setMapProps }) => {
   const container = useRef(null)
   const moveListener = useRef(null)
   const [cursor, setCursor] = useState('grab')
@@ -116,9 +116,7 @@ const MapContainer = ({ children, setMapProps, showBorder }) => {
         width: '100%',
         height: 'fit-content',
         position: 'relative',
-        borderWidth: showBorder ? 1 : 0,
-        borderColor: 'secondary',
-        borderStyle: 'solid',
+        background: 'background',
         cursor,
         '&:focus, &:focus-visible': { outline: 'none' },
       }}

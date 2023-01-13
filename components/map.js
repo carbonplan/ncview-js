@@ -10,6 +10,7 @@ import { getMapProps } from './utils'
 import MapContainer from './map-container'
 import Loading from './loading'
 import MinimapListener from './minimap-listener'
+import { alpha } from '@theme-ui/color'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -55,15 +56,14 @@ const Map = () => {
     <Flex
       sx={{
         height: 'calc(100vh - 56px)',
+        mr: [-4, -5, -5, -6],
         flexDirection: 'column',
         justifyContent: 'center',
+        background: alpha('secondary', 0.2),
       }}
     >
       {url ? (
-        <MapContainer
-          setMapProps={setMapProps}
-          showBorder={mapPropsInitialized.current}
-        >
+        <MapContainer setMapProps={setMapProps}>
           {clim && (
             <Minimap {...mapProps}>
               <MinimapListener />
