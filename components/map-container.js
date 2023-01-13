@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { Box, Flex } from 'theme-ui'
+import { Box } from 'theme-ui'
 
 import useStore from './store'
-import Zoom from './zoom'
 
 const MapContainer = ({ children, setMapProps }) => {
   const container = useRef(null)
@@ -128,7 +127,6 @@ const MapContainer = ({ children, setMapProps }) => {
       id='container'
     >
       {children}
-      <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />
     </Box>
   )
 }
