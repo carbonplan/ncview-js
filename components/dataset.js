@@ -170,7 +170,16 @@ const Dataset = () => {
   return (
     <Flex sx={{ flexDirection: 'column', gap: 3 }}>
       <form onSubmit={handleSubmit}>
-        <Label value='Dataset' htmlFor='dataset' direction='vertical'>
+        <Label
+          value='Dataset'
+          htmlFor='dataset'
+          direction='vertical'
+          sx={{
+            color: 'primary',
+            fontSize: 2,
+            fontFamily: 'heading',
+          }}
+        >
           <Flex
             sx={{
               gap: 2,

@@ -34,21 +34,14 @@ const Index = () => {
                 borderStyle: 'solid',
                 height: '100vh',
                 pb: 4,
+                overflow: 'scroll',
               }}
             >
-              <Flex
-                sx={{
-                  height: '100%',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                }}
-              >
-                <Box>
-                  <Divider sx={{ mt: '56px', mx: [-4, -5, -5, -6], mb: 4 }} />
-                  <Dataset />
-                </Box>
-                <Display />
-              </Flex>
+              <Divider sx={{ mt: '56px', mx: [-4, -5, -5, -6], mb: 4 }} />
+              <Dataset />
+              <Divider sx={{ mx: [-4, -5, -5, -6], my: 4 }} />
+              <Display />
+              <Divider sx={{ mx: [-4, -5, -5, -6], my: 5 }} />
             </Column>
             <Column start={[5]} width={[8]} sx={{ mt: '56px' }}>
               <Map />

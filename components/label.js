@@ -1,7 +1,7 @@
 import { Column, Row } from '@carbonplan/components'
 import { Box } from 'theme-ui'
 
-const Label = ({ htmlFor, value, children, direction = 'horizontal' }) => {
+const Label = ({ htmlFor, value, children, direction = 'horizontal', sx }) => {
   const singleRow = direction === 'horizontal'
   return (
     <Row columns={[3]}>
@@ -15,7 +15,14 @@ const Label = ({ htmlFor, value, children, direction = 'horizontal' }) => {
         <Box
           as='label'
           htmlFor={htmlFor}
-          sx={{ color: 'secondary', textTransform: 'uppercase' }}
+          sx={{
+            color: 'secondary',
+            textTransform: 'uppercase',
+            fontFamily: 'mono',
+            letterSpacing: 'mono',
+            fontSize: 1,
+            ...sx,
+          }}
         >
           {value}
         </Box>

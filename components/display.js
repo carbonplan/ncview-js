@@ -27,6 +27,16 @@ const Display = () => {
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 3 }}>
+      <Box
+        sx={{
+          fontSize: 2,
+          fontFamily: 'heading',
+          textTransform: 'uppercase',
+          letterSpacing: 'mono',
+        }}
+      >
+        Display
+      </Box>
       <Label value='Projection' htmlFor='projection'>
         <Select
           onChange={(e) => setProjection(e.target.value)}
