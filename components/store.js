@@ -37,7 +37,7 @@ const createDatasetSlice = (set, get) => ({
 
 const createDisplaySlice = (set, get) => ({
   projection: 'naturalEarth1',
-  basemaps: { landBoundaries: true, landMask: false, oceanMask: false },
+  basemaps: { landBoundaries: false, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
   data: null,
