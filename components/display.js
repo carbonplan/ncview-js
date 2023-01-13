@@ -53,7 +53,7 @@ const Display = () => {
 
       <Box>
         <Label value='Basemaps' htmlFor='landBoundaries'>
-          <Flex sx={{ gap: 2 }}>
+          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
             Land boundaries
             <Toggle
               id='landBoundaries'
@@ -66,7 +66,7 @@ const Display = () => {
         </Label>
 
         <Label>
-          <Flex sx={{ gap: 2 }}>
+          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
             Land mask
             <Toggle
               value={basemaps.landMask}
@@ -76,7 +76,7 @@ const Display = () => {
         </Label>
 
         <Label>
-          <Flex sx={{ gap: 2 }}>
+          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
             Ocean mask
             <Toggle
               value={basemaps.oceanMask}
