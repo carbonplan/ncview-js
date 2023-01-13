@@ -135,6 +135,7 @@ export const getVariableInfo = async (
   const dataArray = arrays[variable]
   const chunkKeyArray = getCenterChunk({ arrays, variable })
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
+  const zarray = metadata.metadata[`${variable}/.zarray`]
 
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
@@ -160,6 +161,10 @@ export const getVariableInfo = async (
     lat: getBounds(axes.Y.array),
   }
 
+  const lockZoom = [axes.X.index, axes.Y.index].some(
+    (index) => zarray.shape[index] / zarray.chunks[index] > 4
+  )
+
   return {
     chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
     nullValue,
@@ -171,6 +176,7 @@ export const getVariableInfo = async (
       : undefined,
     axes,
     bounds,
+    lockZoom,
   }
 }
 

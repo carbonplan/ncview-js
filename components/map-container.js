@@ -8,6 +8,9 @@ const MapContainer = ({ children, setMapProps }) => {
   const moveListener = useRef(null)
   const [cursor, setCursor] = useState('grab')
   const hasData = useStore((state) => !!state.data)
+  const lockZoom = useStore((state) =>
+    state.variable ? state.variable.lockZoom : true
+  )
 
   const panMap = useCallback((offset) => {
     setMapProps((prev) => ({
@@ -16,19 +19,23 @@ const MapContainer = ({ children, setMapProps }) => {
     }))
   }, [])
 
-  const zoomMap = useCallback((delta, offset = [0, 0]) => {
-    setMapProps((prev) => {
-      const updatedScale =
-        prev.scale + delta < 0 ? prev.scale : prev.scale + delta
-      return {
-        ...prev,
-        scale: updatedScale,
-        translate: prev.translate.map(
-          (d, i) => offset[i] - ((offset[i] - d) / prev.scale) * updatedScale
-        ),
-      }
-    })
-  }, [])
+  const zoomMap = useCallback(
+    (delta, offset = [0, 0]) => {
+      if (lockZoom) return
+      setMapProps((prev) => {
+        const updatedScale =
+          prev.scale + delta < 0 ? prev.scale : prev.scale + delta
+        return {
+          ...prev,
+          scale: updatedScale,
+          translate: prev.translate.map(
+            (d, i) => offset[i] - ((offset[i] - d) / prev.scale) * updatedScale
+          ),
+        }
+      })
+    },
+    [lockZoom]
+  )
 
   const handler = useCallback(
     ({ key, keyCode, metaKey, ...rest }) => {
@@ -60,7 +67,7 @@ const MapContainer = ({ children, setMapProps }) => {
         }
       }
     },
-    [hasData]
+    [hasData, panMap, zoomMap]
   )
   useEffect(() => {
     window.addEventListener('keydown', handler)
