@@ -17,14 +17,16 @@ const MapContainer = ({ sx, children, setMapProps }) => {
     }))
   }, [])
 
-  const zoomMap = useCallback((delta) => {
+  const zoomMap = useCallback((delta, offset = [0, 0]) => {
     setMapProps((prev) => {
       const updatedScale =
         prev.scale + delta < 0 ? prev.scale : prev.scale + delta
       return {
         ...prev,
         scale: updatedScale,
-        translate: prev.translate.map((d) => (d / prev.scale) * updatedScale),
+        translate: prev.translate.map(
+          (d, i) => offset[i] - ((offset[i] - d) / prev.scale) * updatedScale
+        ),
       }
     })
   }, [])
@@ -69,15 +71,6 @@ const MapContainer = ({ sx, children, setMapProps }) => {
     }
   }, [handler])
 
-  useEffect(() => {
-    const wheelListener = (event) => zoomMap(event.deltaY / -48)
-    document.addEventListener('wheel', wheelListener)
-
-    return () => {
-      document.removeEventListener('wheel', wheelListener)
-    }
-  }, [])
-
   const handleMouseDown = useCallback(() => {
     const height = container.current.clientHeight
     const width = container.current.clientWidth
@@ -102,6 +95,21 @@ const MapContainer = ({ sx, children, setMapProps }) => {
     }
   })
 
+  const handleWheel = useCallback(
+    (event) => {
+      const height = container.current.clientHeight
+      const width = container.current.clientWidth
+      const { x, y } = container.current.getBoundingClientRect()
+      const point = [event.clientX - x, event.clientY - y]
+
+      const offset = [(point[0] / width) * 2 - 1, (point[1] / height) * 2 - 1]
+      const delta = event.deltaY / -48
+
+      zoomMap(delta, offset)
+    },
+    [panMap, zoomMap]
+  )
+
   return (
     <Box
       sx={{ cursor, '&:focus, &:focus-visible': { outline: 'none' }, ...sx }}
@@ -109,6 +117,7 @@ const MapContainer = ({ sx, children, setMapProps }) => {
       tabIndex={0}
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
+      onWheel={handleWheel}
     >
       {children}
       <Zoom zoomOut={() => zoomMap(-1)} zoomIn={() => zoomMap(1)} />
