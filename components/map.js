@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
@@ -27,6 +27,7 @@ const Map = () => {
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
   const { northPole, nullValue } = useStore((state) => state.variable)
+  const resetCenterChunk = useStore((state) => state.resetCenterChunk)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
     scale: 1,
@@ -52,6 +53,16 @@ const Map = () => {
     }
   }, [url])
 
+  const handleMinimapChange = useCallback((values) => {
+    setMinimap(values)
+    const { projection, height, width } = values
+    const centerPoint = projection.invert([
+      Math.round(height / 2),
+      Math.round(width / 2),
+    ])
+    resetCenterChunk(centerPoint)
+  }, [])
+
   return (
     <Flex
       sx={{
@@ -66,7 +77,7 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {clim && (
             <Minimap {...mapProps}>
-              <MinimapListener setter={setMinimap} />
+              <MinimapListener setter={handleMinimapChange} />
               {basemaps.oceanMask && (
                 <Path
                   fill={theme.colors.background}
