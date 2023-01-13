@@ -26,7 +26,7 @@ const Map = () => {
   const data = useStore((state) => state.data)
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
-  const { northPole, nullValue } = useStore((state) => state.variable)
+  const { northPole, nullValue, lockZoom } = useStore((state) => state.variable)
   const resetCenterChunk = useStore((state) => state.resetCenterChunk)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
@@ -152,7 +152,7 @@ const Map = () => {
           Provide a Zarr link to explore data
         </Box>
       )}
-      {clim && <Nav map={minimap} setMapProps={setMapProps} />}
+      {clim && lockZoom && <Nav map={minimap} setMapProps={setMapProps} />}
     </Flex>
   )
 }
