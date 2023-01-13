@@ -141,7 +141,7 @@ const Map = () => {
           Provide a Zarr link to explore data
         </Box>
       )}
-      {clim && <Nav map={minimap} />}
+      {clim && <Nav map={minimap} setMapProps={setMapProps} />}
     </Flex>
   )
 }
