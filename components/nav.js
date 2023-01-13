@@ -8,7 +8,7 @@ import useStore from './store'
 import { getMapProps } from './utils'
 import MinimapListener from './minimap-listener'
 
-const Nav = ({ map, setMapProps }) => {
+const Nav = ({ map, setMapProps, sx }) => {
   const { theme } = useThemeUI()
   const [minimapProps, setMinimapProps] = useState({
     scale: 1,
@@ -18,8 +18,6 @@ const Nav = ({ map, setMapProps }) => {
   const staticBounds = useStore((state) => state.variable?.bounds)
   const colormap = useStore((state) => state.colormap)
   const [minimap, setMinimap] = useState(null)
-  const container = useRef(null)
-  const moveListener = useRef(null)
 
   useEffect(() => {
     if (staticBounds) {
@@ -50,31 +48,9 @@ const Nav = ({ map, setMapProps }) => {
     }
   }, [map, minimap])
 
-  // const handleMouseDown = useCallback((e) => {
-  //   const { x, y, width, height } = e.target.getBoundingClientRect()
-
-  //   // setCursor('grabbing')
-
-  //   if (moveListener.current) {
-  //     container.current.removeEventListener('mousemove', moveListener.current)
-  //   }
-  //   moveListener.current = (event) => {
-  //     // panMap([(event.movementX / width) * 2, (event.movementY / height) * 2])
-  //   }
-
-  //   container.current.addEventListener('mousemove', moveListener.current)
-  // }, [])
-
-  // const handleMouseUp = useCallback(() => {
-  //   // setCursor('grab')
-  //   if (moveListener.current) {
-  //     container.current.removeEventListener('mousemove', moveListener.current)
-  //     moveListener.current = null
-  //   }
-  // })
-
   const handleClick = useCallback(
     (e) => {
+      e.stopPropagation()
       const { x, y, width, height } = e.target.getBoundingClientRect()
       const point = [e.clientX - x, e.clientY - y]
       const center = minimap.projection.invert([
@@ -97,19 +73,23 @@ const Nav = ({ map, setMapProps }) => {
   )
 
   return (
-    <Box
-      sx={{ width: '35%' }}
-      // onMouseDown={handleMouseDown}
-      // onMouseUp={handleMouseUp}
-      onClick={handleClick}
-    >
+    <Box sx={{ width: '35%', cursor: 'cell', ...sx }} onClick={handleClick}>
       <Minimap {...minimapProps} projection={PROJECTIONS.naturalEarth1}>
         <MinimapListener setter={setMinimap} />
         <Path
+          fill={theme.colors.background}
           stroke={theme.colors.primary}
           source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
           feature={'land'}
           opacity={1}
+        />{' '}
+        <Path
+          fill={theme.colors.background}
+          opacity={1}
+          source={
+            'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
+          }
+          feature={'ocean'}
         />
         <Sphere stroke={theme.colors.primary} fill='transparent' />
         <Graticule stroke={theme.colors.primary} />

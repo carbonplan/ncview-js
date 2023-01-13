@@ -138,6 +138,13 @@ const Map = () => {
               <Spinner duration={750} size={32} />
             </Box>
           )}
+          {clim && lockZoom && (
+            <Nav
+              map={minimap}
+              setMapProps={setMapProps}
+              sx={{ position: 'absolute', bottom: 0, right: 0 }}
+            />
+          )}
         </MapContainer>
       ) : (
         <Box
@@ -152,7 +159,6 @@ const Map = () => {
           Provide a Zarr link to explore data
         </Box>
       )}
-      {clim && lockZoom && <Nav map={minimap} setMapProps={setMapProps} />}
     </Flex>
   )
 }
