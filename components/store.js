@@ -2,7 +2,6 @@ import create from 'zustand'
 import {
   getAllData,
   getArrays,
-  getAdjacentChunk,
   getMetadata,
   getVariableInfo,
   pointToChunkKey,

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { geoPath } from 'd3-geo'
 
-import { PROJECTIONS } from './constants'
+import { PROJECTIONS, COLORMAP_COLORS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
 import MinimapListener from './minimap-listener'
@@ -16,6 +16,7 @@ const Nav = ({ map, setMapProps }) => {
   })
   const [path, setPath] = useState(null)
   const staticBounds = useStore((state) => state.variable?.bounds)
+  const colormap = useStore((state) => state.colormap)
   const [minimap, setMinimap] = useState(null)
   const container = useRef(null)
   const moveListener = useRef(null)
@@ -118,8 +119,8 @@ const Nav = ({ map, setMapProps }) => {
             d={path}
             sx={{
               vectorEffects: 'non-scaling-stroke',
-              stroke: 'blue',
-              fill: 'blue',
+              stroke: COLORMAP_COLORS[colormap],
+              fill: COLORMAP_COLORS[colormap],
               strokeWidth: 3,
               pointerEvents: 'none',
             }}
