@@ -73,7 +73,7 @@ const Nav = ({ map, setMapProps, sx }) => {
   )
 
   return (
-    <Box sx={{ width: '35%', cursor: 'cell', ...sx }} onClick={handleClick}>
+    <Box sx={{ width: '300px', cursor: 'cell', ...sx }} onClick={handleClick}>
       <Minimap {...minimapProps} projection={PROJECTIONS.naturalEarth1}>
         <MinimapListener setter={setMinimap} />
         <Path
@@ -83,25 +83,15 @@ const Nav = ({ map, setMapProps, sx }) => {
           feature={'land'}
           opacity={1}
         />{' '}
-        <Path
-          fill={theme.colors.background}
-          opacity={1}
-          source={
-            'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
-          }
-          feature={'ocean'}
-        />
-        <Sphere stroke={theme.colors.primary} fill='transparent' />
-        <Graticule stroke={theme.colors.primary} />
         {path && (
           <Box
             as='path'
             d={path}
             sx={{
               vectorEffects: 'non-scaling-stroke',
-              stroke: COLORMAP_COLORS[colormap],
-              fill: COLORMAP_COLORS[colormap],
-              strokeWidth: 3,
+              stroke: 'white',
+              fill: 'white',
+              strokeWidth: 4,
               pointerEvents: 'none',
             }}
           />

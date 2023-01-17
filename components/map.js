@@ -142,7 +142,7 @@ const Map = () => {
             <Nav
               map={minimap}
               setMapProps={setMapProps}
-              sx={{ position: 'absolute', bottom: 0, right: 0 }}
+              sx={{ position: 'fixed', bottom: '18px', right: '18px' }}
             />
           )}
         </MapContainer>
