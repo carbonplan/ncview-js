@@ -23,6 +23,7 @@ const MapContainer = ({ children, setMapProps }) => {
     (delta, offset = [0, 0]) => {
       if (lockZoom) return
       setMapProps((prev) => {
+        delta = delta * prev.scale
         const updatedScale =
           prev.scale + delta < 0 ? prev.scale : prev.scale + delta
         return {
@@ -109,7 +110,7 @@ const MapContainer = ({ children, setMapProps }) => {
       const point = [event.clientX - x, event.clientY - y]
 
       const offset = [(point[0] / width) * 2 - 1, (point[1] / height) * 2 - 1]
-      const delta = event.deltaY / -48
+      const delta = event.deltaY / -150
 
       zoomMap(delta, offset)
     },
