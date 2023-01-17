@@ -24,6 +24,7 @@ const Map = () => {
   const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
   const data = useStore((state) => state.data)
+  const renderable = useStore((state) => Object.values(state.chunks).length > 0)
   const bounds = useStore((state) => state.bounds)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
   const { northPole, nullValue, lockZoom } = useStore((state) => state.variable)
@@ -75,7 +76,7 @@ const Map = () => {
     >
       {url ? (
         <MapContainer setMapProps={setMapProps}>
-          {clim && (
+          {renderable && (
             <Minimap {...mapProps}>
               <MinimapListener setter={handleMinimapChange} />
               {basemaps.oceanMask && (
@@ -138,7 +139,7 @@ const Map = () => {
               <Spinner duration={750} size={32} />
             </Box>
           )}
-          {clim && lockZoom && (
+          {renderable && lockZoom && (
             <Nav
               map={minimap}
               setMapProps={setMapProps}
