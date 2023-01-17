@@ -96,6 +96,11 @@ const pollForCompletedRun = async (
   }
 }
 
+const CLIMS = {
+  21: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
+  25: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
+}
+
 const Dataset = () => {
   const [expanded, setExpanded] = useState(false)
   const [url, setUrl] = useState('')
@@ -145,15 +150,17 @@ const Dataset = () => {
   useEffect(() => {
     if (dataset && completedRun) {
       if (completedRun.outcome === 'success') {
-        setStoreUrl(completedRun.rechunked_dataset, dataset.cf_axes).then(
-          (error) => {
-            if (error) {
-              setErrorMessage(error)
-              setLoading(false)
-              setStoreUrl(null)
-            }
+        setStoreUrl(
+          completedRun.rechunked_dataset,
+          dataset.cf_axes,
+          CLIMS[dataset.id]
+        ).then((error) => {
+          if (error) {
+            setErrorMessage(error)
+            setLoading(false)
+            setStoreUrl(null)
           }
-        )
+        })
       } else if (completedRun.error_message) {
         setErrorMessage(completedRun.error_message)
       } else {
