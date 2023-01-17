@@ -43,6 +43,7 @@ const Display = () => {
           value={projection}
           disabled={loading}
           id='projection'
+          size='xs'
         >
           <option value='naturalEarth1'>naturalEarth1</option>
           <option value='orthographic'>orthographic</option>
@@ -53,7 +54,7 @@ const Display = () => {
 
       <Box>
         <Label value='Basemaps' htmlFor='landBoundaries'>
-          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
+          <Flex sx={{ gap: 2, fontSize: [2, 2, 2, 3] }}>
             Land boundaries
             <Toggle
               id='landBoundaries'
@@ -61,26 +62,29 @@ const Display = () => {
               onClick={() =>
                 setBasemaps({ landBoundaries: !basemaps.landBoundaries })
               }
+              sx={{ mt: '2px' }}
             />
           </Flex>
         </Label>
 
         <Label>
-          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
+          <Flex sx={{ gap: 2, fontSize: [2, 2, 2, 3] }}>
             Land mask
             <Toggle
               value={basemaps.landMask}
               onClick={() => setBasemaps({ landMask: !basemaps.landMask })}
+              sx={{ mt: '2px' }}
             />
           </Flex>
         </Label>
 
         <Label>
-          <Flex sx={{ gap: 2, fontSize: [3, 3, 3, 4] }}>
+          <Flex sx={{ gap: 2, fontSize: [2, 2, 2, 3] }}>
             Ocean mask
             <Toggle
               value={basemaps.oceanMask}
               onClick={() => setBasemaps({ oceanMask: !basemaps.oceanMask })}
+              sx={{ mt: '2px' }}
             />
           </Flex>
         </Label>
@@ -92,6 +96,7 @@ const Display = () => {
           value={colormapName}
           disabled={loading}
           id='colormap'
+          size='xs'
         >
           {colormaps.map(({ name }) => (
             <option key={name} value={name}>
@@ -113,7 +118,7 @@ const Display = () => {
           format={format('.1f')}
           width='100%'
           horizontal
-          bottom
+          sxClim={{ fontSize: [1, 1, 1, 2], mt: ['-1px'], pb: ['2px'] }}
         />
       </Label>
     </Flex>

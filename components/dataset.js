@@ -198,6 +198,7 @@ const Dataset = () => {
               onBlur={() => setFocused(false)}
               value={url}
               sx={{ width: '100%', borderBottomWidth: 0 }}
+              size='xs'
             />
             <IconButton
               sx={{
@@ -245,6 +246,7 @@ const Dataset = () => {
             letterSpacing: 'mono',
             textTransform: 'uppercase',
             fontSize: 1,
+            width: 'fit-content',
           }}
         >
           <Checkbox
@@ -252,7 +254,7 @@ const Dataset = () => {
             checked={forceRerun}
             onChange={() => setForceRerun(!forceRerun)}
           />
-          Force rerun
+          <Box sx={{ ml: '-3px' }}>Force rerun</Box>
         </Box>
       </form>
 
@@ -265,6 +267,7 @@ const Dataset = () => {
                 onChange={(e) => setVariable(e.target.value)}
                 id='variable'
                 sx={sx.select}
+                size='xs'
               >
                 {variables.map((d, i) => (
                   <option key={d} value={d}>
