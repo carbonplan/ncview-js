@@ -51,7 +51,7 @@ const createDisplaySlice = (set, get) => ({
 const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
-  setUrl: async (url, apiMetadata) => {
+  setUrl: async (url, apiMetadata, clim) => {
     set({
       url,
       apiMetadata,
@@ -61,7 +61,7 @@ const useStore = create((set, get) => ({
       variable: {},
       chunks: {},
       data: null,
-      clim: null,
+      clim,
       bounds: null,
     })
 
@@ -79,16 +79,16 @@ const useStore = create((set, get) => ({
     set({ metadata, variables, arrays })
 
     // default to first variable
-    get().setVariable(variables[0])
+    get().setVariable(variables[0], !clim)
   },
-  setVariable: async (name) => {
+  setVariable: async (name, overrideClim) => {
     set({
       variable: { name },
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
       data: null,
-      clim: null,
+      ...(overrideClim ? { clim: null } : {}),
       bounds: null,
     })
 
@@ -98,7 +98,7 @@ const useStore = create((set, get) => ({
     set({
       variable: { name, nullValue, northPole, axes, bounds, lockZoom },
     })
-    get().setChunkKey(chunkKey, true)
+    get().setChunkKey(chunkKey, overrideClim)
   },
   setChunkKey: async (chunkKey, overrideClim = false) => {
     if (get().chunkKey === chunkKey) {
@@ -141,7 +141,7 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, { arrays, variable })
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey, true)
+      setChunkKey(newChunkKey, false) // TODO: reinstate auto-updating clim after demo
     }
   },
 }))

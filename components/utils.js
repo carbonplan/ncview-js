@@ -10,7 +10,7 @@ import { PROJECTIONS, ASPECTS } from './constants'
 
 const getRange = (arr, { nullValue }) => {
   return arr
-    .filter((d) => !Number.isNaN(d) && d !== nullValue)
+    .filter((d) => !Number.isNaN(d) && d !== nullValue && d !== -1000) // TODO: remove after demo
     .reduce(
       ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
       [Infinity, -Infinity]
