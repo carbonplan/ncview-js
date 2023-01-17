@@ -291,15 +291,21 @@ const getActiveChunkKeys = (chunkKey, { axes, arrays, variable }) => {
   const { chunk_shape, shape } = arrays[variable]
 
   return [
+    [-2, -1],
     [-1, -1],
     [0, -1],
     [1, -1],
+    [2, -1],
+    [-2, 0],
     [-1, 0],
     [0, 0],
     [1, 0],
+    [2, 0],
+    [-2, 1],
     [-1, 1],
     [0, 1],
     [1, 1],
+    [2, 1],
   ]
     .map((offset) =>
       getAdjacentChunk(offset, {
