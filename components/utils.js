@@ -96,7 +96,7 @@ const COMPRESSORS = {
 }
 
 const getChunkShapeOverride = (chunkShape) => {
-  if (chunkShape.every((d) => d <= 10)) {
+  if (chunkShape.length === 1 || chunkShape.every((d) => d <= 10)) {
     return null
   }
   return chunkShape.map((d) => Math.min(d, 10))
