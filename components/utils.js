@@ -96,10 +96,10 @@ const COMPRESSORS = {
 }
 
 const getChunkShapeOverride = (chunkShape) => {
-  if (chunkShape.length === 1 || chunkShape.every((d) => d <= 10)) {
+  if (chunkShape.length === 1 || chunkShape.every((d) => d <= 256)) {
     return null
   }
-  return chunkShape.map((d) => Math.min(d, 10))
+  return chunkShape.map((d) => Math.min(d, 256))
 }
 
 export const getArrays = async (url, metadata, variables) => {
