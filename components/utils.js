@@ -95,6 +95,13 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
+const getChunkShapeOverride = (chunkShape) => {
+  if (chunkShape.every((d) => d <= 10)) {
+    return null
+  }
+  return chunkShape.map((d) => Math.min(d, 10))
+}
+
 export const getArrays = async (url, metadata, variables) => {
   // TODO: validate that we can reuse compressors across the store
   const compressorId =
@@ -123,7 +130,13 @@ export const getArrays = async (url, metadata, variables) => {
   const arrs = await Promise.all(
     keys.map((arrayName) => zarr.get_array(store, `/${arrayName}`))
   )
-  keys.forEach((key, i) => (result[key] = arrs[i]))
+  keys.forEach((key, i) => {
+    const arr = arrs[i]
+    const override = getChunkShapeOverride(arr.chunk_shape)
+    if (override) arr.chunk_shape = override
+
+    result[key] = arrs[i]
+  })
 
   return result
 }
@@ -187,7 +200,11 @@ const getData = async (
   const dataArray = arrays[variable]
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
   const data = await dataArray
-    .get_chunk(chunkKeyArray)
+    .get_chunk(chunkKeyArray, {
+      headers: {
+        chunks: dataArray.chunk_shape.join(','),
+      },
+    })
     .then((c) => ndarray(new Float32Array(c.data), c.shape))
 
   const clim = getRange(data.data, { nullValue })

@@ -1,6 +1,6 @@
 import { Input, Select } from '@carbonplan/components'
 import { Box, Checkbox, Flex, IconButton } from 'theme-ui'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
 
 import Label from './label'
@@ -105,7 +105,6 @@ const Dataset = () => {
   const [expanded, setExpanded] = useState(false)
   const [url, setUrl] = useState('')
   const [dataset, setDataset] = useState(null)
-  const [completedRun, setCompletedRun] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
   const [forceRerun, setForceRerun] = useState(false)
@@ -120,7 +119,6 @@ const Dataset = () => {
     async (e) => {
       e.preventDefault()
       setDataset(null)
-      setCompletedRun(null)
       setErrorMessage(null)
       if (!url) {
         setErrorMessage('Please enter a URL')
@@ -132,8 +130,15 @@ const Dataset = () => {
       const d = await createDataset(url, forceRerun)
       if (d.id) {
         setDataset(d)
-        // todo: set interval + number of polls based on dataset size
-        pollForCompletedRun(d.id, setCompletedRun)
+        const u = new URL(d.url)
+        setStoreUrl(
+          'https://756xnpgrdy6om3hgr5wxyxvnzm0ecwcg.lambda-url.us-west-2.on.aws/' +
+            u.hostname +
+            u.pathname,
+          d.cf_axes,
+          CLIMS[d.id]
+        )
+        setLoading(false)
         return
       }
       setLoading(false)
@@ -146,33 +151,6 @@ const Dataset = () => {
     },
     [url, forceRerun]
   )
-
-  useEffect(() => {
-    if (dataset && completedRun) {
-      if (completedRun.outcome === 'success') {
-        setStoreUrl(
-          completedRun.rechunked_dataset,
-          dataset.cf_axes,
-          CLIMS[dataset.id]
-        ).then((error) => {
-          if (error) {
-            setErrorMessage(error)
-            setLoading(false)
-            setStoreUrl(null)
-          }
-        })
-      } else if (completedRun.error_message) {
-        setErrorMessage(completedRun.error_message)
-      } else {
-        setErrorMessage(
-          completedRun.outcome === 'timed_out'
-            ? 'Dataset processing timed out. Please try again with a smaller dataset.'
-            : 'Dataset processing failed'
-        )
-      }
-      setLoading(false)
-    }
-  }, [dataset, completedRun])
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 3 }}>
@@ -222,7 +200,6 @@ const Dataset = () => {
                   e.preventDefault()
                   setUrl('')
                   setDataset(null)
-                  setCompletedRun(null)
                   setErrorMessage(null)
                   setStoreUrl(null)
                 }
