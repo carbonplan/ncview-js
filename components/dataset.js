@@ -97,8 +97,8 @@ const pollForCompletedRun = async (
 }
 
 const CLIMS = {
-  21: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
-  25: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
+  46: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
+  45: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
 }
 
 const Dataset = () => {
