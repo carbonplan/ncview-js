@@ -386,21 +386,26 @@ export const getAllData = async (
 
   const separator = arrays[variable].chunk_separator
   // stitch together chunks in order dictated by chunk keys
-  // TODO: reverse column/row order if required by bounds + coordinates?
   // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
 
   const data = activeChunkKeys
     // sort by columns
     .sort(
       (a, b) =>
-        Number(a.split(separator)[axes.X.index]) -
-        Number(b.split(separator)[axes.X.index])
+        (axes.X.array.data[0] < axes.X.array.data[axes.X.array.data.length - 1]
+          ? 1
+          : -1) *
+        (Number(a.split(separator)[axes.X.index]) -
+          Number(b.split(separator)[axes.X.index]))
     )
     // sort by rows
     .sort(
       (a, b) =>
-        Number(a.split(separator)[axes.Y.index]) -
-        Number(b.split(separator)[axes.Y.index])
+        (axes.Y.array.data[0] < axes.Y.array.data[axes.Y.array.data.length - 1]
+          ? 1
+          : -1) *
+        (Number(a.split(separator)[axes.Y.index]) -
+          Number(b.split(separator)[axes.Y.index]))
     )
     .reduce((rows, chunkKey) => {
       const rowNumber = chunkKey.split(separator)[0]
