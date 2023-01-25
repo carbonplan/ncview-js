@@ -205,11 +205,14 @@ const getData = async (
         chunks: dataArray.chunk_shape.join(','),
       },
     })
-    .then((c) => ndarray(new Float32Array(c.data), c.shape))
+    .then((c) => ndarray(new Float32Array(c.data), dataArray.chunk_shape))
 
   const clim = getRange(data.data, { nullValue })
 
-  let normalizedData = ndarray(new Float32Array(data.data), data.shape)
+  let normalizedData = ndarray(
+    new Float32Array(data.data),
+    dataArray.chunk_shape
+  )
 
   const {
     X: { array: lon },
@@ -221,7 +224,10 @@ const getData = async (
 
   // TODO: handle extra dimensions
   if (latsReversed || lonsReversed) {
-    normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
+    normalizedData = ndarray(
+      new Float32Array(Array(data.size)),
+      dataArray.chunk_shape
+    )
     for (let i = 0; i < data.shape[0]; i++) {
       for (let j = 0; j < data.shape[1]; j++) {
         normalizedData.set(
@@ -408,7 +414,7 @@ export const getAllData = async (
           Number(b.split(separator)[axes.Y.index]))
     )
     .reduce((rows, chunkKey) => {
-      const rowNumber = chunkKey.split(separator)[0]
+      const rowNumber = chunkKey.split(separator)[axes.Y.index]
       const row = rows.find((row) => rowNumber === row[0])
       const filteredData = filterData(chunkKey, activeChunks[chunkKey].data, {
         arrays,
