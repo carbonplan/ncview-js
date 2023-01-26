@@ -131,13 +131,16 @@ const Dataset = () => {
       if (d.id) {
         setDataset(d)
         const u = new URL(d.url)
-        setStoreUrl(
+        const error = await setStoreUrl(
           'https://756xnpgrdy6om3hgr5wxyxvnzm0ecwcg.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
           d.cf_axes,
           CLIMS[d.id]
         )
+        if (error) {
+          setErrorMessage(error)
+        }
         setLoading(false)
         return
       }
