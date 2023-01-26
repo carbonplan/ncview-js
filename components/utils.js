@@ -214,34 +214,23 @@ const getChunkData = async (
     variable,
   })
 
-  let normalizedData = ndarray(
-    new Float32Array(filteredData.data),
-    filteredData.shape
-  )
+  const { X, Y } = axes
+  const [xReversed, yReversed] = [
+    X.array.data[0] < X.array.data[X.array.data.length - 1],
+    Y.array.data[0] < Y.array.data[Y.array.data.length - 1],
+  ]
 
-  const {
-    X: { array: lon },
-    Y: { array: lat },
-  } = axes
-
-  const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
-  const lonsReversed = lon.data[0] > lon.data[lon.data.length - 1]
-
-  // TODO: handle extra dimensions
-  if (latsReversed || lonsReversed) {
-    for (let i = 0; i < filteredData.shape[0]; i++) {
-      for (let j = 0; j < filteredData.shape[1]; j++) {
-        normalizedData.set(
-          i,
-          j,
-          filteredData.get(
-            latsReversed ? filteredData.shape[0] - 1 - i : i,
-            lonsReversed ? filteredData.shape[1] - 1 - j : j
-          )
-        )
-      }
+  const steps = filteredData.shape.map((c, i) => {
+    if (xReversed && i === Y.index) {
+      return -1
+    } else if (yReversed && i === X.index) {
+      return -1
+    } else {
+      return 1
     }
-  }
+  })
+
+  const normalizedData = filteredData.step(...steps)
 
   const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
     axes,
