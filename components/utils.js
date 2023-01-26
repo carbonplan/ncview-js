@@ -216,14 +216,14 @@ const getChunkData = async (
 
   const { X, Y } = axes
   const [xReversed, yReversed] = [
-    X.array.data[0] < X.array.data[X.array.data.length - 1],
-    Y.array.data[0] < Y.array.data[Y.array.data.length - 1],
+    X.array.data[0] > X.array.data[X.array.data.length - 1],
+    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
   ]
 
   const steps = filteredData.shape.map((c, i) => {
-    if (xReversed && i === Y.index) {
+    if (xReversed && i === X.index) {
       return -1
-    } else if (yReversed && i === X.index) {
+    } else if (yReversed && i === Y.index) {
       return -1
     } else {
       return 1
@@ -386,22 +386,22 @@ export const getAllData = async (
 
   const { X, Y } = axes
   const [xReversed, yReversed] = [
-    X.array.data[0] < X.array.data[X.array.data.length - 1],
-    Y.array.data[0] < Y.array.data[Y.array.data.length - 1],
+    X.array.data[0] > X.array.data[X.array.data.length - 1],
+    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
   ]
 
   const data = activeChunkKeys
     // sort by columns
     .sort(
       (a, b) =>
-        (xReversed ? 1 : -1) *
+        (xReversed ? -1 : 1) *
         (Number(a.split(separator)[X.index]) -
           Number(b.split(separator)[X.index]))
     )
     // sort by rows
     .sort(
       (a, b) =>
-        (yReversed ? 1 : -1) *
+        (yReversed ? -1 : 1) *
         (Number(a.split(separator)[Y.index]) -
           Number(b.split(separator)[Y.index]))
     )
