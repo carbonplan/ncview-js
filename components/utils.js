@@ -224,10 +224,7 @@ const getData = async (
 
   // TODO: handle extra dimensions
   if (latsReversed || lonsReversed) {
-    normalizedData = ndarray(
-      new Float32Array(Array(data.size)),
-      dataArray.chunk_shape
-    )
+    normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
     for (let i = 0; i < data.shape[0]; i++) {
       for (let j = 0; j < data.shape[1]; j++) {
         normalizedData.set(
