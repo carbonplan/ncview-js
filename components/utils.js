@@ -450,23 +450,20 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
   const indices = chunkKey.split(separator).map(Number)
   const { chunk_shape, shape } = arrays[variable]
 
-  let truncated = false
   const truncatedShape = indices.map((index, i) => {
     const impliedShape = (index + 1) * chunk_shape[i]
     if (impliedShape > shape[i]) {
-      truncated = true
       return shape[i] % chunk_shape[i]
     } else {
       return chunk_shape[i]
     }
   })
 
-  if (truncated) {
+  if (truncatedShape.some((d, i) => d !== shape[i])) {
     return ndarray(new Float32Array(data.data), truncatedShape)
+  } else {
+    return data
   }
-
-  // See https://github.com/scijs/ndarray/issues/24 for detailed explanation of .hi()
-  return data.hi(...truncatedShape)
 }
 
 export const pointToChunkKey = (
