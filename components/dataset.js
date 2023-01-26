@@ -1,5 +1,5 @@
 import { Input, Select } from '@carbonplan/components'
-import { Box, Checkbox, Flex, IconButton } from 'theme-ui'
+import { Box, Flex, IconButton } from 'theme-ui'
 import { useCallback, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
 
@@ -107,7 +107,6 @@ const Dataset = () => {
   const [dataset, setDataset] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
-  const [forceRerun, setForceRerun] = useState(false)
   const setLoading = useStore((state) => state.setLoading)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
@@ -127,7 +126,7 @@ const Dataset = () => {
 
       setStoreUrl()
       setLoading(true)
-      const d = await createDataset(url, forceRerun)
+      const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
         const u = new URL(d.url)
@@ -152,7 +151,7 @@ const Dataset = () => {
         setErrorMessage('Unable to process dataset')
       }
     },
-    [url, forceRerun]
+    [url]
   )
 
   return (
@@ -221,28 +220,6 @@ const Dataset = () => {
             {errorMessage}
           </Box>
         </Label>
-
-        <Box
-          as='label'
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            color: 'secondary',
-            fontFamily: 'mono',
-            letterSpacing: 'mono',
-            textTransform: 'uppercase',
-            fontSize: 1,
-            width: 'fit-content',
-          }}
-        >
-          <Checkbox
-            sx={sx.checkbox(forceRerun)}
-            checked={forceRerun}
-            onChange={() => setForceRerun(!forceRerun)}
-          />
-          <Box sx={{ ml: '-3px' }}>Force rerun</Box>
-        </Box>
       </form>
 
       {variable && (
