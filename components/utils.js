@@ -193,7 +193,7 @@ export const getVariableInfo = async (
   }
 }
 
-const getData = async (
+const getChunkData = async (
   chunkKey,
   { arrays, variable: { axes, name: variable, nullValue } }
 ) => {
@@ -209,35 +209,28 @@ const getData = async (
 
   const clim = getRange(data.data, { nullValue })
 
-  let normalizedData = ndarray(
-    new Float32Array(data.data),
-    dataArray.chunk_shape
-  )
+  const filteredData = filterData(chunkKey, data, {
+    arrays,
+    variable,
+  })
 
-  const {
-    X: { array: lon },
-    Y: { array: lat },
-  } = axes
+  const { X, Y } = axes
+  const [xReversed, yReversed] = [
+    X.array.data[0] > X.array.data[X.array.data.length - 1],
+    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
+  ]
 
-  const latsReversed = lat.data[0] > lat.data[lat.data.length - 1]
-  const lonsReversed = lon.data[0] > lon.data[lon.data.length - 1]
-
-  // TODO: handle extra dimensions
-  if (latsReversed || lonsReversed) {
-    normalizedData = ndarray(new Float32Array(Array(data.size)), data.shape)
-    for (let i = 0; i < data.shape[0]; i++) {
-      for (let j = 0; j < data.shape[1]; j++) {
-        normalizedData.set(
-          i,
-          j,
-          data.get(
-            latsReversed ? data.shape[0] - 1 - i : i,
-            lonsReversed ? data.shape[1] - 1 - j : j
-          )
-        )
-      }
+  const steps = filteredData.shape.map((c, i) => {
+    if (xReversed && i === X.index) {
+      return -1
+    } else if (yReversed && i === Y.index) {
+      return -1
+    } else {
+      return 1
     }
-  }
+  })
+
+  const normalizedData = filteredData.step(...steps)
 
   const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
     axes,
@@ -355,7 +348,7 @@ export const getAllData = async (
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getData(key, {
+        const chunk = await getChunkData(key, {
           arrays,
           variable: { axes, name: variable, nullValue },
         })
@@ -391,38 +384,37 @@ export const getAllData = async (
   // stitch together chunks in order dictated by chunk keys
   // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
 
+  const { X, Y } = axes
+  const [xReversed, yReversed] = [
+    X.array.data[0] > X.array.data[X.array.data.length - 1],
+    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
+  ]
+
   const data = activeChunkKeys
     // sort by columns
     .sort(
       (a, b) =>
-        (axes.X.array.data[0] < axes.X.array.data[axes.X.array.data.length - 1]
-          ? 1
-          : -1) *
-        (Number(a.split(separator)[axes.X.index]) -
-          Number(b.split(separator)[axes.X.index]))
+        (xReversed ? -1 : 1) *
+        (Number(a.split(separator)[X.index]) -
+          Number(b.split(separator)[X.index]))
     )
     // sort by rows
     .sort(
       (a, b) =>
-        (axes.Y.array.data[0] < axes.Y.array.data[axes.Y.array.data.length - 1]
-          ? 1
-          : -1) *
-        (Number(a.split(separator)[axes.Y.index]) -
-          Number(b.split(separator)[axes.Y.index]))
+        (yReversed ? -1 : 1) *
+        (Number(a.split(separator)[Y.index]) -
+          Number(b.split(separator)[Y.index]))
     )
     .reduce((rows, chunkKey) => {
-      const rowNumber = chunkKey.split(separator)[axes.Y.index]
+      const rowNumber = chunkKey.split(separator)[Y.index]
       const row = rows.find((row) => rowNumber === row[0])
-      const filteredData = filterData(chunkKey, activeChunks[chunkKey].data, {
-        arrays,
-        variable,
-      })
+      const { data } = activeChunks[chunkKey]
       if (row) {
-        row[1] = concatColumns([row[1], filteredData], {
+        row[1] = concatColumns([row[1], data], {
           dtype: 'float32',
         })
       } else {
-        rows.push([rowNumber, filteredData])
+        rows.push([rowNumber, data])
       }
       return rows
     }, [])
@@ -456,8 +448,11 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
     }
   })
 
-  // See https://github.com/scijs/ndarray/issues/24 for detailed explanation of .hi()
-  return data.hi(...truncatedShape)
+  if (truncatedShape.some((d, i) => d !== shape[i])) {
+    return ndarray(new Float32Array(data.data), truncatedShape)
+  } else {
+    return data
+  }
 }
 
 export const pointToChunkKey = (
