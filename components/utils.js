@@ -95,6 +95,13 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
+const getChunkShapeOverride = (chunkShape) => {
+  if (chunkShape.length === 1 || chunkShape.every((d) => d <= 256)) {
+    return null
+  }
+  return chunkShape.map((d) => Math.min(d, 256))
+}
+
 export const getArrays = async (url, metadata, variables) => {
   // TODO: validate that we can reuse compressors across the store
   const compressorId =
@@ -123,7 +130,13 @@ export const getArrays = async (url, metadata, variables) => {
   const arrs = await Promise.all(
     keys.map((arrayName) => zarr.get_array(store, `/${arrayName}`))
   )
-  keys.forEach((key, i) => (result[key] = arrs[i]))
+  keys.forEach((key, i) => {
+    const arr = arrs[i]
+    const override = getChunkShapeOverride(arr.chunk_shape)
+    if (override) arr.chunk_shape = override
+
+    result[key] = arrs[i]
+  })
 
   return result
 }
@@ -187,12 +200,19 @@ const getData = async (
   const dataArray = arrays[variable]
   const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
   const data = await dataArray
-    .get_chunk(chunkKeyArray)
-    .then((c) => ndarray(new Float32Array(c.data), c.shape))
+    .get_chunk(chunkKeyArray, {
+      headers: {
+        chunks: dataArray.chunk_shape.join(','),
+      },
+    })
+    .then((c) => ndarray(new Float32Array(c.data), dataArray.chunk_shape))
 
   const clim = getRange(data.data, { nullValue })
 
-  let normalizedData = ndarray(new Float32Array(data.data), data.shape)
+  let normalizedData = ndarray(
+    new Float32Array(data.data),
+    dataArray.chunk_shape
+  )
 
   const {
     X: { array: lon },
@@ -369,24 +389,29 @@ export const getAllData = async (
 
   const separator = arrays[variable].chunk_separator
   // stitch together chunks in order dictated by chunk keys
-  // TODO: reverse column/row order if required by bounds + coordinates?
   // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
 
   const data = activeChunkKeys
     // sort by columns
     .sort(
       (a, b) =>
-        Number(a.split(separator)[axes.X.index]) -
-        Number(b.split(separator)[axes.X.index])
+        (axes.X.array.data[0] < axes.X.array.data[axes.X.array.data.length - 1]
+          ? 1
+          : -1) *
+        (Number(a.split(separator)[axes.X.index]) -
+          Number(b.split(separator)[axes.X.index]))
     )
     // sort by rows
     .sort(
       (a, b) =>
-        Number(a.split(separator)[axes.Y.index]) -
-        Number(b.split(separator)[axes.Y.index])
+        (axes.Y.array.data[0] < axes.Y.array.data[axes.Y.array.data.length - 1]
+          ? 1
+          : -1) *
+        (Number(a.split(separator)[axes.Y.index]) -
+          Number(b.split(separator)[axes.Y.index]))
     )
     .reduce((rows, chunkKey) => {
-      const rowNumber = chunkKey.split(separator)[0]
+      const rowNumber = chunkKey.split(separator)[axes.Y.index]
       const row = rows.find((row) => rowNumber === row[0])
       const filteredData = filterData(chunkKey, activeChunks[chunkKey].data, {
         arrays,

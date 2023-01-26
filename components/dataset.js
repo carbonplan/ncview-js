@@ -1,6 +1,6 @@
 import { Input, Select } from '@carbonplan/components'
-import { Box, Checkbox, Flex, IconButton } from 'theme-ui'
-import { useCallback, useEffect, useState } from 'react'
+import { Box, Flex, IconButton } from 'theme-ui'
+import { useCallback, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
 
 import Label from './label'
@@ -97,18 +97,16 @@ const pollForCompletedRun = async (
 }
 
 const CLIMS = {
-  21: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
-  25: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
+  46: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
+  45: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
 }
 
 const Dataset = () => {
   const [expanded, setExpanded] = useState(false)
   const [url, setUrl] = useState('')
   const [dataset, setDataset] = useState(null)
-  const [completedRun, setCompletedRun] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
-  const [forceRerun, setForceRerun] = useState(false)
   const setLoading = useStore((state) => state.setLoading)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
@@ -120,7 +118,6 @@ const Dataset = () => {
     async (e) => {
       e.preventDefault()
       setDataset(null)
-      setCompletedRun(null)
       setErrorMessage(null)
       if (!url) {
         setErrorMessage('Please enter a URL')
@@ -129,11 +126,21 @@ const Dataset = () => {
 
       setStoreUrl()
       setLoading(true)
-      const d = await createDataset(url, forceRerun)
+      const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
-        // todo: set interval + number of polls based on dataset size
-        pollForCompletedRun(d.id, setCompletedRun)
+        const u = new URL(d.url)
+        const error = await setStoreUrl(
+          'https://756xnpgrdy6om3hgr5wxyxvnzm0ecwcg.lambda-url.us-west-2.on.aws/' +
+            u.hostname +
+            u.pathname,
+          d.cf_axes,
+          CLIMS[d.id]
+        )
+        if (error) {
+          setErrorMessage(error)
+        }
+        setLoading(false)
         return
       }
       setLoading(false)
@@ -144,35 +151,8 @@ const Dataset = () => {
         setErrorMessage('Unable to process dataset')
       }
     },
-    [url, forceRerun]
+    [url]
   )
-
-  useEffect(() => {
-    if (dataset && completedRun) {
-      if (completedRun.outcome === 'success') {
-        setStoreUrl(
-          completedRun.rechunked_dataset,
-          dataset.cf_axes,
-          CLIMS[dataset.id]
-        ).then((error) => {
-          if (error) {
-            setErrorMessage(error)
-            setLoading(false)
-            setStoreUrl(null)
-          }
-        })
-      } else if (completedRun.error_message) {
-        setErrorMessage(completedRun.error_message)
-      } else {
-        setErrorMessage(
-          completedRun.outcome === 'timed_out'
-            ? 'Dataset processing timed out. Please try again with a smaller dataset.'
-            : 'Dataset processing failed'
-        )
-      }
-      setLoading(false)
-    }
-  }, [dataset, completedRun])
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 3 }}>
@@ -222,7 +202,6 @@ const Dataset = () => {
                   e.preventDefault()
                   setUrl('')
                   setDataset(null)
-                  setCompletedRun(null)
                   setErrorMessage(null)
                   setStoreUrl(null)
                 }
@@ -241,28 +220,6 @@ const Dataset = () => {
             {errorMessage}
           </Box>
         </Label>
-
-        <Box
-          as='label'
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-            color: 'secondary',
-            fontFamily: 'mono',
-            letterSpacing: 'mono',
-            textTransform: 'uppercase',
-            fontSize: 1,
-            width: 'fit-content',
-          }}
-        >
-          <Checkbox
-            sx={sx.checkbox(forceRerun)}
-            checked={forceRerun}
-            onChange={() => setForceRerun(!forceRerun)}
-          />
-          <Box sx={{ ml: '-3px' }}>Force rerun</Box>
-        </Box>
       </form>
 
       {variable && (
