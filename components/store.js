@@ -132,6 +132,7 @@ const useStore = create((set, get) => ({
     })
 
     set({
+      loading: false,
       data,
       bounds,
       chunks: {

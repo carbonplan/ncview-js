@@ -139,8 +139,8 @@ const Dataset = () => {
         )
         if (error) {
           setErrorMessage(error)
+          setLoading(false)
         }
-        setLoading(false)
         return
       }
       setLoading(false)

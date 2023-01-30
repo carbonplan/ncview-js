@@ -133,7 +133,7 @@ const Map = () => {
               )}
             </Minimap>
           )}
-          {(!data || loading) && (
+          {loading && (
             <Box
               sx={{
                 width: '100%',
