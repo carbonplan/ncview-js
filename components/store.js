@@ -79,7 +79,13 @@ const useStore = create((set, get) => ({
     set({ metadata, variables, arrays })
 
     // default to first variable
-    get().setVariable(variables[0], !clim)
+    const initialVariable = variables[0]
+
+    if (Object.keys(apiMetadata[initialVariable] ?? {}).length < 2) {
+      return 'Unable to parse coordinates. Please use CF conventions.'
+    }
+
+    get().setVariable(initialVariable, !clim)
   },
   setVariable: async (name, overrideClim) => {
     set({
