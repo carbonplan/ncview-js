@@ -64,10 +64,12 @@ const toKeyArray = (chunkKey, { variable, arrays }) => {
   return chunkKey.split(arrays[variable].chunk_separator).map(Number)
 }
 
-const getCenterChunk = ({ arrays, variable }) => {
+const getCenterChunk = ({ arrays, variable, selectors }) => {
   const { chunk_shape, shape } = arrays[variable]
 
-  return shape.map((d, i) => Math.floor(d / chunk_shape[i] / 2))
+  return shape.map(
+    (d, i) => selectors[i].chunk ?? Math.floor(d / chunk_shape[i] / 2)
+  )
 }
 
 export const getMetadata = async (url) => {
@@ -80,7 +82,7 @@ export const getMetadata = async (url) => {
     .filter(Boolean)
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
-    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length === 2) // TODO: update to `>= 2` once non-spatial dimensions are supported
+    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
     .filter((d) =>
       metadata.metadata[`${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
         (dim) => metadata.metadata[`${dim}/.zarray`]
@@ -146,7 +148,6 @@ export const getVariableInfo = async (
   { arrays, metadata, apiMetadata }
 ) => {
   const dataArray = arrays[variable]
-  const chunkKeyArray = getCenterChunk({ arrays, variable })
   const zattrs = metadata.metadata[`${variable}/.zattrs`]
   const zarray = metadata.metadata[`${variable}/.zarray`]
 
@@ -178,6 +179,16 @@ export const getVariableInfo = async (
     (index) => zarray.shape[index] / zarray.chunks[index] > 4
   )
 
+  const selectors = dimensions.map((d, i) => {
+    const isSpatialDimension = [axes.X.index, axes.Y.index].includes(i)
+    return {
+      name: d,
+      chunk: isSpatialDimension ? null : 0,
+      index: isSpatialDimension ? null : 0,
+    }
+  })
+  const chunkKeyArray = getCenterChunk({ arrays, variable, selectors })
+
   return {
     chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
     nullValue,
@@ -190,6 +201,7 @@ export const getVariableInfo = async (
     axes,
     bounds,
     lockZoom,
+    selectors,
   }
 }
 
@@ -334,7 +346,7 @@ const getActiveChunkKeys = (chunkKey, { axes, arrays, variable }) => {
 }
 export const getAllData = async (
   chunkKey,
-  { arrays, chunks, variable: { axes, name: variable, nullValue } }
+  { arrays, chunks, variable: { axes, name: variable, nullValue, selectors } }
 ) => {
   const activeChunkKeys = getActiveChunkKeys(chunkKey, {
     axes,
@@ -409,12 +421,13 @@ export const getAllData = async (
       const rowNumber = chunkKey.split(separator)[Y.index]
       const row = rows.find((row) => rowNumber === row[0])
       const { data } = activeChunks[chunkKey]
+      const selectedData = data.pick(...selectors.map((d) => d.index))
       if (row) {
-        row[1] = concatColumns([row[1], data], {
+        row[1] = concatColumns([row[1], selectedData], {
           dtype: 'float32',
         })
       } else {
-        rows.push([rowNumber, data])
+        rows.push([rowNumber, selectedData])
       }
       return rows
     }, [])
@@ -457,15 +470,7 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
 
 export const pointToChunkKey = (
   [lon, lat],
-  {
-    arrays,
-    variable: {
-      name,
-      // nullValue,
-      // northPole,
-      axes,
-    },
-  }
+  { arrays, variable: { name, selectors, axes } }
 ) => {
   const { chunk_shape, shape } = arrays[name]
 
@@ -475,8 +480,7 @@ export const pointToChunkKey = (
     } else if (axes.Y.index === i) {
       return getAxisIndex(lat, { axis: axes.Y, chunk_shape, shape })
     } else {
-      // TODO: properly handle selected non-spatial dimension
-      return 0
+      return selectors[i].chunk
     }
   })
 

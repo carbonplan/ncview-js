@@ -23,6 +23,7 @@ const createDatasetSlice = (set, get) => ({
     axes: {},
     nullValue: null,
     northPole: null,
+    selectors: [],
   },
 
   // cache of chunks
@@ -98,11 +99,26 @@ const useStore = create((set, get) => ({
       bounds: null,
     })
 
-    const { chunkKey, nullValue, northPole, axes, bounds, lockZoom } =
-      await getVariableInfo(name, get())
+    const {
+      chunkKey,
+      nullValue,
+      northPole,
+      axes,
+      bounds,
+      lockZoom,
+      selectors,
+    } = await getVariableInfo(name, get())
 
     set({
-      variable: { name, nullValue, northPole, axes, bounds, lockZoom },
+      variable: {
+        name,
+        nullValue,
+        northPole,
+        axes,
+        bounds,
+        lockZoom,
+        selectors,
+      },
     })
     get().setChunkKey(chunkKey, overrideClim)
   },
@@ -145,7 +161,10 @@ const useStore = create((set, get) => ({
   resetCenterChunk: (centerPoint) => {
     const { variable, arrays, setChunkKey } = get()
 
-    const newChunkKey = pointToChunkKey(centerPoint, { arrays, variable })
+    const newChunkKey = pointToChunkKey(centerPoint, {
+      arrays,
+      variable,
+    })
 
     if (newChunkKey) {
       setChunkKey(newChunkKey, false) // TODO: reinstate auto-updating clim after demo
