@@ -17,6 +17,7 @@ const DATASETS = [
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
   's3://carbonplan-data-viewer/demo/MURSST.zarr',
   's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
+  's3://mur-sst/zarr',
 ]
 
 const sx = {
