@@ -75,7 +75,7 @@ const useStore = create((set, get) => ({
     if (variables.length === 0) {
       return 'No viewable variables found. Please provide a dataset with 2D data arrays.'
     }
-    const arrays = await getArrays(url, metadata, variables)
+    const arrays = await getArrays(url, metadata, variables, apiMetadata)
 
     set({ metadata, variables, arrays })
 

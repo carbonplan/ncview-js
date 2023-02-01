@@ -97,14 +97,14 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
-const getChunkShapeOverride = (chunkShape) => {
-  if (chunkShape.length === 1 || chunkShape.every((d) => d <= 256)) {
+const getChunkShapeOverride = (chunkShape, limits) => {
+  if (chunkShape.length === 1 || chunkShape.every((d, i) => d <= limits[i])) {
     return null
   }
-  return chunkShape.map((d) => Math.min(d, 256))
+  return chunkShape.map((d, i) => Math.min(d, limits[i]))
 }
 
-export const getArrays = async (url, metadata, variables) => {
+export const getArrays = async (url, metadata, variables, apiMetadata) => {
   // TODO: validate that we can reuse compressors across the store
   const compressorId =
     metadata.metadata[`${variables[0]}/.zarray`].compressor.id
@@ -134,7 +134,11 @@ export const getArrays = async (url, metadata, variables) => {
   )
   keys.forEach((key, i) => {
     const arr = arrs[i]
-    const override = getChunkShapeOverride(arr.chunk_shape)
+    const dimensions = metadata.metadata[`${key}/.zattrs`]['_ARRAY_DIMENSIONS']
+    const limits = dimensions.map((d, i) =>
+      [apiMetadata[key].X, apiMetadata[key].Y].includes(d) ? 256 : 30
+    )
+    const override = getChunkShapeOverride(arr.chunk_shape, limits)
     if (override) arr.chunk_shape = override
 
     result[key] = arrs[i]
@@ -156,7 +160,9 @@ export const getVariableInfo = async (
     : null
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
   const coordinates = await Promise.all(
-    dimensions.map((coord) => arrays[coord]).map((arr) => get(arr))
+    dimensions
+      .map((coord) => arrays[coord])
+      .map((arr) => arr.get_chunk([0], { chunks: arr.shape.join(',') }))
   )
 
   const nullValue = getNullValue(dataArray)
