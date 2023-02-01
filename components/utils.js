@@ -161,7 +161,9 @@ export const getVariableInfo = async (
   const coordinates = await Promise.all(
     dimensions
       .map((coord) => arrays[coord])
-      .map((arr) => arr.get_chunk([0], { chunks: arr.shape.join(',') }))
+      .map((arr) =>
+        arr.get_chunk([0], { headers: { chunks: arr.shape.join(',') } })
+      )
   )
 
   const nullValue = getNullValue(dataArray)
