@@ -1,6 +1,5 @@
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
-import { get } from 'zarrita/ndarray'
 import ndarray from 'ndarray'
 import concatColumns from 'ndarray-concat-cols'
 import concatRows from 'ndarray-concat-rows'
