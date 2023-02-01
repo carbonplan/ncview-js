@@ -4,7 +4,6 @@ import ndarray from 'ndarray'
 import concatColumns from 'ndarray-concat-cols'
 import concatRows from 'ndarray-concat-rows'
 
-import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { PROJECTIONS, ASPECTS } from './constants'
 
 const getRange = (arr, { nullValue }) => {
@@ -89,11 +88,6 @@ export const getMetadata = async (url) => {
   return { metadata, variables }
 }
 
-const COMPRESSORS = {
-  zlib: Zlib,
-  blosc: Blosc,
-}
-
 const getChunkShapeOverride = (chunkShape, limits) => {
   if (chunkShape.length === 1 || chunkShape.every((d, i) => d <= limits[i])) {
     return null
@@ -102,15 +96,6 @@ const getChunkShapeOverride = (chunkShape, limits) => {
 }
 
 export const getArrays = async (url, metadata, variables, apiMetadata) => {
-  // TODO: validate that we can reuse compressors across the store
-  const compressorId =
-    metadata.metadata[`${variables[0]}/.zarray`].compressor.id
-  const compressor = COMPRESSORS[compressorId]
-  if (!compressor) {
-    throw new Error(`no compressor found for compressor.id=${compressorId}`)
-  }
-
-  zarr.registry.set(compressor.codecId, () => compressor)
   const store = new FetchStore(url)
 
   const coords = new Set(
