@@ -48,24 +48,22 @@ const getNullValue = (dataArray) => {
   return nullValue
 }
 
-const toKeyString = (chunkKeyArray, { variable, arrays }) => {
+const toKeyString = (chunkKeyArray, { chunk_separator }) => {
   if (chunkKeyArray.length === 0) {
     return ''
   }
 
-  return chunkKeyArray.join(arrays[variable].chunk_separator)
+  return chunkKeyArray.join(chunk_separator)
 }
-const toKeyArray = (chunkKey, { variable, arrays }) => {
+const toKeyArray = (chunkKey, { chunk_separator }) => {
   if (chunkKey.length === 0) {
     return []
   }
 
-  return chunkKey.split(arrays[variable].chunk_separator).map(Number)
+  return chunkKey.split(chunk_separator).map(Number)
 }
 
-const getCenterChunk = ({ arrays, variable, selectors }) => {
-  const { chunk_shape, shape } = arrays[variable]
-
+const getCenterChunk = ({ chunk_shape, shape, selectors }) => {
   return shape.map(
     (d, i) => selectors[i].chunk ?? Math.floor(d / chunk_shape[i] / 2)
   )
@@ -147,12 +145,12 @@ export const getArrays = async (url, metadata, variables, apiMetadata) => {
 }
 
 export const getVariableInfo = async (
-  variable,
+  name,
   { arrays, metadata, apiMetadata }
 ) => {
-  const dataArray = arrays[variable]
-  const zattrs = metadata.metadata[`${variable}/.zattrs`]
-  const zarray = metadata.metadata[`${variable}/.zarray`]
+  const dataArray = arrays[name]
+  const zattrs = metadata.metadata[`${name}/.zattrs`]
+  const zarray = metadata.metadata[`${name}/.zarray`]
 
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
@@ -167,9 +165,10 @@ export const getVariableInfo = async (
   )
 
   const nullValue = getNullValue(dataArray)
+  const { chunk_separator, chunk_shape, shape } = dataArray
 
-  const axes = Object.keys(apiMetadata[variable]).reduce((accum, key) => {
-    const index = dimensions.indexOf(apiMetadata[variable][key])
+  const axes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
+    const index = dimensions.indexOf(apiMetadata[name][key])
 
     return {
       ...accum,
@@ -194,11 +193,10 @@ export const getVariableInfo = async (
       index: isSpatialDimension ? null : 0,
     }
   })
-  const chunkKeyArray = getCenterChunk({ arrays, variable, selectors })
+  const chunkKeyArray = getCenterChunk({ chunk_shape, shape, selectors })
 
   return {
-    chunkKey: toKeyString(chunkKeyArray, { arrays, variable }),
-    nullValue,
+    chunkKey: toKeyString(chunkKeyArray, { chunk_separator }),
     northPole: gridMapping
       ? [
           gridMapping.grid_north_pole_longitude,
@@ -209,28 +207,33 @@ export const getVariableInfo = async (
     bounds,
     lockZoom,
     selectors,
+    nullValue,
+    chunk_separator,
+    chunk_shape,
+    shape,
+    array: dataArray,
   }
 }
 
 const getChunkData = async (
   chunkKey,
-  { arrays, variable: { axes, name: variable, nullValue } }
+  { array, axes, nullValue, chunk_separator, chunk_shape, shape }
 ) => {
-  const dataArray = arrays[variable]
-  const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
-  const data = await dataArray
+  const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
+  const data = await array
     .get_chunk(chunkKeyArray, {
       headers: {
-        chunks: dataArray.chunk_shape.join(','),
+        chunks: chunk_shape.join(','),
       },
     })
-    .then((c) => ndarray(new Float32Array(c.data), dataArray.chunk_shape))
+    .then((c) => ndarray(new Float32Array(c.data), chunk_shape))
 
   const clim = getRange(data.data, { nullValue })
 
   const filteredData = filterData(chunkKey, data, {
-    arrays,
-    variable,
+    chunk_separator,
+    chunk_shape,
+    shape,
   })
 
   const { X, Y } = axes
@@ -253,7 +256,7 @@ const getChunkData = async (
 
   const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
     axes,
-    chunk_shape: dataArray.chunk_shape,
+    chunk_shape: chunk_shape,
   })
   const bounds = {
     lat: latRange,
@@ -287,10 +290,8 @@ export const getMapProps = (bounds, projection) => {
   return { scale, translate, projection: PROJECTIONS[projection] }
 }
 
-export const getAdjacentChunk = (
-  offset,
-  { arrays, axes, variable, chunkKey, chunk, shape }
-) => {
+export const getAdjacentChunk = (offset, chunkKey, variable) => {
+  const { axes, chunk_shape, shape, chunk_separator } = variable
   const [horizontalOffset, verticalOffset] = offset
 
   const coordinateOffset = shape.map((d, i) => {
@@ -303,25 +304,23 @@ export const getAdjacentChunk = (
     }
   })
 
-  const chunkKeyArray = toKeyArray(chunkKey, { arrays, variable })
+  const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
   const newChunkKeyArray = chunkKeyArray.map((d, i) => d + coordinateOffset[i])
 
   // if new chunk key corresponds to array indices outside of the range represented
   // by `shape`, return null
   if (
     newChunkKeyArray.some(
-      (d, i) => d * chunk[i] < 0 || d * chunk[i] >= shape[i]
+      (d, i) => d * chunk_shape[i] < 0 || d * chunk_shape[i] >= shape[i]
     )
   ) {
     return null
   } else {
-    return toKeyString(newChunkKeyArray, { arrays, variable })
+    return toKeyString(newChunkKeyArray, { chunk_separator })
   }
 }
 
-const getActiveChunkKeys = (chunkKey, { axes, arrays, variable }) => {
-  const { chunk_shape, shape } = arrays[variable]
-
+const getActiveChunkKeys = (chunkKey, variable) => {
   return [
     [-2, -1],
     [-1, -1],
@@ -339,27 +338,11 @@ const getActiveChunkKeys = (chunkKey, { axes, arrays, variable }) => {
     [1, 1],
     [2, 1],
   ]
-    .map((offset) =>
-      getAdjacentChunk(offset, {
-        axes,
-        arrays,
-        variable,
-        chunkKey,
-        chunk: chunk_shape,
-        shape,
-      })
-    )
+    .map((offset) => getAdjacentChunk(offset, chunkKey, variable))
     .filter(Boolean)
 }
-export const getAllData = async (
-  chunkKey,
-  { arrays, chunks, variable: { axes, name: variable, nullValue, selectors } }
-) => {
-  const activeChunkKeys = getActiveChunkKeys(chunkKey, {
-    axes,
-    arrays,
-    variable,
-  })
+export const getAllData = async (chunkKey, { chunks, variable }) => {
+  const activeChunkKeys = getActiveChunkKeys(chunkKey, variable)
   const activeChunks = {}
   const allChunks = await Promise.all(
     activeChunkKeys.map(async (key) => {
@@ -367,10 +350,7 @@ export const getAllData = async (
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getChunkData(key, {
-          arrays,
-          variable: { axes, name: variable, nullValue },
-        })
+        const chunk = await getChunkData(key, variable)
         activeChunks[key] = chunk
         return chunk
       }
@@ -399,7 +379,7 @@ export const getAllData = async (
     [Infinity, -Infinity]
   )
 
-  const separator = arrays[variable].chunk_separator
+  const { chunk_separator: separator, axes, selectors } = variable
   // stitch together chunks in order dictated by chunk keys
   // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
 
@@ -454,10 +434,12 @@ export const getAllData = async (
   }
 }
 
-const filterData = (chunkKey, data, { arrays, variable }) => {
-  const separator = arrays[variable].chunk_separator
-  const indices = chunkKey.split(separator).map(Number)
-  const { chunk_shape, shape } = arrays[variable]
+const filterData = (
+  chunkKey,
+  data,
+  { chunk_separator, chunk_shape, shape }
+) => {
+  const indices = chunkKey.split(chunk_separator).map(Number)
 
   const truncatedShape = indices.map((index, i) => {
     const impliedShape = (index + 1) * chunk_shape[i]
@@ -477,10 +459,8 @@ const filterData = (chunkKey, data, { arrays, variable }) => {
 
 export const pointToChunkKey = (
   [lon, lat],
-  { arrays, variable: { name, selectors, axes } }
+  { selectors, axes, chunk_separator, chunk_shape, shape }
 ) => {
-  const { chunk_shape, shape } = arrays[name]
-
   const chunkKey = shape.map((d, i) => {
     if (axes.X.index === i) {
       return getAxisIndex(lon, { axis: axes.X, chunk_shape, shape })
@@ -492,7 +472,7 @@ export const pointToChunkKey = (
   })
 
   if (chunkKey.every((d) => d >= 0)) {
-    return toKeyString(chunkKey, { variable: name, arrays })
+    return toKeyString(chunkKey, { chunk_separator })
   }
 }
 

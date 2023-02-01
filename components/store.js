@@ -90,7 +90,7 @@ const useStore = create((set, get) => ({
   },
   setVariable: async (name, overrideClim) => {
     set({
-      variable: { name },
+      variable: { name, selectors: [] },
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
@@ -107,6 +107,10 @@ const useStore = create((set, get) => ({
       bounds,
       lockZoom,
       selectors,
+      chunk_separator,
+      chunk_shape,
+      shape,
+      array,
     } = await getVariableInfo(name, get())
 
     set({
@@ -118,6 +122,10 @@ const useStore = create((set, get) => ({
         bounds,
         lockZoom,
         selectors,
+        chunk_separator,
+        chunk_shape,
+        shape,
+        array,
       },
     })
     get().setChunkKey(chunkKey, overrideClim)
@@ -161,10 +169,7 @@ const useStore = create((set, get) => ({
   resetCenterChunk: (centerPoint) => {
     const { variable, arrays, setChunkKey } = get()
 
-    const newChunkKey = pointToChunkKey(centerPoint, {
-      arrays,
-      variable,
-    })
+    const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
       setChunkKey(newChunkKey, false) // TODO: reinstate auto-updating clim after demo
