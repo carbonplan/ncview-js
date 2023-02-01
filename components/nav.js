@@ -1,9 +1,9 @@
-import { Graticule, Minimap, Path, Sphere } from '@carbonplan/minimaps'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { Minimap, Path } from '@carbonplan/minimaps'
+import { useCallback, useEffect, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { geoPath } from 'd3-geo'
 
-import { PROJECTIONS, COLORMAP_COLORS } from './constants'
+import { PROJECTIONS } from './constants'
 import useStore from './store'
 import { getMapProps } from './utils'
 import MinimapListener from './minimap-listener'
@@ -89,8 +89,8 @@ const Nav = ({ map, setMapProps, sx }) => {
             d={path}
             sx={{
               vectorEffects: 'non-scaling-stroke',
-              stroke: 'white',
-              fill: 'white',
+              stroke: 'primary',
+              fill: 'primary',
               strokeWidth: 4,
               pointerEvents: 'none',
             }}
