@@ -16,6 +16,7 @@ const createDatasetSlice = (set, get) => ({
   apiMetadata: null,
   variables: [],
   arrays: {},
+  headers: null,
 
   // variable
   variable: {
@@ -75,9 +76,14 @@ const useStore = create((set, get) => ({
     if (variables.length === 0) {
       return 'No viewable variables found. Please provide a dataset with 2D data arrays.'
     }
-    const arrays = await getArrays(url, metadata, variables, apiMetadata)
+    const { arrays, headers } = await getArrays(
+      url,
+      metadata,
+      variables,
+      apiMetadata
+    )
 
-    set({ metadata, variables, arrays })
+    set({ metadata, variables, arrays, headers })
 
     // default to first variable
     const initialVariable = variables[0]
@@ -135,7 +141,7 @@ const useStore = create((set, get) => ({
       return
     }
 
-    const { variable, arrays, chunks } = get()
+    const { variable, headers, chunks } = get()
 
     set({
       chunkKey,
@@ -151,8 +157,8 @@ const useStore = create((set, get) => ({
       chunks: newChunks,
     } = await getAllData(chunkKey, {
       chunks,
-      arrays,
       variable,
+      headers,
     })
 
     set({

@@ -95,7 +95,56 @@ const getChunkShapeOverride = (chunkShape, limits) => {
   return chunkShape.map((d, i) => Math.min(d, limits[i]))
 }
 
+const getChunksOverrides = (metadata, variables, apiMetadata) => {
+  const coordinates = new Set(
+    variables.flatMap(
+      (variable) =>
+        metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
+    )
+  )
+
+  const result = {}
+
+  coordinates.forEach((coordinate) => {
+    const { shape, chunks } = metadata.metadata[`${coordinate}/.zarray`]
+
+    if (shape.some((d, i) => d !== chunks[i])) {
+      result[coordinate] = shape
+    }
+  })
+
+  variables.forEach((variable) => {
+    const nativeChunks = metadata.metadata[`${variable}/.zarray`].chunks
+    const dimensions =
+      metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
+    const limits = dimensions.map((d, i) =>
+      [apiMetadata[variable].X, apiMetadata[variable].Y].includes(d) ? 256 : 30
+    )
+    const chunks = getChunkShapeOverride(nativeChunks, limits)
+
+    if (chunks) {
+      result[variable] = chunks
+    }
+  })
+
+  return result
+}
+
+const getChunksHeader = (metadata, variables, apiMetadata) => {
+  const chunks = getChunksOverrides(metadata, variables, apiMetadata)
+  return new Headers(
+    Object.keys(chunks).map((key) => [
+      'chunks',
+      `${key}=${chunks[key].join(',')}`,
+    ])
+  )
+}
+
 export const getArrays = async (url, metadata, variables, apiMetadata) => {
+  // TODO: instantiate store with headers and clean up manual overrides
+  const headers = getChunksHeader(metadata, variables, apiMetadata)
+  const chunksOverrides = getChunksOverrides(metadata, variables, apiMetadata)
+
   const store = new FetchStore(url)
 
   const coords = new Set(
@@ -116,22 +165,18 @@ export const getArrays = async (url, metadata, variables, apiMetadata) => {
   )
   keys.forEach((key, i) => {
     const arr = arrs[i]
-    const dimensions = metadata.metadata[`${key}/.zattrs`]['_ARRAY_DIMENSIONS']
-    const limits = dimensions.map((d, i) =>
-      [apiMetadata[key].X, apiMetadata[key].Y].includes(d) ? 256 : 30
-    )
-    const override = getChunkShapeOverride(arr.chunk_shape, limits)
-    if (override) arr.chunk_shape = override
+    // TODO: remove if store can be instantiated with headers
+    if (chunksOverrides[key]) arr.chunk_shape = chunksOverrides[key]
 
-    result[key] = arrs[i]
+    result[key] = arr
   })
 
-  return result
+  return { arrays: result, headers }
 }
 
 export const getVariableInfo = async (
   name,
-  { arrays, metadata, apiMetadata }
+  { arrays, headers, metadata, apiMetadata }
 ) => {
   const dataArray = arrays[name]
   const zattrs = metadata.metadata[`${name}/.zattrs`]
@@ -144,9 +189,7 @@ export const getVariableInfo = async (
   const coordinates = await Promise.all(
     dimensions
       .map((coord) => arrays[coord])
-      .map((arr) =>
-        arr.get_chunk([0], { headers: { chunks: arr.shape.join(',') } })
-      )
+      .map((arr, i) => arr.get_chunk([0], { headers }))
   )
 
   const nullValue = getNullValue(dataArray)
@@ -202,15 +245,14 @@ export const getVariableInfo = async (
 
 const getChunkData = async (
   chunkKey,
-  { array, axes, nullValue, chunk_separator, chunk_shape, shape }
+  {
+    variable: { array, axes, nullValue, chunk_separator, chunk_shape, shape },
+    headers,
+  }
 ) => {
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
   const data = await array
-    .get_chunk(chunkKeyArray, {
-      headers: {
-        chunks: chunk_shape.join(','),
-      },
-    })
+    .get_chunk(chunkKeyArray, { headers })
     .then((c) => ndarray(new Float32Array(c.data), chunk_shape))
 
   const clim = getRange(data.data, { nullValue })
@@ -326,7 +368,7 @@ const getActiveChunkKeys = (chunkKey, variable) => {
     .map((offset) => getAdjacentChunk(offset, chunkKey, variable))
     .filter(Boolean)
 }
-export const getAllData = async (chunkKey, { chunks, variable }) => {
+export const getAllData = async (chunkKey, { chunks, variable, headers }) => {
   const activeChunkKeys = getActiveChunkKeys(chunkKey, variable)
   const activeChunks = {}
   const allChunks = await Promise.all(
@@ -335,7 +377,7 @@ export const getAllData = async (chunkKey, { chunks, variable }) => {
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getChunkData(key, variable)
+        const chunk = await getChunkData(key, { variable, headers })
         activeChunks[key] = chunk
         return chunk
       }
