@@ -9,6 +9,7 @@ import {
 
 const createDatasetSlice = (set, get) => ({
   loading: false,
+  error: null,
 
   // dataset
   url: null,
@@ -32,8 +33,6 @@ const createDatasetSlice = (set, get) => ({
 
   // active chunk
   chunkKey: null,
-
-  setLoading: (loading) => set({ loading }),
 })
 
 const createDisplaySlice = (set, get) => ({
@@ -72,9 +71,16 @@ const useStore = create((set, get) => ({
       return
     }
 
+    set({ loading: true })
+
     const { metadata, variables } = await getMetadata(url)
     if (variables.length === 0) {
-      return 'No viewable variables found. Please provide a dataset with 2D data arrays.'
+      set({
+        loading: false,
+        error:
+          'No viewable variables found. Please provide a dataset with 2D data arrays.',
+      })
+      return
     }
     const { arrays, headers } = await getArrays(
       url,
@@ -89,7 +95,11 @@ const useStore = create((set, get) => ({
     const initialVariable = variables[0]
 
     if (Object.keys(apiMetadata[initialVariable] ?? {}).length < 2) {
-      return 'Unable to parse coordinates. Please use CF conventions.'
+      set({
+        loading: false,
+        error: 'Unable to parse coordinates. Please use CF conventions.',
+      })
+      return
     }
 
     get().setVariable(initialVariable, !clim)
@@ -97,6 +107,7 @@ const useStore = create((set, get) => ({
   setVariable: async (name, overrideClim) => {
     set({
       variable: { name, selectors: [] },
+      loading: true,
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
@@ -145,32 +156,36 @@ const useStore = create((set, get) => ({
 
     set({
       chunkKey,
+      loading: true,
       // Null out chunk-specific fields
       data: null,
       bounds: null,
     })
 
-    const {
-      data,
-      bounds,
-      clim,
-      chunks: newChunks,
-    } = await getAllData(chunkKey, {
-      chunks,
-      variable,
-      headers,
-    })
-
-    set({
-      loading: false,
-      data,
-      bounds,
-      chunks: {
-        ...chunks,
-        ...newChunks,
-      },
-      ...(overrideClim ? { clim } : {}),
-    })
+    try {
+      const {
+        data,
+        bounds,
+        clim,
+        chunks: newChunks,
+      } = await getAllData(chunkKey, {
+        chunks,
+        variable,
+        headers,
+      })
+      set({
+        loading: false,
+        data,
+        bounds,
+        chunks: {
+          ...chunks,
+          ...newChunks,
+        },
+        ...(overrideClim ? { clim } : {}),
+      })
+    } catch (e) {
+      set({ loading: false, error: 'Error loading data.' })
+    }
   },
   resetCenterChunk: (centerPoint) => {
     const { variable, arrays, setChunkKey } = get()

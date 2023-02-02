@@ -108,7 +108,7 @@ const Dataset = () => {
   const [dataset, setDataset] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
-  const setLoading = useStore((state) => state.setLoading)
+  const storeError = useStore((state) => state.error)
   const setStoreUrl = useStore((state) => state.setUrl)
   const variable = useStore((state) => state.variable.name)
   const variables = useStore((state) => state.variables)
@@ -126,27 +126,18 @@ const Dataset = () => {
       }
 
       setStoreUrl()
-      setLoading(true)
       const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
         const u = new URL(d.url)
-        const error = await setStoreUrl(
+        setStoreUrl(
           'https://756xnpgrdy6om3hgr5wxyxvnzm0ecwcg.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
           d.cf_axes,
           CLIMS[d.id]
         )
-        if (error) {
-          setErrorMessage(error)
-          setLoading(false)
-        }
-        return
-      }
-      setLoading(false)
-
-      if (d.detail?.length > 0) {
+      } else if (d.detail?.length > 0) {
         setErrorMessage(d.detail[0].msg)
       } else {
         setErrorMessage('Unable to process dataset')
@@ -218,7 +209,7 @@ const Dataset = () => {
               color: 'red',
             }}
           >
-            {errorMessage}
+            {storeError ?? errorMessage}
           </Box>
         </Label>
       </form>
