@@ -5,6 +5,7 @@ import Display from '../components/display'
 
 import Header from '../components/header'
 import Map from '../components/map'
+import Selectors from '../components/selectors'
 
 const Index = () => {
   return (
@@ -38,7 +39,10 @@ const Index = () => {
               }}
             >
               <Divider sx={{ mt: '56px', mx: [-4, -5, -5, -6], mb: 4 }} />
-              <Dataset />
+              <Flex sx={{ flexDirection: 'column', gap: 3 }}>
+                <Dataset />
+                <Selectors />
+              </Flex>
               <Divider sx={{ mx: [-4, -5, -5, -6], my: 4 }} />
               <Display />
               <Divider sx={{ mx: [-4, -5, -5, -6], my: 5 }} />

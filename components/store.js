@@ -5,6 +5,8 @@ import {
   getMetadata,
   getVariableInfo,
   pointToChunkKey,
+  toKeyArray,
+  toKeyString,
 } from './utils'
 
 const createDatasetSlice = (set, get) => ({
@@ -148,10 +150,6 @@ const useStore = create((set, get) => ({
     get().setChunkKey(chunkKey, overrideClim)
   },
   setChunkKey: async (chunkKey, overrideClim = false) => {
-    if (get().chunkKey === chunkKey) {
-      return
-    }
-
     const { variable, headers, chunks } = get()
 
     set({
@@ -188,12 +186,45 @@ const useStore = create((set, get) => ({
     }
   },
   resetCenterChunk: (centerPoint) => {
-    const { variable, arrays, setChunkKey } = get()
+    const { variable, setChunkKey } = get()
 
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
       setChunkKey(newChunkKey, false) // TODO: reinstate auto-updating clim after demo
+    }
+  },
+  setSelector: (index, values) => {
+    const { variable, chunkKey, setChunkKey } = get()
+
+    const updatedSelector = variable.selectors[index]
+    let updatedChunkKey = chunkKey
+    let shouldUpdate = false
+
+    if (
+      typeof values.index === 'number' &&
+      updatedSelector.index !== values.index
+    ) {
+      shouldUpdate = true
+      updatedSelector.index = values.index
+    }
+
+    if (
+      typeof values.chunk === 'number' &&
+      updatedSelector.chunk !== values.chunk
+    ) {
+      shouldUpdate = true
+      updatedSelector.chunk = values.chunk
+      const chunkArray = toKeyArray(chunkKey, variable)
+      chunkArray[index] = values.chunk
+      updatedChunkKey = toKeyString(chunkArray, variable)
+    }
+
+    variable.selectors[index] = { ...variable.selectors[index], ...values }
+
+    if (shouldUpdate) {
+      set({ variable: { ...variable, selectors: variable.selectors } })
+      setChunkKey(updatedChunkKey)
     }
   },
 }))
