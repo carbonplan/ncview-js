@@ -1,9 +1,10 @@
 import { Slider } from '@carbonplan/components'
-import { Box, Flex, IconButton } from 'theme-ui'
+import { Box, Flex } from 'theme-ui'
 import { useCallback, useState } from 'react'
 
-import Label from './label'
 import useStore from './store'
+import Label from './label'
+import IconButton from './icons/icon-button'
 import Next from './icons/next'
 import Back from './icons/back'
 import Play from './icons/play'
@@ -48,13 +49,7 @@ const Selector = ({ index }) => {
               aria-label={`Play across ${selector.name} dimension`}
               onClick={() => setPlaying(true)}
               disabled={playing}
-              sx={{
-                color: !playing ? 'primary' : 'secondary',
-                padding: 0,
-                cursor: 'pointer',
-                width: 14,
-                height: 16,
-              }}
+              sx={{ width: 14, height: 16 }}
             >
               <Play />
             </IconButton>
@@ -63,13 +58,7 @@ const Selector = ({ index }) => {
               aria-label={`Pause across ${selector.name} dimension`}
               onClick={() => setPlaying(false)}
               disabled={!playing}
-              sx={{
-                color: playing ? 'primary' : 'secondary',
-                padding: 0,
-                cursor: 'pointer',
-                width: 14,
-                height: 16,
-              }}
+              sx={{ width: 14, height: 16 }}
             >
               <Pause />
             </IconButton>
@@ -98,13 +87,7 @@ const Selector = ({ index }) => {
               setSelector(index, { chunk: selector.chunk - 1 })
             }}
             disabled={selector.chunk === 0}
-            sx={{
-              color: selector.chunk > 0 ? 'primary' : 'secondary',
-              padding: 0,
-              cursor: 'pointer',
-              width: 16,
-              height: 16,
-            }}
+            sx={{ width: 16, height: 16 }}
           >
             <Back />
           </IconButton>
@@ -115,13 +98,7 @@ const Selector = ({ index }) => {
               setSelector(index, { chunk: selector.chunk + 1 })
             }}
             disabled={selector.chunk === finalChunk}
-            sx={{
-              color: selector.chunk < finalChunk ? 'primary' : 'secondary',
-              padding: 0,
-              cursor: 'pointer',
-              width: 16,
-              height: 16,
-            }}
+            sx={{ width: 16, height: 16 }}
           >
             <Next />
           </IconButton>
