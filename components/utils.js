@@ -47,14 +47,14 @@ const getNullValue = (dataArray) => {
   return nullValue
 }
 
-const toKeyString = (chunkKeyArray, { chunk_separator }) => {
+export const toKeyString = (chunkKeyArray, { chunk_separator }) => {
   if (chunkKeyArray.length === 0) {
     return ''
   }
 
   return chunkKeyArray.join(chunk_separator)
 }
-const toKeyArray = (chunkKey, { chunk_separator }) => {
+export const toKeyArray = (chunkKey, { chunk_separator }) => {
   if (chunkKey.length === 0) {
     return []
   }
