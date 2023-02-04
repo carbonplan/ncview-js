@@ -25,8 +25,11 @@ const Selector = ({ index }) => {
   )
   const setSelector = useStore((state) => state.setSelector)
   const chunk_shape = useStore((state) => state.variable.chunk_shape)
-  const numChunks = useStore((state) =>
-    Math.ceil(state.variable.shape[index] / state.variable.chunk_shape[index])
+  const finalChunk = useStore(
+    (state) =>
+      Math.ceil(
+        state.variable.shape[index] / state.variable.chunk_shape[index]
+      ) - 1
   )
 
   const setSelectorIndex = useCallback(
@@ -111,9 +114,9 @@ const Selector = ({ index }) => {
             onClick={() => {
               setSelector(index, { chunk: selector.chunk + 1 })
             }}
-            disabled={selector.chunk === numChunks - 1}
+            disabled={selector.chunk === finalChunk}
             sx={{
-              color: selector.chunk < numChunks - 1 ? 'primary' : 'secondary',
+              color: selector.chunk < finalChunk ? 'primary' : 'secondary',
               padding: 0,
               cursor: 'pointer',
               width: 16,
@@ -128,7 +131,7 @@ const Selector = ({ index }) => {
             <Box as='span' sx={{ color: 'primary' }}>
               {selector.chunk}
             </Box>{' '}
-            / {numChunks}
+            / {finalChunk}
           </Box>
         </Flex>
       </Flex>
