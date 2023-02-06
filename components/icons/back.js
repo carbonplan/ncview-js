@@ -11,7 +11,7 @@ const Back = (props) => {
       {...props}
     >
       <path d='M4 7.5L15 15L15 0L4 7.5Z' />
-      <line x1='1' y1='15' x2='1' y2='-4.37115e-08' stroke-width='2' />
+      <line x1='1' y1='15' x2='1' y2='-4.37115e-08' strokeWidth='2' />
     </Box>
   )
 }

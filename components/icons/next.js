@@ -11,7 +11,7 @@ const Next = (props) => {
       {...props}
     >
       <path d='M11 7.5L0 0V15L11 7.5Z' />
-      <line x1='14' y1='4.37115e-08' x2='14' y2='15' stroke-width='2' />
+      <line x1='14' y1='4.37115e-08' x2='14' y2='15' strokeWidth='2' />
     </Box>
   )
 }
