@@ -1,6 +1,6 @@
 import { Slider } from '@carbonplan/components'
 import { Box, Flex } from 'theme-ui'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import useStore from './store'
 import Label from './label'
@@ -19,8 +19,38 @@ const sx = {
   },
 }
 
-const Selector = ({ index }) => {
+const usePlay = (index) => {
   const [playing, setPlaying] = useState(false)
+  const selector = useStore(
+    (state) => state.variable.selectors && state.variable.selectors[index]
+  )
+  const setSelector = useStore((state) => state.setSelector)
+  const chunk_shape = useStore((state) => state.variable.chunk_shape)
+  const intervalId = useRef(null)
+
+  useEffect(() => {
+    if (playing) {
+      let value = selector.index
+
+      const incrementIndex = () => {
+        value = (value + 1) % chunk_shape[index]
+        setSelector(index, { index: value })
+      }
+
+      intervalId.current = setInterval(incrementIndex, 1000)
+    }
+
+    if (!playing && intervalId.current) {
+      clearInterval(intervalId.current)
+      intervalId.current = null
+    }
+  }, [playing])
+
+  return [playing, setPlaying]
+}
+
+const Selector = ({ index }) => {
+  const [playing, setPlaying] = usePlay(index)
   const selector = useStore(
     (state) => state.variable.selectors && state.variable.selectors[index]
   )
