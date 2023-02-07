@@ -147,10 +147,12 @@ const useStore = create((set, get) => ({
         array,
       },
     })
-    get().setChunkKey(chunkKey, overrideClim)
+    get().setChunkKey(chunkKey, { overrideClim: true })
   },
-  setChunkKey: async (chunkKey, overrideClim = false) => {
-    const { variable, headers, chunks } = get()
+  setChunkKey: async (chunkKey, { overrideClim, forceUpdate }) => {
+    if (chunkKey === get().chunkKey && !forceUpdate) {
+      return
+    }
 
     set({
       chunkKey,
@@ -166,11 +168,9 @@ const useStore = create((set, get) => ({
         bounds,
         clim,
         chunks: newChunks,
-      } = await getAllData(chunkKey, {
-        chunks,
-        variable,
-        headers,
-      })
+      } = await getAllData(chunkKey, get())
+      const { chunks } = get()
+
       set({
         loading: false,
         data,
@@ -191,7 +191,7 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey, false) // TODO: reinstate auto-updating clim after demo
+      setChunkKey(newChunkKey, { overrideClim: false, forceUpdate: false }) // TODO: reinstate auto-updating clim after demo
     }
   },
   setSelector: (index, values) => {
@@ -224,7 +224,7 @@ const useStore = create((set, get) => ({
 
     if (shouldUpdate) {
       set({ variable: { ...variable, selectors: variable.selectors } })
-      setChunkKey(updatedChunkKey)
+      setChunkKey(updatedChunkKey, { overrideClim: false, forceUpdate: true })
     }
   },
 }))
