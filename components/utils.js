@@ -117,9 +117,15 @@ const getChunksOverrides = (metadata, variables, apiMetadata) => {
     const nativeChunks = metadata.metadata[`${variable}/.zarray`].chunks
     const dimensions =
       metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
-    const limits = dimensions.map((d, i) =>
-      [apiMetadata[variable].X, apiMetadata[variable].Y].includes(d) ? 256 : 30
-    )
+    const limits = dimensions.map((d, i) => {
+      if ([apiMetadata[variable].X, apiMetadata[variable].Y].includes(d)) {
+        return 360
+      } else if (d === apiMetadata[variable].T) {
+        return 30
+      } else {
+        return 1
+      }
+    })
     const chunks = getChunkShapeOverride(nativeChunks, limits)
 
     if (chunks) {
