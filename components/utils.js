@@ -231,12 +231,15 @@ export const getVariableInfo = async (
 
   return {
     chunkKey: toKeyString(chunkKeyArray, { chunk_separator }),
-    northPole: gridMapping
-      ? [
-          gridMapping.grid_north_pole_longitude,
-          gridMapping.grid_north_pole_latitude,
-        ]
-      : undefined,
+    northPole:
+      gridMapping &&
+      gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
+      gridMapping.hasOwnProperty('grid_north_pole_latitude')
+        ? [
+            gridMapping.grid_north_pole_longitude,
+            gridMapping.grid_north_pole_latitude,
+          ]
+        : undefined,
     axes,
     bounds,
     lockZoom,
