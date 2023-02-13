@@ -16,6 +16,7 @@ const DATASETS = [
   's3://carbonplan-data-viewer/demo/MURSST.zarr',
   's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
   's3://mur-sst/zarr',
+  'https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/WOA_1degree_monthly-feedstock/woa18-1deg-monthly.zarr',
 ]
 
 const sx = {
