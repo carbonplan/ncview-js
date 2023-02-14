@@ -102,7 +102,7 @@ const Dataset = () => {
         setDataset(d)
         const u = new URL(d.url)
         setStoreUrl(
-          'https://756xnpgrdy6om3hgr5wxyxvnzm0ecwcg.lambda-url.us-west-2.on.aws/' +
+          'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
           d.cf_axes,
