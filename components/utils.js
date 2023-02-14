@@ -88,11 +88,26 @@ export const getMetadata = async (url) => {
   return { metadata, variables }
 }
 
-const getChunkShapeOverride = (chunkShape, limits) => {
-  if (chunkShape.length === 1 || chunkShape.every((d, i) => d <= limits[i])) {
+const getChunkShapeOverride = (chunkShape, dimensions, axes) => {
+  if (chunkShape.length === 1) {
     return null
   }
-  return chunkShape.map((d, i) => Math.min(d, limits[i]))
+
+  const fullSpace =
+    dimensions
+      .filter((d) => [axes.X, axes.Y].includes(d))
+      .every((d) => d <= 360) &&
+    chunkShape.reduce((product, d) => product * d, 1) < 1000000
+
+  return dimensions.map((d, i) => {
+    if ([axes.X, axes.Y].includes(d)) {
+      return fullSpace ? chunkShape[i] : Math.min(128, chunkShape[i])
+    } else if (d === axes.T) {
+      return Math.min(30, chunkShape[i])
+    } else {
+      return 1
+    }
+  })
 }
 
 const getChunksOverrides = (metadata, variables, apiMetadata) => {
@@ -117,16 +132,11 @@ const getChunksOverrides = (metadata, variables, apiMetadata) => {
     const nativeChunks = metadata.metadata[`${variable}/.zarray`].chunks
     const dimensions =
       metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
-    const limits = dimensions.map((d, i) => {
-      if ([apiMetadata[variable].X, apiMetadata[variable].Y].includes(d)) {
-        return 360
-      } else if (d === apiMetadata[variable].T) {
-        return 30
-      } else {
-        return 1
-      }
-    })
-    const chunks = getChunkShapeOverride(nativeChunks, limits)
+    const chunks = getChunkShapeOverride(
+      nativeChunks,
+      dimensions,
+      apiMetadata[variable]
+    )
 
     if (chunks) {
       result[variable] = chunks
