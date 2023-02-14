@@ -74,50 +74,53 @@ const Selector = ({ index }) => {
     <Label value={selector.name} direction='vertical'>
       <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
         {chunk_shape[index] > 1 && (
-          <Row columns={[4]}>
-            <Column start={1} width={[4, 1, 1, 1]}>
-              <Flex sx={{ gap: 3 }}>
-                <IconButton
-                  aria-label={`Play across ${selector.name} dimension`}
-                  onClick={() => setPlaying(true)}
-                  disabled={playing}
-                  sx={{ width: 14, height: 16 }}
-                >
-                  <Play />
-                </IconButton>
+          <>
+            <Row columns={[4]}>
+              <Column start={1} width={[4, 1, 1, 1]}>
+                <Flex sx={{ gap: 3 }}>
+                  <IconButton
+                    aria-label={`Play across ${selector.name} dimension`}
+                    onClick={() => setPlaying(true)}
+                    disabled={playing}
+                    sx={{ width: 14, height: 16 }}
+                  >
+                    <Play />
+                  </IconButton>
 
-                <IconButton
-                  aria-label={`Pause across ${selector.name} dimension`}
-                  onClick={() => setPlaying(false)}
-                  disabled={!playing}
-                  sx={{ width: 14, height: 16 }}
-                >
-                  <Pause />
-                </IconButton>
-              </Flex>
-            </Column>
+                  <IconButton
+                    aria-label={`Pause across ${selector.name} dimension`}
+                    onClick={() => setPlaying(false)}
+                    disabled={!playing}
+                    sx={{ width: 14, height: 16 }}
+                  >
+                    <Pause />
+                  </IconButton>
+                </Flex>
+              </Column>
 
-            <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
-              <Box sx={{ ...sx.subLabel, pb: 1 }}>
-                step{' '}
-                <Box as='span' sx={{ color: 'primary' }}>
-                  {selector.index}
-                </Box>{' '}
-                / {chunk_shape[index]}
-              </Box>
-            </Column>
-          </Row>
+              <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
+                <Box sx={{ ...sx.subLabel, pb: 1 }}>
+                  step{' '}
+                  <Box as='span' sx={{ color: 'primary' }}>
+                    {selector.index}
+                  </Box>{' '}
+                  / {chunk_shape[index]}
+                </Box>
+              </Column>
+            </Row>
+            <Slider
+              value={selector.index}
+              min={0}
+              max={chunk_shape[index]}
+              onChange={(e) => setSelectorIndex(parseFloat(e.target.value))}
+              step={1}
+              sx={{ mb: 3 }}
+            />
+          </>
         )}
 
-        <Slider
-          value={selector.index}
-          min={0}
-          max={chunk_shape[index]}
-          onChange={(e) => setSelectorIndex(parseFloat(e.target.value))}
-          step={1}
-        />
         {finalChunk > 0 && (
-          <Row columns={[4]} sx={{ mt: 3 }}>
+          <Row columns={[4]}>
             <Column start={1} width={[4, 1, 1, 1]}>
               <Flex sx={{ gap: 3 }}>
                 <IconButton
