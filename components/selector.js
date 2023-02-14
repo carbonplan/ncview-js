@@ -73,39 +73,41 @@ const Selector = ({ index }) => {
   return (
     <Label value={selector.name} direction='vertical'>
       <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
-        <Row columns={[4]}>
-          <Column start={1} width={[4, 1, 1, 1]}>
-            <Flex sx={{ gap: 3 }}>
-              <IconButton
-                aria-label={`Play across ${selector.name} dimension`}
-                onClick={() => setPlaying(true)}
-                disabled={playing}
-                sx={{ width: 14, height: 16 }}
-              >
-                <Play />
-              </IconButton>
+        {chunk_shape[index] > 1 && (
+          <Row columns={[4]}>
+            <Column start={1} width={[4, 1, 1, 1]}>
+              <Flex sx={{ gap: 3 }}>
+                <IconButton
+                  aria-label={`Play across ${selector.name} dimension`}
+                  onClick={() => setPlaying(true)}
+                  disabled={playing}
+                  sx={{ width: 14, height: 16 }}
+                >
+                  <Play />
+                </IconButton>
 
-              <IconButton
-                aria-label={`Pause across ${selector.name} dimension`}
-                onClick={() => setPlaying(false)}
-                disabled={!playing}
-                sx={{ width: 14, height: 16 }}
-              >
-                <Pause />
-              </IconButton>
-            </Flex>
-          </Column>
+                <IconButton
+                  aria-label={`Pause across ${selector.name} dimension`}
+                  onClick={() => setPlaying(false)}
+                  disabled={!playing}
+                  sx={{ width: 14, height: 16 }}
+                >
+                  <Pause />
+                </IconButton>
+              </Flex>
+            </Column>
 
-          <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
-            <Box sx={{ ...sx.subLabel, pb: 1 }}>
-              step{' '}
-              <Box as='span' sx={{ color: 'primary' }}>
-                {selector.index}
-              </Box>{' '}
-              / {chunk_shape[index]}
-            </Box>
-          </Column>
-        </Row>
+            <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
+              <Box sx={{ ...sx.subLabel, pb: 1 }}>
+                step{' '}
+                <Box as='span' sx={{ color: 'primary' }}>
+                  {selector.index}
+                </Box>{' '}
+                / {chunk_shape[index]}
+              </Box>
+            </Column>
+          </Row>
+        )}
 
         <Slider
           value={selector.index}
@@ -114,44 +116,45 @@ const Selector = ({ index }) => {
           onChange={(e) => setSelectorIndex(parseFloat(e.target.value))}
           step={1}
         />
+        {finalChunk > 0 && (
+          <Row columns={[4]} sx={{ mt: 3 }}>
+            <Column start={1} width={[4, 1, 1, 1]}>
+              <Flex sx={{ gap: 3 }}>
+                <IconButton
+                  aria-label={`View previous ${selector.name} chunk`}
+                  onClick={() => {
+                    setSelector(index, { chunk: selector.chunk - 1 })
+                  }}
+                  disabled={selector.chunk === 0}
+                  sx={{ width: 16, height: 16 }}
+                >
+                  <Back />
+                </IconButton>
 
-        <Row columns={[4]} sx={{ mt: 3 }}>
-          <Column start={1} width={[4, 1, 1, 1]}>
-            <Flex sx={{ gap: 3 }}>
-              <IconButton
-                aria-label={`View previous ${selector.name} chunk`}
-                onClick={() => {
-                  setSelector(index, { chunk: selector.chunk - 1 })
-                }}
-                disabled={selector.chunk === 0}
-                sx={{ width: 16, height: 16 }}
-              >
-                <Back />
-              </IconButton>
+                <IconButton
+                  aria-label={`View next ${selector.name} chunk`}
+                  onClick={() => {
+                    setSelector(index, { chunk: selector.chunk + 1 })
+                  }}
+                  disabled={selector.chunk === finalChunk}
+                  sx={{ width: 16, height: 16 }}
+                >
+                  <Next />
+                </IconButton>
+              </Flex>
+            </Column>
 
-              <IconButton
-                aria-label={`View next ${selector.name} chunk`}
-                onClick={() => {
-                  setSelector(index, { chunk: selector.chunk + 1 })
-                }}
-                disabled={selector.chunk === finalChunk}
-                sx={{ width: 16, height: 16 }}
-              >
-                <Next />
-              </IconButton>
-            </Flex>
-          </Column>
-
-          <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
-            <Box sx={sx.subLabel}>
-              chunk{' '}
-              <Box as='span' sx={{ color: 'primary' }}>
-                {selector.chunk}
-              </Box>{' '}
-              / {finalChunk}
-            </Box>
-          </Column>
-        </Row>
+            <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
+              <Box sx={sx.subLabel}>
+                chunk{' '}
+                <Box as='span' sx={{ color: 'primary' }}>
+                  {selector.chunk}
+                </Box>{' '}
+                / {finalChunk}
+              </Box>
+            </Column>
+          </Row>
+        )}
       </Flex>
     </Label>
   )
