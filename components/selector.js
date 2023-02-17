@@ -4,11 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 
 import useStore from './store'
 import Label from './label'
+import ArrayMetadata from './array-metadata'
 import IconButton from './icons/icon-button'
 import Next from './icons/next'
 import Back from './icons/back'
 import Play from './icons/play'
 import Pause from './icons/pause'
+import { TooltipContent, TooltipWrapper } from './tooltip'
 
 const sx = {
   subLabel: {
@@ -50,6 +52,7 @@ const usePlay = (index) => {
 }
 
 const Selector = ({ index }) => {
+  const [expanded, setExpanded] = useState(false)
   const [playing, setPlaying] = usePlay(index)
   const selector = useStore(
     (state) => state.variable.selectors && state.variable.selectors[index]
@@ -71,7 +74,17 @@ const Selector = ({ index }) => {
   )
 
   return (
-    <Label value={selector.name} direction='vertical'>
+    <Label
+      value={
+        <TooltipWrapper expanded={expanded} setExpanded={setExpanded}>
+          {selector.name}
+        </TooltipWrapper>
+      }
+      direction='vertical'
+    >
+      <TooltipContent expanded={expanded}>
+        <ArrayMetadata array={selector.name} />
+      </TooltipContent>
       <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
         {chunk_shape[index] > 1 && (
           <>

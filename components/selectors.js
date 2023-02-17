@@ -1,12 +1,11 @@
-import { Select, Slider } from '@carbonplan/components'
-import { Box, Flex } from 'theme-ui'
-import { useCallback, useState } from 'react'
+import { Select } from '@carbonplan/components'
+import { useState } from 'react'
 
 import Label from './label'
 import Selector from './selector'
 import { TooltipContent, TooltipWrapper } from './tooltip'
 import useStore from './store'
-import VariableMetadata from './variable-metadata'
+import ArrayMetadata from './array-metadata'
 
 const sx = {
   select: {
@@ -47,7 +46,7 @@ const Selectors = () => {
             </TooltipWrapper>
           </Label>
           <TooltipContent expanded={expanded}>
-            <VariableMetadata />
+            <ArrayMetadata array={variable} />
           </TooltipContent>
         </>
       )}
