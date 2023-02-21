@@ -58,6 +58,7 @@ const useStore = create((set, get) => ({
     set({
       url,
       apiMetadata,
+      error: null,
       // Null out all dataset-related fields
       metadata: null,
       variables: [],
