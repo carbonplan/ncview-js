@@ -3,12 +3,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { geoPath } from 'd3-geo'
 
-import { PROJECTIONS } from './constants'
+import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
-import { getMapProps } from './utils'
-import MinimapListener from './minimap-listener'
+import { getMapProps, getProjection } from './utils'
 
-const Nav = ({ map, setMapProps, sx }) => {
+const PROJECTION = 'naturalEarth1'
+
+const Nav = ({ mapProps, setMapProps, sx }) => {
   const { theme } = useThemeUI()
   const [minimapProps, setMinimapProps] = useState({
     scale: 1,
@@ -16,23 +17,22 @@ const Nav = ({ map, setMapProps, sx }) => {
   })
   const [path, setPath] = useState(null)
   const staticBounds = useStore((state) => state.variable?.bounds)
-  const colormap = useStore((state) => state.colormap)
-  const [minimap, setMinimap] = useState(null)
 
   useEffect(() => {
     if (staticBounds) {
-      setMinimapProps(getMapProps(staticBounds, 'naturalEarth1'))
+      setMinimapProps(getMapProps(staticBounds, PROJECTION))
     }
   }, [staticBounds])
 
   useEffect(() => {
-    if (map && minimap) {
-      const { projection, width, height } = map
+    if (mapProps && minimapProps) {
+      const mapProjection = getProjection(mapProps)
+
       const corners = [
-        projection.invert([0, 0]),
-        projection.invert([width, 0]),
-        projection.invert([width, height]),
-        projection.invert([0, height]),
+        mapProjection.invert([0, 0]),
+        mapProjection.invert([800, 0]),
+        mapProjection.invert([800, 800 * ASPECTS[mapProjection.id]]),
+        mapProjection.invert([0, 800 * ASPECTS[mapProjection.id]]),
       ]
 
       const f = {
@@ -44,38 +44,46 @@ const Nav = ({ map, setMapProps, sx }) => {
         },
       }
 
-      setPath(geoPath(minimap.projection)(f))
+      const minimapProjection = getProjection({
+        projection: PROJECTIONS[PROJECTION],
+        ...minimapProps,
+      })
+
+      setPath(geoPath(minimapProjection)(f))
     }
-  }, [map, minimap])
+  }, [mapProps, minimapProps])
 
   const handleClick = useCallback(
     (e) => {
       e.stopPropagation()
       const { x, y, width, height } = e.target.getBoundingClientRect()
       const point = [e.clientX - x, e.clientY - y]
-      const center = minimap.projection.invert([
-        (point[0] / width) * minimap.width,
-        (point[1] / height) * minimap.height,
+
+      const minimapProjection = getProjection({
+        projection: PROJECTIONS[PROJECTION],
+        ...minimapProps,
+      })
+
+      const center = minimapProjection.invert([
+        (point[0] / width) * 800,
+        (point[1] / height) * 800 * ASPECTS[PROJECTION],
       ])
 
-      const mapPoint = map.projection(center)
-      const offset = [
-        1 - (mapPoint[0] / map.width) * 2,
-        1 - (mapPoint[1] / map.height) * 2,
-      ]
+      const mapProjection = getProjection(mapProps)
+      const mapPoint = mapProjection(center)
+      const offset = [1 - (mapPoint[0] / 800) * 2, 1 - (mapPoint[1] / 400) * 2]
 
       setMapProps((prev) => ({
         ...prev,
         translate: prev.translate.map((d, i) => d + offset[i]),
       }))
     },
-    [minimap, map, setMapProps]
+    [minimapProps, mapProps, setMapProps]
   )
 
   return (
     <Box sx={{ width: '300px', cursor: 'cell', ...sx }} onClick={handleClick}>
-      <Minimap {...minimapProps} projection={PROJECTIONS.naturalEarth1}>
-        <MinimapListener setter={setMinimap} />
+      <Minimap {...minimapProps} projection={PROJECTIONS[PROJECTION]}>
         <Path
           fill={theme.colors.background}
           stroke={theme.colors.primary}

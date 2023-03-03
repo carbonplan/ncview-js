@@ -187,7 +187,11 @@ const useStore = create((set, get) => ({
     }
   },
   resetCenterChunk: (centerPoint) => {
-    const { variable, setChunkKey } = get()
+    const { variable, chunks, setChunkKey } = get()
+
+    if (Object.keys(chunks).length === 0) {
+      return
+    }
 
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 

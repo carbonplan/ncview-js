@@ -336,6 +336,17 @@ export const getMapProps = (bounds, projection) => {
   return { scale, translate, projection: PROJECTIONS[projection] }
 }
 
+export const getProjection = ({ projection, scale, translate }) => {
+  const p = projection()
+  p.scale((scale * 800) / (2 * Math.PI))
+  p.translate([
+    ((1 + translate[0]) * 800) / 2,
+    ((1 + translate[1]) * ASPECTS[p.id] * 800) / 2,
+  ])
+
+  return p
+}
+
 export const getAdjacentChunk = (offset, chunkKey, variable) => {
   const { axes, chunk_shape, shape, chunk_separator } = variable
   const [horizontalOffset, verticalOffset] = offset

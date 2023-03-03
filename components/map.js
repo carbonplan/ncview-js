@@ -1,14 +1,13 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
-import { PROJECTIONS } from './constants'
+import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
-import { getMapProps } from './utils'
+import { getMapProps, getProjection } from './utils'
 import MapContainer from './map-container'
-import MinimapListener from './minimap-listener'
 import Nav from './nav'
 
 const Map = () => {
@@ -35,7 +34,6 @@ const Map = () => {
     translate: [0, 0],
   })
   const mapPropsInitialized = useRef(false)
-  const [minimap, setMinimap] = useState(null)
 
   useEffect(() => {
     mapPropsInitialized.current = false
@@ -60,15 +58,14 @@ const Map = () => {
     }
   }, [url])
 
-  const handleMinimapChange = useCallback((values) => {
-    setMinimap(values)
-    const { projection, height, width } = values
+  useEffect(() => {
+    const projection = getProjection(mapProps)
     const centerPoint = projection.invert([
-      Math.round(height / 2),
-      Math.round(width / 2),
+      Math.round((800 * ASPECTS[projection.id]) / 2),
+      Math.round(800 / 2),
     ])
     resetCenterChunk(centerPoint)
-  }, [])
+  }, [mapProps])
 
   return (
     <Flex
@@ -84,7 +81,6 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {renderable && (
             <Minimap {...mapProps}>
-              <MinimapListener setter={handleMinimapChange} />
               {basemaps.oceanMask && (
                 <Path
                   fill={theme.colors.background}
@@ -147,7 +143,7 @@ const Map = () => {
           )}
           {renderable && lockZoom && (
             <Nav
-              map={minimap}
+              mapProps={mapProps}
               setMapProps={setMapProps}
               sx={{ position: 'fixed', bottom: '18px', right: '18px' }}
             />
