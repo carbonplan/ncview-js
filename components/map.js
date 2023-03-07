@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
-import { useThemedColormap } from '@carbonplan/colormaps'
 
 import { Minimap, Path, Sphere } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
@@ -9,24 +8,19 @@ import useStore from './store'
 import { getMapProps, getProjection } from './utils'
 import MapContainer from './map-container'
 import Nav from './nav'
+import Tile from './tile'
 
 const Map = () => {
   const { theme } = useThemeUI()
-  const colormapName = useStore((state) => state.colormap)
-  const colormap = useThemedColormap(colormapName, {
-    count: 255,
-    format: 'rgb',
-  })
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
-  const clim = useStore((state) => state.clim)
   const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
-  const data = useStore((state) => state.data)
   const renderable = useStore((state) => Object.values(state.chunks).length > 0)
-  const bounds = useStore((state) => state.bounds)
+  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
-  const { northPole, nullValue, lockZoom } = useStore((state) => state.variable)
+  const chunkKey = useStore((state) => state.chunkKey)
+  const { lockZoom } = useStore((state) => state.variable)
   const resetCenterChunk = useStore((state) => state.resetCenterChunk)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
@@ -116,17 +110,10 @@ const Map = () => {
 
               <Sphere fill={theme.colors.background} />
 
-              {data && bounds && (
-                <Raster
-                  source={data}
-                  bounds={bounds}
-                  northPole={northPole}
-                  colormap={colormap}
-                  mode={'lut'}
-                  clim={clim}
-                  nullValue={nullValue}
-                />
-              )}
+              {activeChunkKeys.map((key) => (
+                <Tile key={key} chunkKey={key} />
+              ))}
+              {/* <Tile chunkKey={chunkKey} /> */}
             </Minimap>
           )}
           {loading && (

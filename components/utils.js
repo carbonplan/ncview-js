@@ -1,8 +1,6 @@
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import ndarray from 'ndarray'
-import concatColumns from 'ndarray-concat-cols'
-import concatRows from 'ndarray-concat-rows'
 
 import { PROJECTIONS, ASPECTS } from './constants'
 
@@ -33,7 +31,7 @@ const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
       [key]: [
         array.data[start],
         array.data[Math.min(end, array.data.length - 1)],
-      ].sort(),
+      ].sort((a, b) => a - b),
     }
   }, {})
 }
@@ -262,7 +260,7 @@ export const getVariableInfo = async (
   }
 }
 
-const getChunkData = async (
+export const getChunkData = async (
   chunkKey,
   {
     variable: { array, axes, nullValue, chunk_separator, chunk_shape, shape },
@@ -414,20 +412,6 @@ export const getAllData = async (chunkKey, { chunks, variable, headers }) => {
     })
   )
 
-  const combinedBounds = allChunks.reduce(
-    (prev, { bounds: { lat, lon } }) => ({
-      lat: [
-        Math.min(Math.min(...lat), prev.lat[0]),
-        Math.max(Math.max(...lat), prev.lat[1]),
-      ],
-      lon: [
-        Math.min(Math.min(...lon), prev.lon[0]),
-        Math.max(Math.max(...lon), prev.lon[1]),
-      ],
-    }),
-    { lat: [Infinity, -Infinity], lon: [Infinity, -Infinity] }
-  )
-
   const combinedClim = allChunks.reduce(
     (prev, { clim: [min, max] }) => [
       Math.min(min, prev[0]),
@@ -436,57 +420,9 @@ export const getAllData = async (chunkKey, { chunks, variable, headers }) => {
     [Infinity, -Infinity]
   )
 
-  const { chunk_separator: separator, axes, selectors } = variable
-  // stitch together chunks in order dictated by chunk keys
-  // TODO: handle empty chunks https://zarr.readthedocs.io/en/stable/tutorial.html#empty-chunks (i.e. non-continuous chunks)
-
-  const { X, Y } = axes
-  const [xReversed, yReversed] = [
-    X.array.data[0] > X.array.data[X.array.data.length - 1],
-    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
-  ]
-
-  const data = activeChunkKeys
-    // sort by columns
-    .sort(
-      (a, b) =>
-        (xReversed ? -1 : 1) *
-        (Number(a.split(separator)[X.index]) -
-          Number(b.split(separator)[X.index]))
-    )
-    // sort by rows
-    .sort(
-      (a, b) =>
-        (yReversed ? -1 : 1) *
-        (Number(a.split(separator)[Y.index]) -
-          Number(b.split(separator)[Y.index]))
-    )
-    .reduce((rows, chunkKey) => {
-      const rowNumber = chunkKey.split(separator)[Y.index]
-      const row = rows.find((row) => rowNumber === row[0])
-      const { data } = activeChunks[chunkKey]
-      const selectedData = data.pick(...selectors.map((d) => d.index))
-      if (row) {
-        row[1] = concatColumns([row[1], selectedData], {
-          dtype: 'float32',
-        })
-      } else {
-        rows.push([rowNumber, selectedData])
-      }
-      return rows
-    }, [])
-    .reduce((columns, column) => {
-      if (!columns) {
-        return column[1]
-      } else {
-        return concatRows([columns, column[1]], { dtype: 'float32' })
-      }
-    }, null)
-
   return {
-    bounds: combinedBounds,
+    activeChunkKeys,
     clim: combinedClim,
-    data,
     chunks: activeChunks,
   }
 }

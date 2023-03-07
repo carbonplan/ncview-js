@@ -2,6 +2,7 @@ import create from 'zustand'
 import {
   getAllData,
   getArrays,
+  getChunkData,
   getMetadata,
   getVariableInfo,
   pointToChunkKey,
@@ -31,6 +32,7 @@ const createDatasetSlice = (set, get) => ({
   },
 
   // cache of chunks
+  activeChunkKeys: [],
   chunks: {},
 
   // active chunk
@@ -64,6 +66,7 @@ const useStore = create((set, get) => ({
       variables: [],
       variable: {},
       chunks: {},
+      activeChunkKeys: [],
       data: null,
       clim,
       bounds: null,
@@ -114,6 +117,7 @@ const useStore = create((set, get) => ({
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
+      activeChunkKeys: [],
       data: null,
       ...(overrideClim ? { clim: null } : {}),
       bounds: null,
@@ -165,17 +169,15 @@ const useStore = create((set, get) => ({
 
     try {
       const {
-        data,
-        bounds,
         clim,
         chunks: newChunks,
+        activeChunkKeys,
       } = await getAllData(chunkKey, get())
       const { chunks } = get()
 
       set({
+        activeChunkKeys,
         loading: false,
-        data,
-        bounds,
         chunks: {
           ...chunks,
           ...newChunks,
@@ -198,6 +200,25 @@ const useStore = create((set, get) => ({
     if (newChunkKey) {
       setChunkKey(newChunkKey, { overrideClim: false, forceUpdate: false }) // TODO: reinstate auto-updating clim after demo
     }
+  },
+  fetchChunk: async (chunkKey) => {
+    const { variable, headers, chunks: initialChunks } = get()
+
+    if (initialChunks[chunkKey]) {
+      return
+    }
+
+    if (!headers || !variable.name) {
+      set({
+        loading: false,
+        error: 'Tried to fetch chunk before store was fully initialized.',
+      })
+      return
+    }
+
+    const result = await getChunkData(chunkKey, { variable, headers })
+    const { chunks } = get()
+    set({ chunks: { ...chunks, [chunkKey]: result } })
   },
   setSelector: (index, values) => {
     const { variable, chunkKey, setChunkKey } = get()
