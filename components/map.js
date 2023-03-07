@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
-import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
+import { Minimap, Path, Sphere } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
 import { getMapProps, getProjection } from './utils'

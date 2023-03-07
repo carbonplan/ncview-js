@@ -1,8 +1,8 @@
-import { Minimap, Path } from '@carbonplan/minimaps'
 import { useCallback, useEffect, useState } from 'react'
 import { Box, useThemeUI } from 'theme-ui'
 import { geoPath } from 'd3-geo'
 
+import { Minimap, Path } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
 import { getMapProps, getProjection } from './utils'
