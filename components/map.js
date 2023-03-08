@@ -29,7 +29,6 @@ const Map = () => {
   const { northPole, nullValue } = useStore((state) => state.variable)
   const clim = useStore((state) => state.clim)
 
-  const chunkKey = useStore((state) => state.chunkKey)
   const { lockZoom } = useStore((state) => state.variable)
   const resetCenterChunk = useStore((state) => state.resetCenterChunk)
   const [mapProps, setMapProps] = useState({

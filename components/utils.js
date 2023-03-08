@@ -13,10 +13,6 @@ const getRange = (arr, { nullValue }) => {
     )
 }
 
-const getBounds = (coord) => {
-  return [coord.data[0], coord.data[coord.data.length - 1]].sort()
-}
-
 const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
   return Object.keys(axes).reduce((accum, key) => {
     const { array, index } = axes[key]
@@ -223,11 +219,6 @@ export const getVariableInfo = async (
     }
   }, {})
 
-  const bounds = {
-    lon: getBounds(axes.X.array),
-    lat: getBounds(axes.Y.array),
-  }
-
   const lockZoom = [axes.X.index, axes.Y.index].some(
     (index) => zarray.shape[index] / zarray.chunks[index] > 4
   )
@@ -254,7 +245,6 @@ export const getVariableInfo = async (
           ]
         : undefined,
     axes,
-    bounds,
     lockZoom,
     selectors,
     nullValue,
@@ -380,7 +370,7 @@ export const getAdjacentChunk = (offset, chunkKey, variable) => {
   }
 }
 
-const getActiveChunkKeys = (chunkKey, variable) => {
+export const getActiveChunkKeys = (chunkKey, { variable }) => {
   return [
     [-2, -1],
     [-1, -1],
@@ -401,8 +391,11 @@ const getActiveChunkKeys = (chunkKey, variable) => {
     .map((offset) => getAdjacentChunk(offset, chunkKey, variable))
     .filter(Boolean)
 }
-export const getAllData = async (chunkKey, { chunks, variable, headers }) => {
-  const activeChunkKeys = getActiveChunkKeys(chunkKey, variable)
+
+export const getClim = async (
+  activeChunkKeys,
+  { chunks, variable, headers }
+) => {
   const activeChunks = {}
   const allChunks = await Promise.all(
     activeChunkKeys.map(async (key) => {
@@ -426,7 +419,6 @@ export const getAllData = async (chunkKey, { chunks, variable, headers }) => {
   )
 
   return {
-    activeChunkKeys,
     clim: combinedClim,
     chunks: activeChunks,
   }

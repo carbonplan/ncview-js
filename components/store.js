@@ -1,8 +1,9 @@
 import create from 'zustand'
 import {
-  getAllData,
+  getActiveChunkKeys,
   getArrays,
   getChunkData,
+  getClim,
   getMetadata,
   getVariableInfo,
   pointToChunkKey,
@@ -44,8 +45,6 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { landBoundaries: false, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
-  data: null,
-  bounds: null,
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
@@ -67,9 +66,7 @@ const useStore = create((set, get) => ({
       variable: {},
       chunks: {},
       activeChunkKeys: [],
-      data: null,
       clim,
-      bounds: null,
     })
 
     // handle clearing url
@@ -108,9 +105,9 @@ const useStore = create((set, get) => ({
       return
     }
 
-    get().setVariable(initialVariable, !clim)
+    get().setVariable(initialVariable)
   },
-  setVariable: async (name, overrideClim) => {
+  setVariable: async (name) => {
     set({
       variable: { name, selectors: [] },
       loading: true,
@@ -118,9 +115,7 @@ const useStore = create((set, get) => ({
       chunkKey: null,
       chunks: {},
       activeChunkKeys: [],
-      data: null,
-      ...(overrideClim ? { clim: null } : {}),
-      bounds: null,
+      clim: null,
     })
 
     const {
@@ -128,7 +123,6 @@ const useStore = create((set, get) => ({
       nullValue,
       northPole,
       axes,
-      bounds,
       lockZoom,
       selectors,
       chunk_separator,
@@ -143,7 +137,6 @@ const useStore = create((set, get) => ({
         nullValue,
         northPole,
         axes,
-        bounds,
         lockZoom,
         selectors,
         chunk_separator,
@@ -152,9 +145,9 @@ const useStore = create((set, get) => ({
         array,
       },
     })
-    get().setChunkKey(chunkKey, { overrideClim: true })
+    get().setChunkKey(chunkKey, { initializeClim: true })
   },
-  setChunkKey: async (chunkKey, { overrideClim, forceUpdate }) => {
+  setChunkKey: async (chunkKey, { initializeClim, forceUpdate }) => {
     if (chunkKey === get().chunkKey && !forceUpdate) {
       return
     }
@@ -162,28 +155,28 @@ const useStore = create((set, get) => ({
     set({
       chunkKey,
       loading: true,
-      // Null out chunk-specific fields
-      data: null,
-      bounds: null,
     })
 
     try {
-      const {
-        clim,
-        chunks: newChunks,
-        activeChunkKeys,
-      } = await getAllData(chunkKey, get())
-      const { chunks } = get()
-
-      set({
+      const activeChunkKeys = await getActiveChunkKeys(chunkKey, get())
+      const toSet = {
         activeChunkKeys,
         loading: false,
-        chunks: {
+      }
+      if (initializeClim) {
+        const { clim, chunks: newChunks } = await getClim(
+          activeChunkKeys,
+          get()
+        )
+        const { chunks } = get()
+        toSet.chunks = {
           ...chunks,
           ...newChunks,
-        },
-        ...(overrideClim ? { clim } : {}),
-      })
+        }
+        toSet.clim = clim
+      }
+
+      set(toSet)
     } catch (e) {
       set({ loading: false, error: 'Error loading data.' })
     }
@@ -198,7 +191,7 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey, { overrideClim: false, forceUpdate: false }) // TODO: reinstate auto-updating clim after demo
+      setChunkKey(newChunkKey, { initializeClim: false, forceUpdate: false }) // TODO: reinstate auto-updating clim after demo
     }
   },
   fetchChunk: async (chunkKey) => {
@@ -250,7 +243,7 @@ const useStore = create((set, get) => ({
 
     if (shouldUpdate) {
       set({ variable: { ...variable, selectors: variable.selectors } })
-      setChunkKey(updatedChunkKey, { overrideClim: false, forceUpdate: true })
+      setChunkKey(updatedChunkKey, { initializeClim: false, forceUpdate: true })
     }
   },
 }))

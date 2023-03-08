@@ -16,13 +16,6 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
     translate: [0, 0],
   })
   const [path, setPath] = useState(null)
-  const staticBounds = useStore((state) => state.variable?.bounds)
-
-  useEffect(() => {
-    if (staticBounds) {
-      setMinimapProps(getMapProps(staticBounds, PROJECTION))
-    }
-  }, [staticBounds])
 
   useEffect(() => {
     if (mapProps && minimapProps) {
