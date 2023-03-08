@@ -31,7 +31,7 @@ const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
       [key]: [
         array.data[start],
         array.data[Math.min(end, array.data.length - 1)],
-      ].sort((a, b) => a - b),
+      ].sort((a, b) => Number(a) - Number(b)),
     }
   }, {})
 }
