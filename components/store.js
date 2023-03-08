@@ -209,9 +209,10 @@ const useStore = create((set, get) => ({
       return
     }
 
+    set({ loading: true })
     const result = await getChunkData(chunkKey, { variable, headers })
     const { chunks } = get()
-    set({ chunks: { ...chunks, [chunkKey]: result } })
+    set({ loading: false, chunks: { ...chunks, [chunkKey]: result } })
   },
   setSelector: (index, values) => {
     const { variable, chunkKey, setChunkKey } = get()
