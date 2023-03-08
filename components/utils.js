@@ -25,13 +25,18 @@ const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
     }
     const start = chunkKeyArray[index] * chunk_shape[index]
     const end = start + chunk_shape[index] - 1
+    const halfStep = Math.abs(Number(array.data[0]) - Number(array.data[1])) / 2
+
+    const initialBounds = [
+      array.data[start],
+      array.data[Math.min(end, array.data.length - 1)],
+    ]
+      .map(Number)
+      .sort((a, b) => a - b)
 
     return {
       ...accum,
-      [key]: [
-        array.data[start],
-        array.data[Math.min(end, array.data.length - 1)],
-      ].sort((a, b) => Number(a) - Number(b)),
+      [key]: [initialBounds[0] - halfStep, initialBounds[1] + halfStep],
     }
   }, {})
 }

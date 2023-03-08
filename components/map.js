@@ -129,7 +129,6 @@ const Map = () => {
                 {activeChunkKeys.map((key) => (
                   <Chunk key={key} chunkKey={key} />
                 ))}
-                {/* <Chunk chunkKey={chunkKey} /> */}
               </Tiles>
             </Minimap>
           )}

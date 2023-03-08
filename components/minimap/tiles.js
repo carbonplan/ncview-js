@@ -30,7 +30,6 @@ const Tiles = ({
   const draw = useRef()
   const lut = useRef()
   const context = useRef({})
-  const isLoaded = useRef(false)
   const invalidated = useRef(null)
 
   const tiles = useRef({})
@@ -245,12 +244,23 @@ const Tiles = ({
       count: 6,
 
       primitive: 'triangles',
+
+      blend: {
+        enable: true,
+        equation: 'add',
+        func: {
+          src: 'src alpha',
+          dst: 'one minus src alpha',
+        },
+      },
+      depth: { enable: false },
     })
   }, [projection.glsl.name])
 
   redraw.current = (invalidatedBy) => {
     if (draw.current) {
       const { pixelRatio } = context.current
+
       draw.current(
         Object.keys(tiles.current).map((tileKey) => ({
           ...tiles.current[tileKey],
