@@ -1,9 +1,9 @@
 import { useContext, useEffect, useRef } from 'react'
 import { useRegl } from './regl'
-import { TilesContext } from './tiles'
+import { LayerContext } from './layer'
 
 const Tile = ({ id, source, bounds }) => {
-  const { invalidate, registerTile, unregisterTile } = useContext(TilesContext)
+  const { invalidate, registerTile, unregisterTile } = useContext(LayerContext)
   const { regl } = useRegl()
 
   const texture = useRef()

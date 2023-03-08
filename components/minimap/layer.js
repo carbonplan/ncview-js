@@ -4,9 +4,9 @@ import { useMinimap } from './minimap'
 
 const NORTH_POLE = [0, 90]
 
-export const TilesContext = createContext({ invalidate: () => {} })
+export const LayerContext = createContext({ invalidate: () => {} })
 
-const Tiles = ({
+const Layer = ({
   children,
   mode = 'lut',
   colormap = null,
@@ -309,10 +309,10 @@ const Tiles = ({
   ])
 
   return (
-    <TilesContext.Provider value={{ invalidate, registerTile, unregisterTile }}>
+    <LayerContext.Provider value={{ invalidate, registerTile, unregisterTile }}>
       {children}
-    </TilesContext.Provider>
+    </LayerContext.Provider>
   )
 }
 
-export default Tiles
+export default Layer

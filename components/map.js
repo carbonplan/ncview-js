@@ -8,7 +8,7 @@ import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
 import { getMapProps, getProjection } from './utils'
 import MapContainer from './map-container'
-import Tiles from './minimap/tiles'
+import Layer from './minimap/layer'
 import Nav from './nav'
 import Chunk from './chunk'
 
@@ -119,7 +119,7 @@ const Map = () => {
 
               <Sphere fill={theme.colors.background} />
 
-              <Tiles
+              <Layer
                 colormap={colormap}
                 clim={clim}
                 northPole={northPole}
@@ -128,7 +128,7 @@ const Map = () => {
                 {activeChunkKeys.map((key) => (
                   <Chunk key={key} chunkKey={key} />
                 ))}
-              </Tiles>
+              </Layer>
             </Minimap>
           )}
           {loading && (
