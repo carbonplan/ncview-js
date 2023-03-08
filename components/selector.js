@@ -117,14 +117,14 @@ const Selector = ({ index }) => {
                   <Box as='span' sx={{ color: 'primary' }}>
                     {selector.index}
                   </Box>{' '}
-                  / {chunk_shape[index]}
+                  / {chunk_shape[index] - 1}
                 </Box>
               </Column>
             </Row>
             <Slider
               value={selector.index}
               min={0}
-              max={chunk_shape[index]}
+              max={chunk_shape[index] - 1}
               onChange={(e) => setSelectorIndex(parseFloat(e.target.value))}
               step={1}
               sx={{ mb: 3 }}
