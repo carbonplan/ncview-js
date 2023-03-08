@@ -3,7 +3,7 @@ import {
   orthographic,
   mercator,
   equirectangular,
-} from '@carbonplan/minimaps/projections'
+} from './minimap/projections'
 
 export const PROJECTIONS = {
   naturalEarth1,
