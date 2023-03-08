@@ -5,6 +5,7 @@ import { format } from 'd3-format'
 
 import useStore from './store'
 import Label from './label'
+import ResetClim from './reset-clim'
 
 const Display = () => {
   const loading = useStore((state) => state.loading)
@@ -51,7 +52,6 @@ const Display = () => {
           <option value='equirectangular'>equirectangular</option>
         </Select>
       </Label>
-
       <Box>
         <Label value='Basemaps' htmlFor='landBoundaries'>
           <Flex sx={{ gap: 2, fontSize: [2, 2, 2, 3] }}>
@@ -89,7 +89,6 @@ const Display = () => {
           </Flex>
         </Label>
       </Box>
-
       <Label value='Colormap' htmlFor='colormap'>
         <Select
           onChange={(e) => setColormap(e.target.value)}
@@ -121,6 +120,7 @@ const Display = () => {
           sxClim={{ fontSize: [1, 1, 1, 2], mt: ['-1px'], pb: ['2px'] }}
         />
       </Label>
+      <ResetClim />
     </Flex>
   )
 }
