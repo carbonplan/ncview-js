@@ -147,8 +147,8 @@ const useStore = create((set, get) => ({
     })
     get().setChunkKey(chunkKey, { initializeClim: true })
   },
-  setChunkKey: async (chunkKey, { initializeClim, forceUpdate }) => {
-    if (chunkKey === get().chunkKey && !forceUpdate) {
+  setChunkKey: async (chunkKey, { initializeClim }) => {
+    if (chunkKey === get().chunkKey) {
       return
     }
 
@@ -191,7 +191,7 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey, { initializeClim: false, forceUpdate: false }) // TODO: reinstate auto-updating clim after demo
+      setChunkKey(newChunkKey, { initializeClim: false }) // TODO: reinstate auto-updating clim after demo
     }
   },
   fetchChunk: async (chunkKey) => {
@@ -233,17 +233,22 @@ const useStore = create((set, get) => ({
       updatedSelector.chunk !== values.chunk
     ) {
       shouldUpdate = true
-      updatedSelector.chunk = values.chunk
       const chunkArray = toKeyArray(chunkKey, variable)
       chunkArray[index] = values.chunk
       updatedChunkKey = toKeyString(chunkArray, variable)
+      updatedSelector.chunk = values.chunk
     }
 
-    variable.selectors[index] = { ...variable.selectors[index], ...values }
-
     if (shouldUpdate) {
-      set({ variable: { ...variable, selectors: variable.selectors } })
-      setChunkKey(updatedChunkKey, { initializeClim: false, forceUpdate: true })
+      const updatedSelectors = [
+        ...variable.selectors.slice(0, index),
+        updatedSelector,
+        ...variable.selectors.slice(index + 1),
+      ]
+      set({ variable: { ...variable, selectors: updatedSelectors } })
+      if (updatedChunkKey !== chunkKey) {
+        setChunkKey(updatedChunkKey, { initializeClim: false })
+      }
     }
   },
 }))
