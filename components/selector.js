@@ -11,6 +11,7 @@ import Back from './icons/back'
 import Play from './icons/play'
 import Pause from './icons/pause'
 import { TooltipContent, TooltipWrapper } from './tooltip'
+import DateDisplay from './date-display'
 
 const sx = {
   subLabel: {
@@ -113,11 +114,15 @@ const Selector = ({ index }) => {
 
               <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
                 <Box sx={{ ...sx.subLabel, pb: 1 }}>
-                  step{' '}
+                  <DateDisplay
+                    selector={selector}
+                    chunkShape={chunk_shape[index]}
+                  />{' '}
+                  (
                   <Box as='span' sx={{ color: 'primary' }}>
                     {selector.index}
                   </Box>{' '}
-                  / {chunk_shape[index] - 1}
+                  / {chunk_shape[index] - 1})
                 </Box>
               </Column>
             </Row>
