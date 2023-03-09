@@ -11,17 +11,25 @@ const DateDisplay = ({ selector, chunkShape }) => {
   const formatter = useCallback(
     (v) => {
       if (calendar !== 'proleptic_gregorian') {
-        throw new Error(`Unexpected calendar: ${calendar}`)
+        console.warn(`Unhandled calendar: ${calendar}`)
+        return
       }
 
       const startDate = units.match(/(?<=days since ).+/)
       if (!startDate) {
-        throw new Error(
-          `No date found in: ${units}. Expected 'dates since [DATE STRING]' format.`
+        console.warn(
+          `No date found in: ${units}. Expected 'days since [DATE STRING]' format.`
         )
+        return
       }
 
-      const date = new Date(startDate)
+      let dateString = startDate[0]
+      // append time to use local time zone if time is not already present
+      if (!dateString.match(/\d\d:\d\d/)) {
+        dateString = `${dateString} 12:00`
+      }
+
+      const date = new Date(dateString)
       date.setDate(date.getDate() + v)
 
       return formatDate(date.toLocaleDateString())

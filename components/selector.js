@@ -66,6 +66,7 @@ const Selector = ({ index }) => {
         state.variable.shape[index] / state.variable.chunk_shape[index]
       ) - 1
   )
+  const axes = useStore((state) => state.variable.axes)
 
   const setSelectorIndex = useCallback(
     (value) => {
@@ -114,15 +115,21 @@ const Selector = ({ index }) => {
 
               <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
                 <Box sx={{ ...sx.subLabel, pb: 1 }}>
-                  <DateDisplay
-                    selector={selector}
-                    chunkShape={chunk_shape[index]}
-                  />{' '}
-                  (
-                  <Box as='span' sx={{ color: 'primary' }}>
-                    {selector.index}
-                  </Box>{' '}
-                  / {chunk_shape[index] - 1})
+                  <Flex sx={{ gap: 2 }}>
+                    {axes.T?.index === index && (
+                      <DateDisplay
+                        selector={selector}
+                        chunkShape={chunk_shape[index]}
+                      />
+                    )}
+                    <Box>
+                      (
+                      <Box as='span' sx={{ color: 'primary' }}>
+                        {selector.index}
+                      </Box>
+                    </Box>
+                    /<Box>{chunk_shape[index] - 1})</Box>
+                  </Flex>
                 </Box>
               </Column>
             </Row>
@@ -167,11 +174,14 @@ const Selector = ({ index }) => {
 
             <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
               <Box sx={sx.subLabel}>
-                chunk{' '}
-                <Box as='span' sx={{ color: 'primary' }}>
-                  {selector.chunk}
-                </Box>{' '}
-                / {finalChunk}
+                <Flex sx={{ gap: 2 }}>
+                  chunk
+                  <Box as='span' sx={{ color: 'primary' }}>
+                    {selector.chunk}
+                  </Box>
+                  <Box>/</Box>
+                  <Box>{finalChunk}</Box>
+                </Flex>
               </Box>
             </Column>
           </Row>
