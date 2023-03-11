@@ -94,9 +94,10 @@ const MapContainer = ({ children, setMapProps }) => {
     container.current.addEventListener('mousemove', moveListener.current)
   }, [panMap])
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseUp = useCallback((event) => {
     setCursor('grab')
     if (moveListener.current) {
+      event.preventDefault()
       container.current.removeEventListener('mousemove', moveListener.current)
       moveListener.current = null
     }
@@ -117,6 +118,21 @@ const MapContainer = ({ children, setMapProps }) => {
     [panMap, zoomMap]
   )
 
+  const handleClick = useCallback(
+    (event) => {
+      if (cursor === 'grabbing') {
+        return
+      }
+      const height = container.current.clientHeight
+      const width = container.current.clientWidth
+      const { x, y } = container.current.getBoundingClientRect()
+      const point = [event.clientX - x, event.clientY - y]
+
+      console.log(point)
+    },
+    [cursor]
+  )
+
   return (
     <Box
       sx={{
@@ -132,6 +148,7 @@ const MapContainer = ({ children, setMapProps }) => {
       onMouseDown={handleMouseDown}
       onMouseUp={handleMouseUp}
       onWheel={handleWheel}
+      onClick={handleClick}
       id='container'
     >
       {children}

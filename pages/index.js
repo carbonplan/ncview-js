@@ -6,6 +6,7 @@ import Display from '../components/display'
 
 import Header from '../components/header'
 import Map from '../components/map'
+import Plots from '../components/plots'
 import Selectors from '../components/selectors'
 
 const Index = () => {
@@ -24,7 +25,7 @@ const Index = () => {
       >
         <Container>
           <Row>
-            <Sidebar expanded side='left' width={4}>
+            <Sidebar expanded side='left' width={4} footer={<Plots />}>
               <Flex sx={{ flexDirection: 'column', gap: 3 }}>
                 <Dataset />
                 <Selectors />

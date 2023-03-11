@@ -45,11 +45,13 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { landBoundaries: false, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
+  mode: 'explore',
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
+  setMode: (mode) => set({ mode }),
 })
 
 const useStore = create((set, get) => ({
