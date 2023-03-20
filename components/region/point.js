@@ -1,5 +1,5 @@
 import { useThemeUI } from 'theme-ui'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useStore from '../store'
 import { getProjection } from '../utils'
 
@@ -7,8 +7,18 @@ const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
   const container = useRef(null)
   const moveListener = useRef(null)
-  const [[cx, cy], setCircle] = useState([])
+  const center = useStore((state) => state.center)
   const setCenter = useStore((state) => state.setCenter)
+
+  const projectedCenter = useMemo(() => {
+    if (center) {
+      const height = container.current?.clientHeight
+      const width = container.current?.clientWidth
+      const proj = getProjection(mapProps)
+      const c = proj(center)
+      return [(c[0] / 800) * width, (c[1] / 400) * height]
+    }
+  }, [center, mapProps])
 
   const updatePoint = useCallback(
     (point) => {
@@ -19,22 +29,20 @@ const Point = ({ mapProps }) => {
         (point[0] / width) * 800,
         (point[1] / height) * 800 * 0.5,
       ])
-      const c = proj(p)
 
-      setCircle([(c[0] / 800) * width, (c[1] / 400) * height])
       setCenter(p)
     },
-    [mapProps, setCircle, setCenter]
+    [mapProps, setCenter]
   )
 
   useEffect(() => {
-    if ([cx, cy].some((d) => d == null)) {
+    if (!projectedCenter) {
       const height = container.current.clientHeight
       const width = container.current.clientWidth
 
       updatePoint([width / 2, height / 2])
     }
-  }, [cx, cy, mapProps])
+  }, [projectedCenter])
 
   const handleMouseDown = useCallback(() => {
     if (moveListener.current) {
@@ -69,15 +77,17 @@ const Point = ({ mapProps }) => {
       }}
       ref={container}
     >
-      <circle
-        r={8}
-        fill={theme.colors.primary}
-        cx={cx}
-        cy={cy}
-        cursor='move'
-        onMouseDown={handleMouseDown}
-        onMouseUp={handleMouseUp}
-      />
+      {projectedCenter && (
+        <circle
+          r={8}
+          fill={theme.colors.primary}
+          cx={projectedCenter[0]}
+          cy={projectedCenter[1]}
+          cursor='move'
+          onMouseDown={handleMouseDown}
+          onMouseUp={handleMouseUp}
+        />
+      )}
     </svg>
   )
 }
