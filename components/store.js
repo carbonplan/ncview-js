@@ -33,11 +33,12 @@ const createDatasetSlice = (set, get) => ({
   },
 
   // cache of chunks
-  activeChunkKeys: [],
   chunks: {},
 
-  // active chunk
+  // central chunk
   chunkKey: null,
+  // active chunks
+  activeChunkKeys: [],
 })
 
 const createDisplaySlice = (set, get) => ({
@@ -160,7 +161,7 @@ const useStore = create((set, get) => ({
     })
 
     try {
-      const activeChunkKeys = await getActiveChunkKeys(chunkKey, get())
+      const activeChunkKeys = getActiveChunkKeys(chunkKey, get())
       const toSet = {
         activeChunkKeys,
         loading: false,
