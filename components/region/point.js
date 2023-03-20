@@ -6,6 +6,7 @@ import { getProjection } from '../utils'
 const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
   const container = useRef(null)
+  const moveListener = useRef(null)
   const [[cx, cy], setCircle] = useState([])
   const setCenter = useStore((state) => state.setCenter)
 
@@ -35,13 +36,26 @@ const Point = ({ mapProps }) => {
     }
   }, [cx, cy, mapProps])
 
-  const handleClick = useCallback(
-    (event) => {
+  const handleMouseDown = useCallback(() => {
+    if (moveListener.current) {
+      container.current.removeEventListener('mousemove', moveListener.current)
+    }
+    moveListener.current = (event) => {
+      event.stopPropagation()
+
       const { x, y } = container.current.getBoundingClientRect()
       updatePoint([event.clientX - x, event.clientY - y])
-    },
-    [updatePoint]
-  )
+    }
+
+    container.current.addEventListener('mousemove', moveListener.current)
+  }, [updatePoint])
+
+  const handleMouseUp = useCallback((e) => {
+    if (moveListener.current) {
+      container.current.removeEventListener('mousemove', moveListener.current)
+      moveListener.current = null
+    }
+  })
 
   return (
     <svg
@@ -54,9 +68,16 @@ const Point = ({ mapProps }) => {
         zIndex: 1,
       }}
       ref={container}
-      onClick={handleClick}
     >
-      <circle r={8} fill={theme.colors.primary} cx={cx} cy={cy} />
+      <circle
+        r={8}
+        fill={theme.colors.primary}
+        cx={cx}
+        cy={cy}
+        cursor='move'
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+      />
     </svg>
   )
 }
