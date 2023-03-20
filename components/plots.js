@@ -34,7 +34,7 @@ const Plots = () => {
   const setMode = useStore((state) => state.setMode)
 
   const handleClick = useCallback(() => {
-    setMode(mode === 'explore' ? 'plot' : 'explore')
+    setMode(mode === 'inactive' ? 'point' : 'inactive')
   }, [mode])
 
   return (
@@ -49,13 +49,15 @@ const Plots = () => {
       >
         Plots
         <Box sx={{ position: 'relative', ml: [2], mt: '-1px' }}>
-          {mode !== 'plot' && <Search sx={{ strokeWidth: 2, width: '18px' }} />}
-          {mode === 'plot' && <X sx={{ strokeWidth: 2, width: '18px' }} />}
+          {mode === 'inactive' && (
+            <Search sx={{ strokeWidth: 2, width: '18px' }} />
+          )}
+          {mode !== 'inactive' && <X sx={{ strokeWidth: 2, width: '18px' }} />}
         </Box>
       </Flex>
       <AnimateHeight
         duration={150}
-        height={mode === 'plot' ? 'auto' : 0}
+        height={mode !== 'inactive' ? 'auto' : 0}
         easing={'linear'}
         style={{ pointerEvents: 'none' }}
       >
@@ -63,16 +65,24 @@ const Plots = () => {
           <Box sx={{ pointerEvents: 'all' }}>
             <Flex>
               <Label sx={sx.radioLabel}>
-                <Radio sx={sx.radio} name='plot' />
+                <Radio
+                  sx={sx.radio}
+                  name='mode'
+                  value='point'
+                  onChange={(e) => setMode(e.target.value)}
+                  checked={mode === 'point'}
+                />
                 Point
               </Label>
               <Label sx={sx.radioLabel}>
-                <Radio sx={sx.radio} name='plot' />
+                <Radio
+                  sx={sx.radio}
+                  name='mode'
+                  value='circle'
+                  onChange={(e) => setMode(e.target.value)}
+                  checked={mode === 'circle'}
+                />
                 Circle
-              </Label>
-              <Label sx={sx.radioLabel}>
-                <Radio sx={sx.radio} name='plot' disabled />
-                Polygon
               </Label>
             </Flex>
           </Box>

@@ -46,18 +46,24 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { landBoundaries: false, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
-  mode: 'explore',
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
+})
+
+const createPlotsSlice = (set, get) => ({
+  mode: 'inactive',
+  center: null,
   setMode: (mode) => set({ mode }),
+  setCenter: (center) => set({ center }),
 })
 
 const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
+  ...createPlotsSlice(set, get),
   setUrl: async (url, apiMetadata, clim) => {
     set({
       url,
