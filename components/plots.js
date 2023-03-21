@@ -35,9 +35,15 @@ const Plots = () => {
   const mode = useStore((state) => state.mode)
   const center = useStore((state) => state.center)
   const setMode = useStore((state) => state.setMode)
+  const setCenter = useStore((state) => state.setCenter)
 
   const handleClick = useCallback(() => {
-    setMode(mode === 'inactive' ? 'point' : 'inactive')
+    if (mode === 'inactive') {
+      setMode('point')
+    } else {
+      setMode('inactive')
+      setCenter(null)
+    }
   }, [mode])
 
   return (
