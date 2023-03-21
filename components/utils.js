@@ -1,6 +1,7 @@
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import ndarray from 'ndarray'
+import unpack from 'ndarray-unpack'
 
 import { PROJECTIONS, ASPECTS } from './constants'
 
@@ -485,4 +486,86 @@ const getAxisIndex = (value, { axis, chunk_shape, shape }) => {
   const chunkStep = step * chunk_shape[index]
 
   return Math.floor((value - start) / chunkStep)
+}
+
+const inBounds = (point, bounds) => {
+  const [lon, lat] = point
+
+  return (
+    bounds.lon[0] <= lon &&
+    bounds.lon[1] >= lon &&
+    bounds.lat[0] <= lat &&
+    bounds.lat[1] >= lat
+  )
+}
+
+// TODO: avoid returning data when chunk is not yet present in `chunks`
+// TODO: handle chunks with bounds that span meridians
+// TODO: handle circular areas
+//       - handle non-equal area pixels in aggregation
+export const getLines = (
+  center,
+  selector,
+  { activeChunkKeys, chunks, variable, selectors }
+) => {
+  const result = { coords: [], points: [], range: [Infinity, -Infinity] }
+  const selectedChunks = activeChunkKeys.filter(
+    (c) => chunks[c] && inBounds(center, chunks[c].bounds)
+  )
+
+  const { chunk_separator, axes, chunk_shape } = variable
+
+  selectedChunks.forEach((chunkKey) => {
+    const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
+    const { clim, bounds, data } = chunks[chunkKey]
+    result.range = [
+      Math.min(result.range[0], clim[0]),
+      Math.max(result.range[1], clim[1]),
+    ]
+
+    const spatialIndices = [
+      { axis: axes.X, key: 'lon', coord: center[0] },
+      { axis: axes.Y, key: 'lat', coord: center[1] },
+    ].map(({ axis, key, coord }) => {
+      const { step } = axis
+      // const start = Math.floor(coord - bounds[key][0]) / step
+      // const end = Math.ceil(coord - bounds[key][0]) / step
+
+      return Math.round((coord - bounds[key][0]) / step)
+    })
+
+    const indices = selectors.map((s, i) => {
+      if (s.name === selector.name) {
+        // return all values for selector being plotted
+        return null
+      } else if (i === axes.X.index) {
+        // return selected index for X dimensions
+        return spatialIndices[0]
+      } else if (i === axes.Y.index) {
+        // return selected index for Y dimension
+        return spatialIndices[1]
+      } else {
+        // return displayed index for all other dimensions
+        return selector.index
+      }
+    })
+
+    const values = indices.every((i) => typeof i === 'number')
+      ? data.get(...indices)
+      : unpack(data.pick(...indices))
+
+    result.coords.push([
+      axes.X.array.data[
+        chunk_shape[axes.X.index] * chunkKeyArray[axes.X.index] +
+          spatialIndices[0]
+      ],
+      axes.Y.array.data[
+        chunk_shape[axes.Y.index] * chunkKeyArray[axes.Y.index] +
+          spatialIndices[1]
+      ],
+    ])
+
+    result.points.push(values)
+  })
+  return result
 }
