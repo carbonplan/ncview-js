@@ -105,9 +105,9 @@ const PointInformation = () => {
   )
 
   return (
-    <Box sx={{ width: '100%', height: '200px', mt: 3 }}>
+    <Box sx={{ width: '100%', mt: 3 }}>
       {coords[0] && <Point point={coords[0]} />}
-      {points[0] && (
+      {points[0] != null && (
         <Flex
           sx={{
             fontFamily: 'mono',
