@@ -161,11 +161,11 @@ const LineChart = ({ selector, index }) => {
 }
 
 const Charts = () => {
-  const selectors = useStore((state) => state.variable.selectors)
+  const selectors = useStore((state) => state.variable?.selectors)
 
   return (
     <>
-      {selectors
+      {selectors?
         .filter((s) => typeof s.chunk === 'number')
         .map((s, i) => (
           <LineChart key={s.name} selector={s} index={i} />
