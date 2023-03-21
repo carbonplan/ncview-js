@@ -3,7 +3,6 @@ import { SidebarFooter } from '@carbonplan/layouts'
 import { useCallback } from 'react'
 import { Search, X } from '@carbonplan/icons'
 import AnimateHeight from 'react-animate-height'
-import { format } from 'd3-format'
 
 import useStore from './store'
 import Charts from './region/charts'
@@ -96,11 +95,6 @@ const Plots = () => {
             </Flex>
           </Box>
         </Box>
-        {center && (
-          <Box sx={{ fontFamily: 'mono', letterSpacing: 'mono' }}>
-            {center.map(format('.1f')).join(', ')}
-          </Box>
-        )}
         {mode !== 'inactive' && center && <Charts />}
       </AnimateHeight>
     </SidebarFooter>

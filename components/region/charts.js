@@ -2,13 +2,15 @@ import {
   Axis,
   AxisLabel,
   Chart,
+  Circle,
   Line,
   Plot,
   TickLabels,
   Ticks,
 } from '@carbonplan/charts'
-import { Box } from 'theme-ui'
+import { Box, Flex } from 'theme-ui'
 import unpack from 'ndarray-unpack'
+import { format } from 'd3-format'
 
 import useStore from '../store'
 import { toKeyArray } from '../utils'
@@ -26,14 +28,12 @@ const inBounds = (point, bounds) => {
 
 // TODO: avoid returning data when chunk is not yet present in `chunks`
 // TODO: handle non-equal area pixels in aggregation
-// TODO: handle multiple non-spatial dimensions
-// TODO: aggregate clims for use as chart range
 const getPoints = (
   center,
   selector,
   { activeChunkKeys, chunks, variable, selectors }
 ) => {
-  const results = []
+  const result = { points: [], values: [], range: [Infinity, -Infinity] }
   const selectedChunks = activeChunkKeys.filter(
     (c) => chunks[c] && inBounds(center, chunks[c].bounds)
   )
@@ -41,16 +41,19 @@ const getPoints = (
   const { chunk_separator, axes, chunk_shape } = variable
   selectedChunks.forEach((chunkKey) => {
     const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-    const { bounds, data } = chunks[chunkKey]
+    const { clim, bounds, data } = chunks[chunkKey]
+    result.range = [
+      Math.min(result.range[0], clim[0]),
+      Math.max(result.range[1], clim[1]),
+    ]
 
-    const temp = [
+    const spatialIndices = [
       { axis: axes.X, key: 'lon', coord: center[0] },
       { axis: axes.Y, key: 'lat', coord: center[1] },
     ].map(({ axis, key, coord }) => {
-      const { index, step } = axis
-      const offset = chunk_shape[index] * chunkKeyArray[index]
-      const start = Math.floor(coord - bounds[key][0]) / step
-      const end = Math.ceil(coord - bounds[key][0]) / step
+      const { step } = axis
+      // const start = Math.floor(coord - bounds[key][0]) / step
+      // const end = Math.ceil(coord - bounds[key][0]) / step
 
       return Math.round(coord - bounds[key][0]) / step
     })
@@ -62,10 +65,10 @@ const getPoints = (
           return null
         } else if (i === axes.X.index) {
           // return selected index for X dimensions
-          return temp[0]
+          return spatialIndices[0]
         } else if (i === axes.Y.index) {
           // return selected index for Y dimension
-          return temp[1]
+          return spatialIndices[1]
         } else {
           // return displayed index for all other dimensions
           return selector.index
@@ -73,9 +76,19 @@ const getPoints = (
       })
     )
 
-    results.push(unpack(values))
+    result.points.push([
+      axes.X.array.data[
+        chunk_shape[axes.X.index] * chunkKeyArray[axes.X.index] +
+          spatialIndices[0]
+      ],
+      axes.Y.array.data[
+        chunk_shape[axes.Y.index] * chunkKeyArray[axes.Y.index] +
+          spatialIndices[1]
+      ],
+    ])
+    result.values.push(unpack(values))
   })
-  return results
+  return result
 }
 
 const LineChart = ({ selector, index }) => {
@@ -86,7 +99,7 @@ const LineChart = ({ selector, index }) => {
   const metadata = useStore((state) => state.metadata?.metadata)
   const selectors = useStore((state) => state.variable.selectors)
 
-  const [points] = getPoints(center, selector, {
+  const { range, points, values } = getPoints(center, selector, {
     activeChunkKeys,
     chunks,
     variable,
@@ -95,10 +108,29 @@ const LineChart = ({ selector, index }) => {
   const chunk_shape = variable.chunk_shape[index]
   const offset = selector.chunk * chunk_shape
   const domain = [offset, offset + chunk_shape - 1]
-  const range = points ? [Math.min(...points), Math.max(...points)] : [0, 0]
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 3 }}>
+      {points[0] && (
+        <Flex
+          sx={{
+            fontFamily: 'mono',
+            letterSpacing: 'mono',
+            textTransform: 'uppercase',
+            fontSize: 0,
+            mb: 3,
+            gap: 2,
+          }}
+        >
+          <Box sx={{ color: 'secondary', display: 'inline-block' }}>lon:</Box>{' '}
+          {format('.1f')(points[0][0])}°,
+          <Box sx={{ color: 'secondary', display: 'inline-block' }}>
+            lat:
+          </Box>{' '}
+          {format('.1f')(points[0][1])}°
+        </Flex>
+      )}
+
       <Chart x={domain} y={range}>
         <Axis left bottom />
         <AxisLabel left units={metadata[`${variable.name}/.zattrs`].units}>
@@ -110,14 +142,17 @@ const LineChart = ({ selector, index }) => {
         <Ticks left bottom />
         <TickLabels left bottom />
         <Plot>
-          {points && (
+          {values[0] && (
             <Line
-              data={points
+              data={values[0]
                 .map((d, i) =>
                   d === variable.nullValue ? null : [offset + i, d]
                 )
                 .filter(Boolean)}
             />
+          )}
+          {values[0] && (
+            <Circle x={offset + selector.index} y={values[0][selector.index]} />
           )}
         </Plot>
       </Chart>
