@@ -17,6 +17,7 @@ const DATASETS = [
   's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
   's3://mur-sst/zarr',
   'https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/WOA_1degree_monthly-feedstock/woa18-1deg-monthly.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.day.GARD-SV.tasmax.zarr',
 ]
 
 const sx = {
