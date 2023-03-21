@@ -27,6 +27,7 @@ const inBounds = (point, bounds) => {
 // TODO: avoid returning data when chunk is not yet present in `chunks`
 // TODO: handle non-equal area pixels in aggregation
 // TODO: handle multiple non-spatial dimensions
+// TODO: aggregate clims for use as chart range
 const getPoints = (
   center,
   selector,
@@ -77,7 +78,7 @@ const getPoints = (
   return results
 }
 
-const LineChart = ({ selector }) => {
+const LineChart = ({ selector, index }) => {
   const center = useStore((state) => state.center)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
@@ -85,21 +86,20 @@ const LineChart = ({ selector }) => {
   const metadata = useStore((state) => state.metadata?.metadata)
   const selectors = useStore((state) => state.variable.selectors)
 
-  // const selectedChunks = activeChunkKeys.filter(
-  //   (c) => chunks[c] && inBounds(center, chunks[c].bounds)
-  // )
-
   const [points] = getPoints(center, selector, {
     activeChunkKeys,
     chunks,
     variable,
     selectors,
   })
+  const chunk_shape = variable.chunk_shape[index]
+  const offset = selector.chunk * chunk_shape
+  const domain = [offset, offset + chunk_shape - 1]
   const range = points ? [Math.min(...points), Math.max(...points)] : [0, 0]
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 3 }}>
-      <Chart x={[0, 29]} y={range}>
+      <Chart x={domain} y={range}>
         <Axis left bottom />
         <AxisLabel left units={metadata[`${variable.name}/.zattrs`].units}>
           {variable.name}
@@ -113,7 +113,9 @@ const LineChart = ({ selector }) => {
           {points && (
             <Line
               data={points
-                .map((d, i) => (d === variable.nullValue ? null : [i, d]))
+                .map((d, i) =>
+                  d === variable.nullValue ? null : [offset + i, d]
+                )
                 .filter(Boolean)}
             />
           )}
@@ -131,7 +133,7 @@ const Charts = () => {
       {selectors
         .filter((s) => typeof s.chunk === 'number')
         .map((s, i) => (
-          <LineChart key={s.name} selector={s} />
+          <LineChart key={s.name} selector={s} index={i} />
         ))}
     </>
   )
