@@ -3,8 +3,10 @@ import { SidebarFooter } from '@carbonplan/layouts'
 import { useCallback } from 'react'
 import { Search, X } from '@carbonplan/icons'
 import AnimateHeight from 'react-animate-height'
+import { format } from 'd3-format'
 
 import useStore from './store'
+import Charts from './region/charts'
 
 const sx = {
   radioLabel: {
@@ -31,6 +33,7 @@ const sx = {
 
 const Plots = () => {
   const mode = useStore((state) => state.mode)
+  const center = useStore((state) => state.center)
   const setMode = useStore((state) => state.setMode)
 
   const handleClick = useCallback(() => {
@@ -87,6 +90,12 @@ const Plots = () => {
             </Flex>
           </Box>
         </Box>
+        {center && (
+          <Box sx={{ fontFamily: 'mono', letterSpacing: 'mono' }}>
+            {center.map(format('.1f')).join(', ')}
+          </Box>
+        )}
+        {mode !== 'inactive' && center && <Charts />}
       </AnimateHeight>
     </SidebarFooter>
   )

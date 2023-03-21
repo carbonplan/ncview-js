@@ -15,13 +15,12 @@ const getRange = (arr, { nullValue }) => {
 
 const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
   return Object.keys(axes).reduce((accum, key) => {
-    const { array, index } = axes[key]
+    const { array, index, step } = axes[key]
     if (!array) {
       return accum
     }
     const start = chunkKeyArray[index] * chunk_shape[index]
     const end = start + chunk_shape[index] - 1
-    const halfStep = Math.abs(Number(array.data[0]) - Number(array.data[1])) / 2
 
     const initialBounds = [
       array.data[start],
@@ -32,7 +31,7 @@ const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
 
     return {
       ...accum,
-      [key]: [initialBounds[0] - halfStep, initialBounds[1] + halfStep],
+      [key]: [initialBounds[0] - step / 2, initialBounds[1] + step / 2],
     }
   }, {})
 }
@@ -212,10 +211,12 @@ export const getVariableInfo = async (
 
   const axes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
     const index = dimensions.indexOf(apiMetadata[name][key])
+    const array = coordinates[index]
+    const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
 
     return {
       ...accum,
-      [key]: { array: coordinates[index], index },
+      [key]: { array, step, index },
     }
   }, {})
 
@@ -293,6 +294,7 @@ export const getChunkData = async (
 
   const normalizedData = filteredData.step(...steps)
 
+  // TODO: only perform bound calculation for spatial dimensions
   const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
     axes,
     chunk_shape: chunk_shape,
