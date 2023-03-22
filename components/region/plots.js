@@ -53,7 +53,7 @@ const LineChart = ({ selector, index }) => {
   const domain = [offset, offset + chunk_shape - 1]
 
   return (
-    <Box sx={{ width: '100%', height: '200px', mt: 3 }}>
+    <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
       {coords[0] && <Point point={coords[0]} />}
 
       <Chart x={domain} y={range}>
@@ -104,25 +104,37 @@ const PointInformation = () => {
     }
   )
 
+  const nanValue =
+    points[0] == null ||
+    points[0] === variable.nullValue ||
+    Number.isNaN(points[0])
+
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
       {coords[0] && <Point point={coords[0]} />}
-      {points[0] != null && (
-        <Flex
-          sx={{
-            fontFamily: 'mono',
-            letterSpacing: 'mono',
-            textTransform: 'uppercase',
-            fontSize: 0,
-            mb: 3,
-            gap: 2,
-          }}
-        >
-          <Box sx={{ color: 'secondary', display: 'inline-block' }}>value:</Box>
-          {format('.1f')(points[0])}{' '}
-          {metadata[`${variable.name}/.zattrs`].units}
-        </Flex>
-      )}
+
+      <Flex
+        sx={{
+          fontFamily: 'mono',
+          letterSpacing: 'mono',
+          textTransform: 'uppercase',
+          fontSize: 0,
+          mb: 3,
+          gap: 2,
+        }}
+      >
+        <Box sx={{ color: 'secondary', display: 'inline-block' }}>value:</Box>
+        {nanValue ? (
+          <Box sx={{ color: 'secondary', display: 'inline-block' }}>
+            not defined
+          </Box>
+        ) : (
+          <>
+            {format('.1f')(points[0])}{' '}
+            {metadata[`${variable.name}/.zattrs`].units}
+          </>
+        )}
+      </Flex>
     </Box>
   )
 }
