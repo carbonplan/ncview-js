@@ -51,6 +51,7 @@ const LineChart = ({ selector, index }) => {
   const chunk_shape = variable.chunk_shape[index]
   const offset = selector.chunk * chunk_shape
   const domain = [offset, offset + chunk_shape - 1]
+  const units = metadata[`${variable.name}/.zattrs`].units
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
@@ -58,7 +59,18 @@ const LineChart = ({ selector, index }) => {
 
       <Chart x={domain} y={range}>
         <Axis left bottom />
-        <AxisLabel left units={metadata[`${variable.name}/.zattrs`].units}>
+        <AxisLabel
+          left
+          units={
+            <Box
+              sx={{
+                wordBreak: units.includes(' ') ? 'break-word' : 'break-all',
+              }}
+            >
+              {units}
+            </Box>
+          }
+        >
           {variable.name}
         </AxisLabel>
         <AxisLabel bottom units={metadata[`${selector.name}/.zattrs`].units}>
