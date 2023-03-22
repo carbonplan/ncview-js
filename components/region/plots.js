@@ -14,6 +14,10 @@ import { format } from 'd3-format'
 import useStore from '../store'
 import { getLines } from '../utils'
 
+const isNullValue = (p) => {
+  return p == null || p === variable.nullValue || Number.isNaN(p)
+}
+
 const Point = ({ point, selector }) => {
   const selectors = useStore((state) => state.variable.selectors)
   const extraCoords = selectors.filter(
@@ -92,7 +96,7 @@ const LineChart = ({ selector, index }) => {
         <Ticks left bottom />
         <TickLabels left bottom />
         <Plot>
-          {points[0] && (
+          {points[0] && points[0].some((d) => !isNullValue(d)) && (
             <Line
               data={points[0]
                 .map((d, i) =>
@@ -101,7 +105,7 @@ const LineChart = ({ selector, index }) => {
                 .filter(Boolean)}
             />
           )}
-          {points[0] && (
+          {points[0] && !isNullValue(points[0][selector.index]) && (
             <Circle x={offset + selector.index} y={points[0][selector.index]} />
           )}
         </Plot>
@@ -129,11 +133,6 @@ const PointInformation = ({ selector }) => {
     }
   )
 
-  const nanValue =
-    points[0] == null ||
-    points[0] === variable.nullValue ||
-    Number.isNaN(points[0])
-
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
       {coords[0] && <Point point={coords[0]} selector={selector} />}
@@ -149,7 +148,7 @@ const PointInformation = ({ selector }) => {
         }}
       >
         <Box sx={{ color: 'secondary', display: 'inline-block' }}>value:</Box>
-        {nanValue ? (
+        {isNullValue(points[0]) ? (
           <Box sx={{ color: 'secondary', display: 'inline-block' }}>
             not defined
           </Box>
