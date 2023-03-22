@@ -14,7 +14,12 @@ import { format } from 'd3-format'
 import useStore from '../store'
 import { getLines } from '../utils'
 
-const Point = ({ point }) => {
+const Point = ({ point, selector }) => {
+  const selectors = useStore((state) => state.variable.selectors)
+  const extraCoords = selectors.filter(
+    (s) => typeof s.index === 'number' && s.name !== selector?.name
+  )
+
   return (
     <Flex
       sx={{
@@ -27,9 +32,17 @@ const Point = ({ point }) => {
       }}
     >
       <Box sx={{ color: 'secondary', display: 'inline-block' }}>lon:</Box>{' '}
-      {format('.1f')(point[0])}°,
-      <Box sx={{ color: 'secondary', display: 'inline-block' }}>lat:</Box>{' '}
+      {format('.1f')(point[0])}°
+      <Box sx={{ color: 'secondary', display: 'inline-block' }}>, lat:</Box>{' '}
       {format('.1f')(point[1])}°
+      {extraCoords.map((c) => (
+        <Box key={c.name}>
+          <Box sx={{ color: 'secondary', display: 'inline-block' }}>
+            , {c.name}:
+          </Box>{' '}
+          {c.index}
+        </Box>
+      ))}
     </Flex>
   )
 }
@@ -55,7 +68,7 @@ const LineChart = ({ selector, index }) => {
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
-      {coords[0] && <Point point={coords[0]} />}
+      {coords[0] && <Point point={coords[0]} selector={selector} />}
 
       <Chart x={domain} y={range}>
         <Axis left bottom />
@@ -97,7 +110,7 @@ const LineChart = ({ selector, index }) => {
   )
 }
 
-const PointInformation = () => {
+const PointInformation = ({ selector }) => {
   const center = useStore((state) => state.center)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
@@ -123,7 +136,7 @@ const PointInformation = () => {
 
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
-      {coords[0] && <Point point={coords[0]} />}
+      {coords[0] && <Point point={coords[0]} selector={selector} />}
 
       <Flex
         sx={{
@@ -157,7 +170,7 @@ const Plots = () => {
   const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
 
   if (selectorLines.length === 0) {
-    return <PointInformation />
+    return <PointInformation selector={s} />
   }
 
   return (
