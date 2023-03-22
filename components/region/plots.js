@@ -169,7 +169,7 @@ const Plots = () => {
   const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
 
   if (selectorLines.length === 0) {
-    return <PointInformation selector={s} />
+    return <PointInformation />
   }
 
   return (
