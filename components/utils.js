@@ -298,7 +298,7 @@ export const getChunkData = async (
   // TODO: only perform bound calculation for spatial dimensions
   const { X: lonRange, Y: latRange } = getChunkBounds(chunkKeyArray, {
     axes,
-    chunk_shape: chunk_shape,
+    chunk_shape,
   })
   const bounds = {
     lat: latRange,
@@ -488,12 +488,24 @@ const getAxisIndex = (value, { axis, chunk_shape, shape }) => {
   return Math.floor((value - start) / chunkStep)
 }
 
+const diffLongitudes = (lonA, lonB) => {
+  const normalized = [lonA, lonB].map((lon) => {
+    if (lon > 180) {
+      return lon - 360
+    } else {
+      return lon
+    }
+  })
+
+  return normalized[0] - normalized[1]
+}
+
 const inBounds = (point, bounds) => {
   const [lon, lat] = point
 
   return (
-    bounds.lon[0] <= lon &&
-    bounds.lon[1] >= lon &&
+    diffLongitudes(bounds.lon[0], lon) <= 0 &&
+    diffLongitudes(bounds.lon[1], lon) >= 0 &&
     bounds.lat[0] <= lat &&
     bounds.lat[1] >= lat
   )
@@ -508,12 +520,11 @@ export const getLines = (
   selector,
   { activeChunkKeys, chunks, variable, selectors }
 ) => {
+  const { chunk_separator, axes, chunk_shape } = variable
   const result = { coords: [], points: [], range: [Infinity, -Infinity] }
   const selectedChunks = activeChunkKeys.filter(
     (c) => chunks[c] && inBounds(center, chunks[c].bounds)
   )
-
-  const { chunk_separator, axes, chunk_shape } = variable
 
   selectedChunks.forEach((chunkKey) => {
     const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
@@ -531,7 +542,7 @@ export const getLines = (
       // const start = Math.floor(coord - bounds[key][0]) / step
       // const end = Math.ceil(coord - bounds[key][0]) / step
 
-      return Math.round((coord - bounds[key][0]) / step)
+      return Math.round(diffLongitudes(coord, bounds[key][0] + step / 2) / step)
     })
 
     const indices = selectors.map((s, i) => {
