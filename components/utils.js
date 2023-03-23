@@ -488,12 +488,13 @@ const getAxisIndex = (value, { axis, chunk_shape, shape }) => {
   return Math.floor((value - start) / chunkStep)
 }
 
-const diffLongitudes = (lonA, lonB) => {
-  const normalized = [lonA, lonB].map((lon) => {
-    if (lon > 180) {
-      return lon - 360
+// Handle diffing coordinates, including longitudes either on -180,180 or 0,360 domains
+const normalizedDiff = (coordA, coordB) => {
+  const normalized = [coordA, coordB].map((coord) => {
+    if (coord > 180) {
+      return coord - 360
     } else {
-      return lon
+      return coord
     }
   })
 
@@ -504,8 +505,8 @@ const inBounds = (point, bounds) => {
   const [lon, lat] = point
 
   return (
-    diffLongitudes(bounds.lon[0], lon) <= 0 &&
-    diffLongitudes(bounds.lon[1], lon) >= 0 &&
+    normalizedDiff(bounds.lon[0], lon) <= 0 &&
+    normalizedDiff(bounds.lon[1], lon) >= 0 &&
     bounds.lat[0] <= lat &&
     bounds.lat[1] >= lat
   )
@@ -542,7 +543,7 @@ export const getLines = (
       // const start = Math.floor(coord - bounds[key][0]) / step
       // const end = Math.ceil(coord - bounds[key][0]) / step
 
-      return Math.round(diffLongitudes(coord, bounds[key][0] + step / 2) / step)
+      return Math.round(normalizedDiff(coord, bounds[key][0] + step / 2) / step)
     })
 
     const indices = selectors.map((s, i) => {
