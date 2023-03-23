@@ -557,7 +557,7 @@ export const getLines = (
         return spatialIndices[1]
       } else {
         // return displayed index for all other dimensions
-        return selector.index
+        return selectors[i].index
       }
     })
 
