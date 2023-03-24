@@ -11,6 +11,7 @@ import MapContainer from './map-container'
 import Layer from './minimap/layer'
 import Nav from './nav'
 import Chunk from './chunk'
+import { Point, Circle } from './region'
 
 const Map = () => {
   const { theme } = useThemeUI()
@@ -28,6 +29,7 @@ const Map = () => {
   })
   const { northPole, nullValue } = useStore((state) => state.variable)
   const clim = useStore((state) => state.clim)
+  const mode = useStore((state) => state.mode)
 
   const { lockZoom } = useStore((state) => state.variable)
   const resetCenterChunk = useStore((state) => state.resetCenterChunk)
@@ -82,6 +84,8 @@ const Map = () => {
     >
       {url ? (
         <MapContainer setMapProps={setMapProps}>
+          {mode === 'point' && <Point mapProps={mapProps} />}
+          {mode === 'circle' && <Circle mapProps={mapProps} />}
           {renderable && (
             <Minimap {...mapProps}>
               {basemaps.oceanMask && (

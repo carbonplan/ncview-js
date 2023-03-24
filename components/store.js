@@ -33,11 +33,12 @@ const createDatasetSlice = (set, get) => ({
   },
 
   // cache of chunks
-  activeChunkKeys: [],
   chunks: {},
 
-  // active chunk
+  // central chunk
   chunkKey: null,
+  // active chunks
+  activeChunkKeys: [],
 })
 
 const createDisplaySlice = (set, get) => ({
@@ -52,9 +53,17 @@ const createDisplaySlice = (set, get) => ({
   setClim: (clim) => set({ clim }),
 })
 
+const createPlotsSlice = (set, get) => ({
+  mode: 'inactive',
+  center: null,
+  setMode: (mode) => set({ mode }),
+  setCenter: (center) => set({ center }),
+})
+
 const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
+  ...createPlotsSlice(set, get),
   setUrl: async (url, apiMetadata, clim) => {
     set({
       url,
@@ -158,7 +167,7 @@ const useStore = create((set, get) => ({
     })
 
     try {
-      const activeChunkKeys = await getActiveChunkKeys(chunkKey, get())
+      const activeChunkKeys = getActiveChunkKeys(chunkKey, get())
       const toSet = {
         activeChunkKeys,
         loading: false,

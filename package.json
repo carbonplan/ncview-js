@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/carbonplan/article-template#readme",
   "dependencies": {
+    "@carbonplan/charts": "^3.0.0",
     "@carbonplan/colormaps": "^4.0.0",
     "@carbonplan/components": "^12.0.0",
     "@carbonplan/icons": "^2.0.0",
@@ -38,8 +39,7 @@
     "d3-geo": "^3.1.0",
     "glsl-geo-projection": "^1.0.1",
     "ndarray": "^1.0.19",
-    "ndarray-concat-cols": "^1.0.0",
-    "ndarray-concat-rows": "^1.0.1",
+    "ndarray-unpack": "^1.0.0",
     "next": "^12.0.7",
     "numcodecs": "^0.2.2",
     "react": "^18.2.0",
