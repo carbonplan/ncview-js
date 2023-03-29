@@ -65,7 +65,7 @@ const Slider = ({ index }) => {
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
-      {chunk_shape > 1 && (
+      {shape > 1 && (
         <>
           <Row columns={[4]}>
             <Column start={1} width={[4, 2, 2, 2]} sx={{ mb: 3 }}>
