@@ -195,7 +195,6 @@ export const getVariableInfo = async (
 ) => {
   const dataArray = arrays[name]
   const zattrs = metadata.metadata[`${name}/.zattrs`]
-  const zarray = metadata.metadata[`${name}/.zarray`]
 
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
@@ -222,7 +221,7 @@ export const getVariableInfo = async (
   }, {})
 
   const lockZoom = [axes.X.index, axes.Y.index].some(
-    (index) => zarray.shape[index] / zarray.chunks[index] > 4
+    (index) => arrays[name].shape[index] / arrays[name].chunk_shape[index] > 4
   )
 
   const selectors = dimensions.map((d, i) => {
