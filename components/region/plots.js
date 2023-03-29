@@ -12,6 +12,7 @@ import {
 } from '@carbonplan/charts'
 import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
+import { alpha } from '@theme-ui/color'
 
 import useStore from '../store'
 import { getLines } from '../utils'
@@ -116,7 +117,7 @@ const LineChart = ({ selector, index }) => {
           <Label
             x={offset + selector.index}
             y={points[0][selector.index]}
-            sx={{ mt: 2, ml: 1 }}
+            sx={{ mt: 2, ml: 1, color: 'primary' }}
           >
             {format('.1f')(points[0][selector.index])} {units}
           </Label>
