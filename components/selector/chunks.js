@@ -70,6 +70,7 @@ const Chunks = ({ index }) => {
                 <Flex sx={{ gap: 2 }}>
                   {axes.T?.index === index && (
                     <DateDisplay
+                      array={axes.T.array}
                       selector={selector}
                       chunkShape={chunk_shape[index]}
                     />

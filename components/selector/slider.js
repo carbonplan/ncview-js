@@ -132,6 +132,7 @@ const Slider = ({ index }) => {
             <Flex sx={{ gap: 2 }}>
               {axes.T?.index === index && (
                 <DateDisplay
+                  array={axes.T.array}
                   selector={{ ...selector, ...sliderValue }}
                   chunkShape={chunk_shape}
                 />
