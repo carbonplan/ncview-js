@@ -455,9 +455,19 @@ export const pointToChunkKey = (
 ) => {
   const chunkKey = shape.map((d, i) => {
     if (axes.X.index === i) {
-      return getAxisIndex(lon, { axis: axes.X, chunk_shape, shape })
+      return getAxisIndex(lon, {
+        name: 'lon',
+        axis: axes.X,
+        chunk_shape,
+        shape,
+      })
     } else if (axes.Y.index === i) {
-      return getAxisIndex(lat, { axis: axes.Y, chunk_shape, shape })
+      return getAxisIndex(lat, {
+        name: 'lat',
+        axis: axes.Y,
+        chunk_shape,
+        shape,
+      })
     } else {
       return selectors[i].chunk
     }
@@ -468,23 +478,63 @@ export const pointToChunkKey = (
   }
 }
 
-const getAxisIndex = (value, { axis, chunk_shape, shape }) => {
+const inLonRange = (lon, range) => {
+  if (range[0] <= lon && range[1] >= lon) {
+    return true
+  } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
+    return true
+  }
+
+  return false
+}
+
+const getLonDiff = (lon, range) => {
+  if (range[0] <= lon && range[1] >= lon) {
+    return lon - range[0]
+  } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
+    return lon - range[0] + 360
+  }
+
+  throw new Error(
+    `Incompatible longitude and range, lon: ${lon}; range: ${range.join(', ')}`
+  )
+}
+
+const inBounds = (point, bounds) => {
+  const [lon, lat] = point
+
+  return (
+    inLonRange(lon, bounds.lon) && bounds.lat[0] <= lat && bounds.lat[1] >= lat
+  )
+}
+
+const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
   const { array, index } = axis
   const start = array.data[0]
   const end = array.data[array.data.length - 1]
 
-  // if value is outside range,
-  if ((value < start && value < end) || (value > start && value > end)) {
-    // return whichever side of range is closer to value.
-    return Math.abs(start - value) < Math.abs(end - value)
-      ? 0
-      : Math.ceil(shape / chunk_shape)
+  let diff
+  if (name === 'lon') {
+    if (!inLonRange(value, [start, end])) {
+      // TODO
+      console.log('in here')
+      return 0
+    }
+    diff = getLonDiff(value, [start, end])
+  } else {
+    // if value is outside range,
+    if ((value < start && value < end) || (value > start && value > end)) {
+      // return whichever side of range is closer to value.
+      return Math.abs(start - value) < Math.abs(end - value)
+        ? 0
+        : Math.ceil(shape / chunk_shape)
+    }
+    diff = value - start
   }
 
-  const step = (end - start) / shape[index]
-  const chunkStep = step * chunk_shape[index]
+  const chunkStep = axis.step * chunk_shape[index]
 
-  return Math.floor((value - start) / chunkStep)
+  return Math.floor(diff / chunkStep)
 }
 
 const radians = (deg) => (deg * Math.PI) / 180
@@ -550,36 +600,6 @@ const unrotateCoords = (coords, northPole) => {
   const theta = -1 * radians(-1 * (90 - northPole[1]))
 
   return rotate(coords, phi, theta)
-}
-
-const inLonRange = (lon, range) => {
-  if (range[0] <= lon && range[1] >= lon) {
-    return true
-  } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
-    return true
-  }
-
-  return false
-}
-
-const getLonDiff = (lon, range) => {
-  if (range[0] <= lon && range[1] >= lon) {
-    return lon - range[0]
-  } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
-    return lon - range[0] + 360
-  }
-
-  throw new Error(
-    `Incompatible longitude and range, lon: ${lon}; range: ${range.join(', ')}`
-  )
-}
-
-const inBounds = (point, bounds) => {
-  const [lon, lat] = point
-
-  return (
-    inLonRange(lon, bounds.lon) && bounds.lat[0] <= lat && bounds.lat[1] >= lat
-  )
 }
 
 // TODO: avoid returning data when chunk is not yet present in `chunks`
