@@ -357,7 +357,17 @@ export const getAdjacentChunk = (offset, chunkKey, variable) => {
   })
 
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-  const newChunkKeyArray = chunkKeyArray.map((d, i) => d + coordinateOffset[i])
+  const newChunkKeyArray = chunkKeyArray.map((d, i) => {
+    let value = d + coordinateOffset[i]
+    const numChunks = Math.ceil(shape[i] / chunk_shape[i])
+    if (value > numChunks - 1) {
+      value = value % numChunks
+    } else if (value < 0) {
+      value = value + numChunks
+    }
+
+    return value
+  })
 
   // if new chunk key corresponds to array indices outside of the range represented
   // by `shape`, return null
