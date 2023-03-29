@@ -23,6 +23,7 @@ const Slider = ({ index }) => {
   )
   const setSelector = useStore((state) => state.setSelector)
   const [sliderValue, setSliderValue] = useState(selector)
+  const [sliding, setSliding] = useState(false)
   const chunk_shape = useStore((state) => state.variable.chunk_shape[index])
   const shape = useStore((state) => state.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
@@ -36,8 +37,11 @@ const Slider = ({ index }) => {
         chunk: Math.floor(value / chunk_shape),
       }
       setSliderValue(updatedSelector)
+      if (!sliding) {
+        setSelector(index, updatedSelector)
+      }
     },
-    [chunk_shape]
+    [index, sliding, chunk_shape]
   )
 
   useEffect(() => {
@@ -49,7 +53,13 @@ const Slider = ({ index }) => {
     }
   }, [selector.index, selector.chunk])
 
+  const handleMouseDown = useCallback(() => {
+    setSliding(true)
+    setSelector(index, sliderValue)
+  }, [index, sliderValue])
+
   const handleMouseUp = useCallback(() => {
+    setSliding(false)
     setSelector(index, sliderValue)
   }, [index, sliderValue])
 
@@ -112,6 +122,7 @@ const Slider = ({ index }) => {
             min={0}
             max={shape - 1}
             onChange={handleChange}
+            onMouseDown={handleMouseDown}
             onMouseUp={handleMouseUp}
             step={1}
             sx={{ mb: 3 }}
