@@ -38,14 +38,14 @@ const Map = () => {
     scale: 1,
     translate: [0, 0],
   })
-  const mapPropsInitialized = useRef(false)
+  const mapPropsInitialized = useRef(0)
 
   useEffect(() => {
-    mapPropsInitialized.current = false
+    mapPropsInitialized.current = 0
   }, [projectionName])
 
   useEffect(() => {
-    if (!mapPropsInitialized.current && chunkBounds) {
+    if (!mapPropsInitialized.current < 2 && chunkBounds) {
       const bounds = lockZoom
         ? chunkBounds
         : {
@@ -53,13 +53,13 @@ const Map = () => {
             lon: [-180, 180],
           }
       setMapProps(getMapProps(bounds, projectionName))
-      mapPropsInitialized.current = true
+      mapPropsInitialized.current += 1
     }
   }, [!!chunkBounds, projectionName, lockZoom])
 
   useEffect(() => {
     if (!url) {
-      mapPropsInitialized.current = false
+      mapPropsInitialized.current = 0
     }
   }, [url])
 
