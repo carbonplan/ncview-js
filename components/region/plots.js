@@ -3,6 +3,7 @@ import {
   AxisLabel,
   Chart,
   Circle,
+  Grid,
   Line,
   Plot,
   TickLabels,
@@ -95,6 +96,7 @@ const LineChart = ({ selector, index }) => {
         </AxisLabel>
         <Ticks left bottom />
         <TickLabels left bottom />
+        <Grid vertical horizontal />
         <Plot>
           {points[0] && points[0].some((d) => !isNullValue(d)) && (
             <Line
