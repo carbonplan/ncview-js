@@ -84,7 +84,7 @@ const LineChart = ({ selector, index }) => {
           units={
             <Box
               sx={{
-                wordBreak: units.includes(' ') ? 'break-word' : 'break-all',
+                wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
               }}
             >
               {units}

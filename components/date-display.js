@@ -10,6 +10,9 @@ const DateDisplay = ({ selector, chunkShape }) => {
 
   const formatter = useCallback(
     (v) => {
+      if (!units) {
+        return
+      }
       if (calendar !== 'proleptic_gregorian') {
         console.warn(`Unhandled calendar: ${calendar}`)
         return
