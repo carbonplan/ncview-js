@@ -1,4 +1,4 @@
-import { Box, Flex, Label, Radio } from 'theme-ui'
+import { Box, Flex } from 'theme-ui'
 import { SidebarFooter } from '@carbonplan/layouts'
 import { useCallback, useEffect } from 'react'
 import { Search, X } from '@carbonplan/icons'
@@ -84,22 +84,6 @@ const Plots = () => {
           easing={'linear'}
           style={{ pointerEvents: 'none' }}
         >
-          <Box sx={{ pt: [3], pb: [2] }}>
-            <Box sx={{ pointerEvents: 'all' }}>
-              <Flex>
-                <Label sx={sx.radioLabel}>
-                  <Radio
-                    sx={sx.radio}
-                    name='mode'
-                    value='point'
-                    onChange={(e) => setMode(e.target.value)}
-                    checked={mode === 'point'}
-                  />
-                  Point
-                </Label>
-              </Flex>
-            </Box>
-          </Box>
           {mode !== 'inactive' && center && selectors && <RegionalPlots />}
         </AnimateHeight>
       </Box>
