@@ -4,6 +4,7 @@ import {
   Chart,
   Circle,
   Grid,
+  Label,
   Line,
   Plot,
   TickLabels,
@@ -111,6 +112,15 @@ const LineChart = ({ selector, index }) => {
             <Circle x={offset + selector.index} y={points[0][selector.index]} />
           )}
         </Plot>
+        {points[0] && !isNullValue(points[0][selector.index]) && (
+          <Label
+            x={offset + selector.index}
+            y={points[0][selector.index]}
+            sx={{ mt: 2, ml: 1 }}
+          >
+            {format('.1f')(points[0][selector.index])} {units}
+          </Label>
+        )}
       </Chart>
     </Box>
   )
