@@ -27,6 +27,11 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
         mapProjection.invert([0, 800 * ASPECTS[mapProjection.id]]),
       ]
 
+      if (corners.some(([lon, lat]) => lat > 90 || lat < -90)) {
+        setPath(null)
+        return
+      }
+
       const f = {
         type: 'Feature',
         properties: {},
