@@ -529,10 +529,8 @@ const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
   if (name === 'lon') {
     // if value is outside range,
     if (!inLonRange(value, [start, end])) {
-      // return whichever side of range is closer to value.
-      return getLonDiff(value, [start, end]) < getLonDiff(value, [end, start])
-        ? 0
-        : Math.ceil(shape / chunk_shape)
+      // return first index
+      return 0
     }
     diff = getLonDiff(value, [start, end])
   } else {
