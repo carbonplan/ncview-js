@@ -45,7 +45,7 @@ const Map = () => {
   }, [projectionName])
 
   useEffect(() => {
-    if (!mapPropsInitialized.current < 2 && chunkBounds) {
+    if (mapPropsInitialized.current < 2 && chunkBounds) {
       const bounds = lockZoom
         ? chunkBounds
         : {
