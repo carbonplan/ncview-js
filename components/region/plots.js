@@ -12,7 +12,7 @@ import {
 } from '@carbonplan/charts'
 import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import useStore from '../store'
 import { getLines } from '../utils'
@@ -64,7 +64,7 @@ const LineChart = ({ selector, index }) => {
   const array = useStore((state) => state.arrays[selector.name])
   const headers = useStore((state) => state.headers)
 
-  const [domain, setDomain] = useState(null)
+  const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
     activeChunkKeys,
     chunks,
@@ -74,68 +74,77 @@ const LineChart = ({ selector, index }) => {
   const chunk_shape = variable.chunk_shape[index]
   const offset = selector.chunk * chunk_shape
   const units = metadata[`${variable.name}/.zattrs`].units
+  const domain = [offset, offset + chunk_shape - 1]
 
   useEffect(() => {
     array.get_chunk([0], { headers }).then((result) => {
-      const data = result.data
-      setDomain([Number(data[offset]), Number(data[offset + chunk_shape - 1])])
+      setSelectorArray(result.data)
     })
   }, [array, offset])
+
+  const formatter = useCallback(
+    (x) => {
+      if (!selectorArray) {
+        return ''
+      } else if (selectorArray[x]) {
+        return Number(selectorArray[x])
+      } else {
+        return ''
+      }
+    },
+    [selectorArray, offset, chunk_shape]
+  )
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
       {coords[0] && <Point point={coords[0]} selector={selector} />}
-      {domain && (
-        <Chart x={domain} y={range}>
-          <Axis left bottom />
-          <AxisLabel
-            left
-            units={
-              <Box
-                sx={{
-                  wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
-                }}
-              >
-                {units}
-              </Box>
-            }
-          >
-            {variable.name}
-          </AxisLabel>
-          <AxisLabel bottom units={metadata[`${selector.name}/.zattrs`].units}>
-            {selector.name}
-          </AxisLabel>
-          <Ticks left bottom />
-          <TickLabels left bottom />
-          <Grid vertical horizontal />
-          <Plot>
-            {points[0] && points[0].some((d) => !isNullValue(d)) && (
-              <Line
-                data={points[0]
-                  .map((d, i) =>
-                    d === variable.nullValue ? null : [offset + i, d]
-                  )
-                  .filter(Boolean)}
-              />
-            )}
-            {points[0] && !isNullValue(points[0][selector.index]) && (
-              <Circle
-                x={offset + selector.index}
-                y={points[0][selector.index]}
-              />
-            )}
-          </Plot>
-          {points[0] && !isNullValue(points[0][selector.index]) && (
-            <Label
-              x={offset + selector.index}
-              y={points[0][selector.index]}
-              sx={{ mt: 2, ml: 1, color: 'primary' }}
+      <Chart x={domain} y={range}>
+        <Axis left bottom />
+        <AxisLabel
+          left
+          units={
+            <Box
+              sx={{
+                wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
+              }}
             >
-              {format('.1f')(points[0][selector.index])} {units}
-            </Label>
+              {units}
+            </Box>
+          }
+        >
+          {variable.name}
+        </AxisLabel>
+        <AxisLabel bottom units={metadata[`${selector.name}/.zattrs`].units}>
+          {selector.name}
+        </AxisLabel>
+        <Ticks left bottom />
+        <TickLabels left />
+        <TickLabels bottom format={formatter} />
+        <Grid vertical horizontal />
+        <Plot>
+          {points[0] && points[0].some((d) => !isNullValue(d)) && (
+            <Line
+              data={points[0]
+                .map((d, i) =>
+                  d === variable.nullValue ? null : [offset + i, d]
+                )
+                .filter(Boolean)}
+            />
           )}
-        </Chart>
-      )}
+          {points[0] && !isNullValue(points[0][selector.index]) && (
+            <Circle x={offset + selector.index} y={points[0][selector.index]} />
+          )}
+        </Plot>
+        {points[0] && !isNullValue(points[0][selector.index]) && (
+          <Label
+            x={offset + selector.index}
+            y={points[0][selector.index]}
+            sx={{ mt: 2, ml: 1, color: 'primary' }}
+          >
+            {format('.1f')(points[0][selector.index])} {units}
+          </Label>
+        )}
+      </Chart>
     </Box>
   )
 }
