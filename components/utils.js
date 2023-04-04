@@ -9,7 +9,10 @@ const getRange = (arr, { nullValue }) => {
   return arr
     .filter((d) => !Number.isNaN(d) && d !== nullValue && d !== -1000) // TODO: remove after demo
     .reduce(
-      ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
+      ([min, max], d) => [
+        Math.min(Number(min), Number(d)),
+        Math.max(Number(max), Number(d)),
+      ],
       [Infinity, -Infinity]
     )
 }
@@ -266,9 +269,9 @@ export const getChunkData = async (
   }
 ) => {
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-  const data = await array
-    .get_chunk(chunkKeyArray, { headers })
-    .then((c) => ndarray(new Float32Array(c.data), chunk_shape))
+  const data = await array.get_chunk(chunkKeyArray, { headers }).then((c) => {
+    return ndarray(Float32Array.from(c.data, Number), chunk_shape)
+  })
 
   const clim = getRange(data.data, { nullValue })
 
@@ -455,7 +458,7 @@ const filterData = (
   })
 
   if (truncatedShape.some((d, i) => d !== shape[i])) {
-    return ndarray(new Float32Array(data.data), truncatedShape)
+    return ndarray(Float32Array.from(data.data, Number), truncatedShape)
   } else {
     return data
   }
