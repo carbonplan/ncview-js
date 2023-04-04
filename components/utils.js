@@ -73,7 +73,7 @@ export const getMetadata = async (url) => {
   const metadata = await response.json()
 
   const variables = Object.keys(metadata.metadata)
-    .map((k) => k.match(/\w+(?=\/\.zarray)/))
+    .map((k) => k.match(/[^\/]+(?=\/\.zarray)/))
     .filter(Boolean)
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
