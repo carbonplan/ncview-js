@@ -7,20 +7,19 @@ import { PROJECTIONS, ASPECTS } from './constants'
 import { getProjection } from './utils'
 
 const PROJECTION = 'naturalEarth1'
-
+const MINIMAP_PROPS = {
+  scale: 1,
+  translate: [0, 0],
+}
 const Nav = ({ mapProps, setMapProps, sx }) => {
   const { theme } = useThemeUI()
-  const [minimapProps, setMinimapProps] = useState({
-    scale: 1,
-    translate: [0, 0],
-  })
   const [path, setPath] = useState(null)
 
   useEffect(() => {
-    if (mapProps && minimapProps) {
+    if (mapProps) {
       const mapProjection = getProjection(mapProps)
 
-      const corners = [
+      let corners = [
         mapProjection.invert([0, 0]),
         mapProjection.invert([800, 0]),
         mapProjection.invert([800, 800 * ASPECTS[mapProjection.id]]),
@@ -30,6 +29,29 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
       if (corners.some(([lon, lat]) => lat > 90 || lat < -90)) {
         setPath(null)
         return
+      }
+
+      // calculate number of degrees latitude that the map spans
+      const degrees = Math.abs(corners[0][1] - corners[2][1])
+      if (degrees > 0 && degrees < 5) {
+        // if less than 5, scale up the drawn box to represent 5deg latitude height
+        const scale = 5 / degrees
+        const offset = 400 * (scale - 1)
+        corners = [
+          mapProjection.invert([-offset, -offset * ASPECTS[mapProjection.id]]),
+          mapProjection.invert([
+            800 + offset,
+            -offset * ASPECTS[mapProjection.id],
+          ]),
+          mapProjection.invert([
+            800 + offset,
+            (800 + offset) * ASPECTS[mapProjection.id],
+          ]),
+          mapProjection.invert([
+            -offset,
+            (800 + offset) * ASPECTS[mapProjection.id],
+          ]),
+        ]
       }
 
       const f = {
@@ -43,12 +65,12 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
 
       const minimapProjection = getProjection({
         projection: PROJECTIONS[PROJECTION],
-        ...minimapProps,
+        ...MINIMAP_PROPS,
       })
 
       setPath(geoPath(minimapProjection)(f))
     }
-  }, [mapProps, minimapProps])
+  }, [mapProps])
 
   const handleClick = useCallback(
     (e) => {
@@ -58,7 +80,7 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
 
       const minimapProjection = getProjection({
         projection: PROJECTIONS[PROJECTION],
-        ...minimapProps,
+        ...MINIMAP_PROPS,
       })
 
       const center = minimapProjection.invert([
@@ -75,12 +97,12 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
         translate: prev.translate.map((d, i) => d + offset[i]),
       }))
     },
-    [minimapProps, mapProps, setMapProps]
+    [mapProps, setMapProps]
   )
 
   return (
     <Box sx={{ width: '300px', cursor: 'cell', ...sx }} onClick={handleClick}>
-      <Minimap {...minimapProps} projection={PROJECTIONS[PROJECTION]}>
+      <Minimap {...MINIMAP_PROPS} projection={PROJECTIONS[PROJECTION]}>
         <Path
           fill={theme.colors.background}
           stroke={theme.colors.primary}
