@@ -18,7 +18,7 @@ const ArrayMetadata = ({ array }) => {
         return (
           <Row
             key={key}
-            columns={3}
+            columns={4}
             sx={{
               color: 'primary',
               fontSize: [1, 1, 1, 2],
@@ -26,19 +26,19 @@ const ArrayMetadata = ({ array }) => {
               letterSpacing: 'mono',
             }}
           >
-            <Column start={1} width={3}>
+            <Column start={1} width={4}>
               <Divider sx={{ width: '100%' }} />
             </Column>
 
             <Column
               start={1}
-              width={1}
+              width={2}
               sx={{ color: 'secondary', wordBreak: 'break-all' }}
             >
               {key}
             </Column>
             <Column
-              start={2}
+              start={3}
               width={2}
               sx={{
                 wordBreak: String(value).includes(' ')
@@ -49,7 +49,7 @@ const ArrayMetadata = ({ array }) => {
               {value}
             </Column>
             {i === keys.length - 1 ? (
-              <Column start={1} width={3}>
+              <Column start={1} width={4}>
                 <Divider sx={{ width: '100%' }} />
               </Column>
             ) : null}

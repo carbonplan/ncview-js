@@ -4,10 +4,10 @@ import { Box } from 'theme-ui'
 const Label = ({ htmlFor, value, children, direction = 'horizontal', sx }) => {
   const singleRow = direction === 'horizontal'
   return (
-    <Row columns={[3]}>
+    <Row columns={[4]}>
       <Column
         start={1}
-        width={singleRow ? 1 : 3}
+        width={singleRow ? 1 : 4}
         sx={{
           mb: singleRow ? 0 : 2,
         }}
@@ -27,7 +27,7 @@ const Label = ({ htmlFor, value, children, direction = 'horizontal', sx }) => {
           {value}
         </Box>
       </Column>
-      <Column start={singleRow ? 2 : 1} width={singleRow ? 2 : 3}>
+      <Column start={singleRow ? 2 : 1} width={singleRow ? 3 : 4}>
         {children}
       </Column>
     </Row>
