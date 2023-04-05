@@ -20,14 +20,8 @@ const Header = () => {
           position: 'absolute',
           top: 0,
           width: '100%',
-          borderWidth: 0,
-          borderStyle: 'solid',
-          borderColor: 'muted',
-          borderBottomWidth: '1px',
-          bg: ['background', 'background', 'unset', 'unset'],
           position: 'sticky',
           top: 0,
-          height: '56px',
           zIndex: 5000,
         }}
       >

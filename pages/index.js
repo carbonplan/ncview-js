@@ -33,7 +33,7 @@ const Index = () => {
               <SidebarDivider sx={{ my: 4 }} />
               <Display />
             </Sidebar>
-            <Column start={[5]} width={[8]} sx={{ mt: '56px' }}>
+            <Column start={[5]} width={[8]}>
               <Map />
             </Column>
           </Row>

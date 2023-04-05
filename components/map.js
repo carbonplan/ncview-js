@@ -75,7 +75,7 @@ const Map = () => {
   return (
     <Flex
       sx={{
-        height: 'calc(100vh - 56px)',
+        height: '100vh',
         mr: [-4, -5, -5, -6],
         flexDirection: 'column',
         justifyContent: 'center',
