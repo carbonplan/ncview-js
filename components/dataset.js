@@ -157,6 +157,14 @@ const Dataset = () => {
               strokeWidth: '2px',
               stroke: 'text',
               color: 'secondary',
+              transition: 'color 0.15s',
+              pr: 0,
+              mr: '-6px',
+              '@media (hover: hover) and (pointer: fine)': {
+                '&:hover': {
+                  color: 'primary',
+                },
+              },
             }}
             aria-label={dataset ? 'Clear URL' : 'Submit URL'}
             type={dataset ? 'button' : 'submit'}
