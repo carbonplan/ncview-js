@@ -41,11 +41,11 @@ const Map = () => {
   const mapPropsInitialized = useRef(0)
 
   useEffect(() => {
-    mapPropsInitialized.current = 0
+    mapPropsInitialized.current = false
   }, [projectionName])
 
   useEffect(() => {
-    if (mapPropsInitialized.current < 2 && chunkBounds) {
+    if (!mapPropsInitialized.current && chunkBounds) {
       const bounds = lockZoom
         ? chunkBounds
         : {
@@ -53,13 +53,13 @@ const Map = () => {
             lon: [-180, 180],
           }
       setMapProps(getMapProps(bounds, projectionName))
-      mapPropsInitialized.current += 1
+      mapPropsInitialized.current = true
     }
   }, [!!chunkBounds, projectionName, lockZoom])
 
   useEffect(() => {
     if (!url) {
-      mapPropsInitialized.current = 0
+      mapPropsInitialized.current = false
     }
   }, [url])
 

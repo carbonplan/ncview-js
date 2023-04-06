@@ -312,7 +312,7 @@ export const getChunkData = async (
   return { data: normalizedData, clim, bounds }
 }
 
-export const getMapProps = (bounds, projection) => {
+export const getMapProps = (bounds, projection, skipMeridianFix) => {
   const f = {
     type: 'Feature',
     properties: {},
@@ -327,11 +327,21 @@ export const getMapProps = (bounds, projection) => {
 
   const aspect = ASPECTS[projection]
   const p = PROJECTIONS[projection]().fitSize([Math.PI * 2, Math.PI], f)
-  const scale = p.scale()
   const translate = [
     p.translate()[0] / Math.PI - 1,
     ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
   ]
+  let scale = p.scale()
+  const spansMeridian = bounds.lon[0] < 180 && bounds.lon[1] > 180
+
+  if (spansMeridian && !skipMeridianFix) {
+    const lonDiff = 180 - bounds.lon[0] + bounds.lon[1] - 180
+    scale = getMapProps(
+      { lon: [0, lonDiff], lat: bounds.lat },
+      projection,
+      true
+    ).scale
+  }
 
   return { scale, translate, projection: PROJECTIONS[projection] }
 }
