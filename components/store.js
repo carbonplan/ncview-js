@@ -47,12 +47,14 @@ const createDisplaySlice = (set, get) => ({
   colormap: 'cool',
   clim: null,
   centerPoint: null,
+  scrubbing: false,
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
   setCenterPoint: (centerPoint) => set({ centerPoint }),
+  setScrubbing: (scrubbing) => set({ scrubbing }),
 })
 
 const createPlotsSlice = (set, get) => ({

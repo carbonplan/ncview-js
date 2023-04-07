@@ -22,6 +22,7 @@ const Slider = ({ index }) => {
     (state) => state.variable.selectors && state.variable.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
+  const setScrubbing = useStore((state) => state.setScrubbing)
   const [sliderValue, setSliderValue] = useState(selector)
   const [sliding, setSliding] = useState(false)
   const chunk_shape = useStore((state) => state.variable.chunk_shape[index])
@@ -55,11 +56,13 @@ const Slider = ({ index }) => {
 
   const handleMouseDown = useCallback(() => {
     setSliding(true)
+    setScrubbing(true)
     setSelector(index, sliderValue)
   }, [index, sliderValue])
 
   const handleMouseUp = useCallback(() => {
     setSliding(false)
+    setScrubbing(false)
     setSelector(index, sliderValue)
   }, [index, sliderValue])
 

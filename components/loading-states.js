@@ -1,9 +1,10 @@
 import { SidebarAttachment } from '@carbonplan/layouts'
-import { Spinner } from 'theme-ui'
+import { Box, Spinner } from 'theme-ui'
 import useStore from './store'
 
 const LoadingStates = () => {
   const loading = useStore((state) => state.loading)
+  const scrubbing = useStore((state) => state.scrubbing)
 
   return (
     <>
@@ -19,9 +20,44 @@ const LoadingStates = () => {
         <Spinner
           duration={750}
           size={32}
-          sx={{ opacity: loading ? 1 : 0, transition: 'opacity 0.05s' }}
+          sx={{
+            opacity: loading && !scrubbing ? 1 : 0,
+            transition: 'opacity 0.05s',
+          }}
         />
       </SidebarAttachment>
+
+      <SidebarAttachment
+        expanded
+        side='left'
+        width={4}
+        sx={{
+          top: '22px',
+          opacity: scrubbing ? 0.5 : 0,
+          transition: 'opacity 0.15s',
+          fontFamily: 'mono',
+          letterSpacing: 'mono',
+          textTransform: 'uppercase',
+          fontSize: [1, 1, 1, 2],
+        }}
+      >
+        Release to update
+      </SidebarAttachment>
+
+      <Box
+        sx={{
+          position: 'absolute',
+          pointerEvents: 'none',
+          width: '100%',
+          left: '0px',
+          top: '0px',
+          height: 'calc(100vh)',
+          opacity: scrubbing ? 0.5 : 0,
+          transition: 'opacity 0.15s',
+          bg: 'background',
+          zIndex: 500,
+        }}
+      />
     </>
   )
 }
