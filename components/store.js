@@ -46,11 +46,13 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { landBoundaries: false, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
+  centerPoint: null,
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
+  setCenterPoint: (centerPoint) => set({ centerPoint }),
 })
 
 const createPlotsSlice = (set, get) => ({
@@ -117,6 +119,7 @@ const useStore = create((set, get) => ({
     get().setVariable(initialVariable)
   },
   setVariable: async (name) => {
+    const { centerPoint } = get()
     set({
       variable: { name, selectors: [] },
       loading: true,
@@ -128,7 +131,7 @@ const useStore = create((set, get) => ({
     })
 
     const {
-      chunkKey,
+      centerPoint: variableCenterPoint,
       nullValue,
       northPole,
       axes,
@@ -140,20 +143,31 @@ const useStore = create((set, get) => ({
       array,
     } = await getVariableInfo(name, get())
 
+    const variable = {
+      name,
+      nullValue,
+      northPole,
+      axes,
+      lockZoom,
+      selectors,
+      chunk_separator,
+      chunk_shape,
+      shape,
+      array,
+    }
     set({
-      variable: {
-        name,
-        nullValue,
-        northPole,
-        axes,
-        lockZoom,
-        selectors,
-        chunk_separator,
-        chunk_shape,
-        shape,
-        array,
-      },
+      variable,
+      ...(centerPoint ? {} : { centerPoint: variableCenterPoint }),
     })
+
+    let chunkKey
+    if (centerPoint) {
+      chunkKey = pointToChunkKey(centerPoint, variable)
+    }
+    if (!chunkKey) {
+      chunkKey = pointToChunkKey(variableCenterPoint, variable)
+    }
+
     get().setChunkKey(chunkKey, { initializeClim: true })
   },
   setChunkKey: async (chunkKey, { initializeClim }) => {
@@ -190,8 +204,8 @@ const useStore = create((set, get) => ({
       set({ loading: false, error: 'Error loading data.' })
     }
   },
-  resetCenterChunk: (centerPoint) => {
-    const { variable, chunks, setChunkKey } = get()
+  resetCenterPoint: (centerPoint) => {
+    const { variable, chunks, setChunkKey, setCenterPoint } = get()
 
     if (Object.keys(chunks).length === 0) {
       return
@@ -200,7 +214,8 @@ const useStore = create((set, get) => ({
     const newChunkKey = pointToChunkKey(centerPoint, variable)
 
     if (newChunkKey) {
-      setChunkKey(newChunkKey, { initializeClim: false }) // TODO: reinstate auto-updating clim after demo
+      setCenterPoint(centerPoint)
+      setChunkKey(newChunkKey, { initializeClim: false })
     }
   },
   fetchChunk: async (chunkKey) => {

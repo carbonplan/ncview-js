@@ -32,7 +32,7 @@ const Map = () => {
   const mode = useStore((state) => state.mode)
 
   const { lockZoom } = useStore((state) => state.variable)
-  const resetCenterChunk = useStore((state) => state.resetCenterChunk)
+  const resetCenterPoint = useStore((state) => state.resetCenterPoint)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
     scale: 1,
@@ -69,7 +69,7 @@ const Map = () => {
       Math.round((800 * ASPECTS[projection.id]) / 2),
       Math.round(800 / 2),
     ])
-    resetCenterChunk(centerPoint)
+    resetCenterPoint(centerPoint)
   }, [mapProps])
 
   return (

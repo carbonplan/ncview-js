@@ -64,12 +64,6 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
-const getCenterChunk = ({ chunk_shape, shape, selectors }) => {
-  return shape.map(
-    (d, i) => selectors[i].chunk ?? Math.floor(d / chunk_shape[i] / 2)
-  )
-}
-
 export const getMetadata = async (url) => {
   // fetch zmetadata to figure out compression and variables
   const response = await fetch(`${url}/.zmetadata`)
@@ -237,10 +231,12 @@ export const getVariableInfo = async (
       index: isSpatialDimension ? null : 0,
     }
   })
-  const chunkKeyArray = getCenterChunk({ chunk_shape, shape, selectors })
 
   return {
-    chunkKey: toKeyString(chunkKeyArray, { chunk_separator }),
+    centerPoint: [
+      axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
+      axes.Y.array.data[Math.round((axes.Y.array.data.length - 1) / 2)],
+    ],
     northPole:
       gridMapping &&
       gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
