@@ -9,7 +9,7 @@ import ResetClim from './reset-clim'
 
 const Display = () => {
   const hasData = useStore((state) => !!state.url)
-  const loading = useStore((state) => state.loading)
+  const loading = useStore((state) => state.getLoading())
   const basemaps = useStore((state) => state.basemaps)
   const setBasemaps = useStore((state) => state.setBasemaps)
   const projection = useStore((state) => state.projection)

@@ -3,7 +3,7 @@ import { Box, Spinner } from 'theme-ui'
 import useStore from './store'
 
 const LoadingStates = () => {
-  const loading = useStore((state) => state.loading)
+  const loading = useStore((state) => state.getLoading())
   const scrubbing = useStore((state) => state.scrubbing)
 
   return (

@@ -6,7 +6,7 @@ import { Reset } from '@carbonplan/icons'
 import { Flex } from 'theme-ui'
 
 const ResetClim = () => {
-  const loading = useStore((state) => state.loading)
+  const loading = useStore((state) => state.getLoading())
   const setClim = useStore((state) => state.setClim)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)

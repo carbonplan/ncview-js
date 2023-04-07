@@ -12,8 +12,13 @@ import {
 } from './utils'
 
 const createDatasetSlice = (set, get) => ({
-  loading: false,
+  // loading
   error: null,
+  _loading: [],
+  _registerLoading: (id) => set({ _loading: [...get()._loading, id] }),
+  _unregisterLoading: (id) =>
+    set({ _loading: get()._loading.filter((d) => d !== id) }),
+  getLoading: () => get()._loading.length > 0,
 
   // dataset
   url: null,
@@ -69,6 +74,7 @@ const useStore = create((set, get) => ({
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
   setUrl: async (url, apiMetadata, clim) => {
+    const { _registerLoading, _unregisterLoading } = get()
     set({
       url,
       apiMetadata,
@@ -87,12 +93,11 @@ const useStore = create((set, get) => ({
       return
     }
 
-    set({ loading: true })
+    _registerLoading('metadata')
 
     const { metadata, variables } = await getMetadata(url)
     if (variables.length === 0) {
       set({
-        loading: false,
         error:
           'No viewable variables found. Please provide a dataset with 2D data arrays.',
       })
@@ -112,25 +117,26 @@ const useStore = create((set, get) => ({
 
     if (Object.keys(apiMetadata[initialVariable] ?? {}).length < 2) {
       set({
-        loading: false,
         error: 'Unable to parse coordinates. Please use CF conventions.',
       })
+      _unregisterLoading('metadata')
       return
     }
 
     get().setVariable(initialVariable)
+    _unregisterLoading('metadata')
   },
   setVariable: async (name) => {
-    const { centerPoint } = get()
+    const { centerPoint, _registerLoading, _unregisterLoading } = get()
     set({
       variable: { name, selectors: [] },
-      loading: true,
       // Null out variable-specific fields
       chunkKey: null,
       chunks: {},
       activeChunkKeys: [],
       clim: null,
     })
+    _registerLoading(name)
 
     const {
       centerPoint: variableCenterPoint,
@@ -161,6 +167,7 @@ const useStore = create((set, get) => ({
       variable,
       ...(centerPoint ? {} : { centerPoint: variableCenterPoint }),
     })
+    _unregisterLoading(name)
 
     let chunkKey
     if (centerPoint) {
@@ -173,21 +180,21 @@ const useStore = create((set, get) => ({
     get().setChunkKey(chunkKey, { initializeClim: true })
   },
   setChunkKey: async (chunkKey, { initializeClim }) => {
-    if (chunkKey === get().chunkKey) {
+    const {
+      chunkKey: existingChunkKey,
+      _registerLoading,
+      _unregisterLoading,
+    } = get()
+    if (chunkKey === existingChunkKey) {
       return
     }
 
-    set({
-      chunkKey,
-      loading: true,
-    })
+    set({ chunkKey })
+    _registerLoading(chunkKey)
 
     try {
       const activeChunkKeys = getActiveChunkKeys(chunkKey, get())
-      const toSet = {
-        activeChunkKeys,
-        loading: false,
-      }
+      const toSet = { activeChunkKeys }
       if (initializeClim) {
         const { clim, chunks: newChunks } = await getClim(
           activeChunkKeys,
@@ -202,8 +209,10 @@ const useStore = create((set, get) => ({
       }
 
       set(toSet)
+      _unregisterLoading(chunkKey)
     } catch (e) {
-      set({ loading: false, error: 'Error loading data.' })
+      set({ error: 'Error loading data.' })
+      _unregisterLoading(chunkKey)
     }
   },
   resetCenterPoint: (centerPoint) => {
@@ -221,7 +230,13 @@ const useStore = create((set, get) => ({
     }
   },
   fetchChunk: async (chunkKey) => {
-    const { variable, headers, chunks: initialChunks } = get()
+    const {
+      variable,
+      headers,
+      chunks: initialChunks,
+      _registerLoading,
+      _unregisterLoading,
+    } = get()
 
     if (initialChunks[chunkKey]) {
       return
@@ -229,16 +244,22 @@ const useStore = create((set, get) => ({
 
     if (!headers || !variable.name) {
       set({
-        loading: false,
         error: 'Tried to fetch chunk before store was fully initialized.',
       })
       return
     }
 
-    set({ loading: true })
-    const result = await getChunkData(chunkKey, { variable, headers })
-    const { chunks } = get()
-    set({ loading: false, chunks: { ...chunks, [chunkKey]: result } })
+    _registerLoading(chunkKey)
+
+    try {
+      const result = await getChunkData(chunkKey, { variable, headers })
+      const { chunks } = get()
+      _unregisterLoading(chunkKey)
+      set({ chunks: { ...chunks, [chunkKey]: result } })
+    } catch (e) {
+      set({ error: 'Error loading data.' })
+      _unregisterLoading(chunkKey)
+    }
   },
   setSelector: (index, values) => {
     const { variable, chunkKey, setChunkKey } = get()
