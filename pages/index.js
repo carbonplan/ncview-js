@@ -5,6 +5,7 @@ import Dataset from '../components/dataset'
 import Display from '../components/display'
 
 import Header from '../components/header'
+import LoadingStates from '../components/loading-states'
 import Map from '../components/map'
 import Plots from '../components/plots'
 import Selectors from '../components/selectors'
@@ -33,6 +34,7 @@ const Index = () => {
               <SidebarDivider sx={{ my: 4 }} />
               <Display />
             </Sidebar>
+            <LoadingStates />
             <Column start={[5]} width={[8]}>
               <Map />
             </Column>

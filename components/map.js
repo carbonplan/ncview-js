@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Box, Flex, Spinner, useThemeUI } from 'theme-ui'
+import { Box, Flex, useThemeUI } from 'theme-ui'
 import { alpha } from '@theme-ui/color'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
@@ -17,7 +17,6 @@ const Map = () => {
   const { theme } = useThemeUI()
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
-  const loading = useStore((state) => state.loading)
   const url = useStore((state) => state.url)
   const renderable = useStore((state) => Object.values(state.chunks).length > 0)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
@@ -135,18 +134,7 @@ const Map = () => {
               </Layer>
             </Minimap>
           )}
-          {loading && (
-            <Box
-              sx={{
-                width: '100%',
-                position: 'absolute',
-                top: 1,
-                left: 1,
-              }}
-            >
-              <Spinner duration={750} size={32} />
-            </Box>
-          )}
+
           {renderable && lockZoom && (
             <Nav
               mapProps={mapProps}
