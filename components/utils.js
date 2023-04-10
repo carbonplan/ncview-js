@@ -467,7 +467,7 @@ const filterData = (
 
 export const pointToChunkKey = (
   [lon, lat],
-  { selectors, axes, chunk_separator, chunk_shape, shape }
+  { selectors, variable: { axes, chunk_separator, chunk_shape, shape } }
 ) => {
   const chunkKey = shape.map((d, i) => {
     if (axes.X.index === i) {

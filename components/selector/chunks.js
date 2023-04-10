@@ -19,8 +19,7 @@ const sx = {
 const Chunks = ({ index }) => {
   const [playing, setPlaying] = usePlay(index)
   const selector = useStore(
-    (state) =>
-      state.dataset.variable.selectors && state.variable.selectors[index]
+    (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
   const chunk_shape = useStore((state) => state.dataset.variable.chunk_shape)

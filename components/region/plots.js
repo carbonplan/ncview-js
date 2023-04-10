@@ -22,7 +22,7 @@ const isNullValue = (p) => {
 }
 
 const Point = ({ point, selector }) => {
-  const selectors = useStore((state) => state.dataset.variable.selectors)
+  const selectors = useStore((state) => state.selectors)
   const extraCoords = selectors.filter(
     (s) => typeof s.index === 'number' && s.name !== selector?.name
   )
@@ -60,7 +60,7 @@ const LineChart = ({ selector, index }) => {
   const chunks = useStore((state) => state.chunks)
   const variable = useStore((state) => state.dataset?.variable)
   const metadata = useStore((state) => state.dataset?.metadata?.metadata)
-  const selectors = useStore((state) => state.dataset?.variable?.selectors)
+  const selectors = useStore((state) => state.selectors)
   const array = useStore((state) => state.dataset?.arrays[selector.name])
   const headers = useStore((state) => state.dataset?.headers)
 
@@ -155,7 +155,7 @@ const PointInformation = ({ selector }) => {
   const chunks = useStore((state) => state.chunks)
   const variable = useStore((state) => state.dataset.variable)
   const metadata = useStore((state) => state.dataset.metadata.metadata)
-  const selectors = useStore((state) => state.dataset.variable?.selectors)
+  const selectors = useStore((state) => state.selectors)
 
   const { coords, points } = getLines(
     center,
@@ -199,7 +199,7 @@ const PointInformation = ({ selector }) => {
 }
 
 const Plots = () => {
-  const selectors = useStore((state) => state.dataset.variable?.selectors)
+  const selectors = useStore((state) => state.selectors)
 
   const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
 

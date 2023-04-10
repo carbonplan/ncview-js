@@ -5,9 +5,7 @@ import useStore from '../store'
 const usePlay = (index, { incrementChunk = false } = {}) => {
   const [playing, setPlaying] = useState(false)
   const selector = useStore(
-    (state) =>
-      state.dataset.variable.selectors &&
-      state.dataset.variable.selectors[index]
+    (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
   const chunk_shape = useStore(

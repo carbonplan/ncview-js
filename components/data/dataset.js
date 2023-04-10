@@ -51,7 +51,7 @@ class Dataset {
       northPole,
       axes,
       lockZoom,
-      selectors,
+      // selectors,
       chunk_separator,
       chunk_shape,
       shape,
@@ -59,13 +59,6 @@ class Dataset {
     }
 
     return { centerPoint, selectors }
-  }
-
-  setSelectors(selectors) {
-    this.variable = {
-      ...this.variable,
-      selectors,
-    }
   }
 }
 

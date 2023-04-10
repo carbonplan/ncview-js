@@ -19,9 +19,7 @@ const sx = {
 const Slider = ({ index }) => {
   const [playing, setPlaying] = usePlay(index, { incrementChunk: true })
   const selector = useStore(
-    (state) =>
-      state.dataset.variable.selectors &&
-      state.dataset.variable.selectors[index]
+    (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
   const setScrubbing = useStore((state) => state.setScrubbing)

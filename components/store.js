@@ -18,8 +18,8 @@ const createDatasetSlice = (set, get) => ({
     set({ _loading: get()._loading.filter((d) => d !== id) }),
   getLoading: () => get()._loading.length > 0,
 
-  // dataset
   dataset: null,
+  selectors: [],
 
   // cache of chunks
   chunks: {},
@@ -63,6 +63,7 @@ const useStore = create((set, get) => ({
       error: null,
       // Null out all dataset-related fields
       dataset: null,
+      selectors: [],
       chunks: {},
       activeChunkKeys: [],
       clim,
@@ -103,6 +104,7 @@ const useStore = create((set, get) => ({
     const { dataset, centerPoint, _registerLoading, _unregisterLoading } = get()
     set({
       // Null out variable-specific fields
+      selectors: [],
       chunkKey: null,
       chunks: {},
       activeChunkKeys: [],
@@ -110,20 +112,27 @@ const useStore = create((set, get) => ({
     })
     _registerLoading(name)
 
-    const { centerPoint: variableCenterPoint } =
+    const { centerPoint: variableCenterPoint, selectors } =
       await dataset.initializeVariable(name)
 
     set({
+      selectors,
       ...(centerPoint ? {} : { centerPoint: variableCenterPoint }),
     })
     _unregisterLoading(name)
 
     let chunkKey
     if (centerPoint) {
-      chunkKey = pointToChunkKey(centerPoint, dataset.variable)
+      chunkKey = pointToChunkKey(centerPoint, {
+        selectors,
+        variable: dataset.variable,
+      })
     }
     if (!chunkKey) {
-      chunkKey = pointToChunkKey(variableCenterPoint, dataset.variable)
+      chunkKey = pointToChunkKey(variableCenterPoint, {
+        selectors,
+        variable: dataset.variable,
+      })
     }
 
     get().setChunkKey(chunkKey, { initializeClim: true })
@@ -166,13 +175,16 @@ const useStore = create((set, get) => ({
     }
   },
   resetCenterPoint: (centerPoint) => {
-    const { dataset, chunks, setChunkKey, setCenterPoint } = get()
+    const { dataset, chunks, selectors, setChunkKey, setCenterPoint } = get()
 
     if (Object.keys(chunks).length === 0) {
       return
     }
 
-    const newChunkKey = pointToChunkKey(centerPoint, dataset.variable)
+    const newChunkKey = pointToChunkKey(centerPoint, {
+      variable: dataset.variable,
+      selectors,
+    })
 
     if (newChunkKey) {
       setCenterPoint(centerPoint)
@@ -211,9 +223,9 @@ const useStore = create((set, get) => ({
     }
   },
   setSelector: (index, values) => {
-    const { dataset, chunkKey, setChunkKey } = get()
+    const { dataset, selectors, chunkKey, setChunkKey } = get()
 
-    const updatedSelector = dataset.variable.selectors[index]
+    const updatedSelector = selectors[index]
     let updatedChunkKey = chunkKey
     let shouldUpdate = false
 
@@ -238,11 +250,11 @@ const useStore = create((set, get) => ({
 
     if (shouldUpdate) {
       const updatedSelectors = [
-        ...dataset.variable.selectors.slice(0, index),
+        ...selectors.slice(0, index),
         updatedSelector,
-        ...dataset.variable.selectors.slice(index + 1),
+        ...selectors.slice(index + 1),
       ]
-      dataset.setSelectors(updatedSelectors)
+      set({ selectors: updatedSelectors })
       if (updatedChunkKey !== chunkKey) {
         setChunkKey(updatedChunkKey, { initializeClim: false })
       }
