@@ -11,9 +11,10 @@ import {
 } from '../utils'
 
 class Dataset {
-  constructor(url, apiMetadata) {
+  constructor(url, apiMetadata, pyramid) {
     this.url = url
     this.apiMetadata = apiMetadata
+    this.pyramid = pyramid
   }
 
   async initialize() {
@@ -62,7 +63,7 @@ class Dataset {
       nullValue,
       northPole,
       axes,
-      lockZoom,
+      lockZoom: this.pyramid ? false : lockZoom,
       // selectors,
       chunk_separator,
       chunk_shape,

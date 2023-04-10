@@ -27,7 +27,6 @@ const createDisplaySlice = (set, get) => ({
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
-  setCenterPoint: (centerPoint) => set({ centerPoint }),
   setScrubbing: (scrubbing) => set({ scrubbing }),
 })
 
@@ -42,7 +41,7 @@ const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, apiMetadata, clim) => {
+  setUrl: async (url, apiMetadata, { pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
@@ -50,7 +49,7 @@ const useStore = create((set, get) => ({
       dataset: null,
       selectors: [],
       chunksToRender: [],
-      clim,
+      clim: null,
     })
 
     // handle clearing url
@@ -61,7 +60,7 @@ const useStore = create((set, get) => ({
     _registerLoading('metadata')
     let dataset
     try {
-      dataset = new Dataset(url, apiMetadata)
+      dataset = new Dataset(url, apiMetadata, pyramid)
       await dataset.initialize()
       set({ dataset })
     } catch (e) {
@@ -110,13 +109,13 @@ const useStore = create((set, get) => ({
     get().resetCenterPoint(centerPoint ?? variableCenterPoint)
   },
   resetCenterPoint: async (centerPoint) => {
-    const { dataset, selectors, setCenterPoint } = get()
+    const { dataset, selectors } = get()
 
     if (!dataset || Object.keys(dataset.chunks).length === 0) {
       return
     }
 
-    setCenterPoint(centerPoint)
+    set({ centerPoint })
     await dataset.updateSelection(centerPoint, selectors)
     set({ chunksToRender: dataset.activeChunkKeys })
   },
