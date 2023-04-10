@@ -18,9 +18,11 @@ const sx = {
 
 const Selectors = () => {
   const [expanded, setExpanded] = useState(false)
-  const variable = useStore((state) => state.variable.name)
+  const variable = useStore((state) => state.dataset?.variable?.name)
   const variables = useStore((state) => state.dataset?.variables)
-  const selectors = useStore((state) => state.variable.selectors || [])
+  const selectors = useStore(
+    (state) => state.dataset?.variable?.selectors || []
+  )
 
   const setVariable = useStore((state) => state.setVariable)
 

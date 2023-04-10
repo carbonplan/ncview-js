@@ -7,7 +7,7 @@ const Chunk = ({ chunkKey }) => {
   const fetchChunk = useStore((state) => state.fetchChunk)
 
   const chunk = useStore((state) => state.chunks[chunkKey])
-  const selectors = useStore((state) => state.variable.selectors)
+  const selectors = useStore((state) => state.dataset.variable.selectors)
 
   const [data, setData] = useState(null)
 

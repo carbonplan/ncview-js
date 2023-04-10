@@ -257,13 +257,9 @@ export const getVariableInfo = async (
   }
 }
 
-export const getChunkData = async (
-  chunkKey,
-  {
-    variable: { array, axes, nullValue, chunk_separator, chunk_shape, shape },
-    dataset,
-  }
-) => {
+export const getChunkData = async (chunkKey, dataset) => {
+  const { array, axes, nullValue, chunk_separator, chunk_shape, shape } =
+    dataset.variable
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
   const data = await array
     .get_chunk(chunkKeyArray, { headers: dataset.headers })
@@ -395,7 +391,7 @@ export const getAdjacentChunk = (offset, chunkKey, variable) => {
   }
 }
 
-export const getActiveChunkKeys = (chunkKey, { variable }) => {
+export const getActiveChunkKeys = (chunkKey, dataset) => {
   return [
     [-2, -1],
     [-1, -1],
@@ -413,14 +409,11 @@ export const getActiveChunkKeys = (chunkKey, { variable }) => {
     [1, 1],
     [2, 1],
   ]
-    .map((offset) => getAdjacentChunk(offset, chunkKey, variable))
+    .map((offset) => getAdjacentChunk(offset, chunkKey, dataset.variable))
     .filter(Boolean)
 }
 
-export const getClim = async (
-  activeChunkKeys,
-  { chunks, variable, dataset }
-) => {
+export const getClim = async (activeChunkKeys, { chunks, dataset }) => {
   const activeChunks = {}
   const allChunks = await Promise.all(
     activeChunkKeys.map(async (key) => {
@@ -428,7 +421,7 @@ export const getClim = async (
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getChunkData(key, { variable, dataset })
+        const chunk = await getChunkData(key, dataset)
         activeChunks[key] = chunk
         return chunk
       }

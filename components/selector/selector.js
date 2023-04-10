@@ -10,7 +10,9 @@ import Slider from './slider'
 const Selector = ({ index, display = 'slider' }) => {
   const [expanded, setExpanded] = useState(false)
   const selector = useStore(
-    (state) => state.variable.selectors && state.variable.selectors[index]
+    (state) =>
+      state.dataset.variable.selectors &&
+      state.dataset.variable.selectors[index]
   )
 
   return (

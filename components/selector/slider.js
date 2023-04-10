@@ -19,16 +19,20 @@ const sx = {
 const Slider = ({ index }) => {
   const [playing, setPlaying] = usePlay(index, { incrementChunk: true })
   const selector = useStore(
-    (state) => state.variable.selectors && state.variable.selectors[index]
+    (state) =>
+      state.dataset.variable.selectors &&
+      state.dataset.variable.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
   const setScrubbing = useStore((state) => state.setScrubbing)
   const [sliderValue, setSliderValue] = useState(selector)
   const [sliding, setSliding] = useState(false)
-  const chunk_shape = useStore((state) => state.variable.chunk_shape[index])
-  const shape = useStore((state) => state.variable.shape[index])
+  const chunk_shape = useStore(
+    (state) => state.dataset.variable.chunk_shape[index]
+  )
+  const shape = useStore((state) => state.dataset.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
-  const axes = useStore((state) => state.variable.axes)
+  const axes = useStore((state) => state.dataset.variable.axes)
 
   const handleChange = useCallback(
     (e) => {

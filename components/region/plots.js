@@ -22,7 +22,7 @@ const isNullValue = (p) => {
 }
 
 const Point = ({ point, selector }) => {
-  const selectors = useStore((state) => state.variable.selectors)
+  const selectors = useStore((state) => state.dataset.variable.selectors)
   const extraCoords = selectors.filter(
     (s) => typeof s.index === 'number' && s.name !== selector?.name
   )
@@ -58,9 +58,9 @@ const LineChart = ({ selector, index }) => {
   const center = useStore((state) => state.center)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
-  const variable = useStore((state) => state.variable)
+  const variable = useStore((state) => state.dataset?.variable)
   const metadata = useStore((state) => state.dataset?.metadata?.metadata)
-  const selectors = useStore((state) => state.variable.selectors)
+  const selectors = useStore((state) => state.dataset?.variable?.selectors)
   const array = useStore((state) => state.dataset?.arrays[selector.name])
   const headers = useStore((state) => state.dataset?.headers)
 
@@ -153,9 +153,9 @@ const PointInformation = ({ selector }) => {
   const center = useStore((state) => state.center)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
-  const variable = useStore((state) => state.variable)
-  const metadata = useStore((state) => state.dataset?.metadata?.metadata)
-  const selectors = useStore((state) => state.variable.selectors)
+  const variable = useStore((state) => state.dataset.variable)
+  const metadata = useStore((state) => state.dataset.metadata.metadata)
+  const selectors = useStore((state) => state.dataset.variable?.selectors)
 
   const { coords, points } = getLines(
     center,
@@ -199,7 +199,7 @@ const PointInformation = ({ selector }) => {
 }
 
 const Plots = () => {
-  const selectors = useStore((state) => state.variable?.selectors)
+  const selectors = useStore((state) => state.dataset.variable?.selectors)
 
   const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
 

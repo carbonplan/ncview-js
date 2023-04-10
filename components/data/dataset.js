@@ -1,6 +1,6 @@
 import FetchStore from 'zarrita/storage/fetch'
 
-import { getArrays, getMetadata } from '../utils'
+import { getArrays, getMetadata, getVariableInfo } from '../utils'
 
 class Dataset {
   constructor(url, apiMetadata) {
@@ -29,6 +29,43 @@ class Dataset {
 
     this.arrays = arrays
     this.headers = headers
+  }
+
+  async initializeVariable(variableName) {
+    const {
+      centerPoint,
+      nullValue,
+      northPole,
+      axes,
+      lockZoom,
+      selectors,
+      chunk_separator,
+      chunk_shape,
+      shape,
+      array,
+    } = await getVariableInfo(variableName, this)
+
+    this.variable = {
+      name: variableName,
+      nullValue,
+      northPole,
+      axes,
+      lockZoom,
+      selectors,
+      chunk_separator,
+      chunk_shape,
+      shape,
+      array,
+    }
+
+    return { centerPoint, selectors }
+  }
+
+  setSelectors(selectors) {
+    this.variable = {
+      ...this.variable,
+      selectors,
+    }
   }
 }
 

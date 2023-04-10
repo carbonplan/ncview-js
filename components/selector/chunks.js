@@ -19,17 +19,19 @@ const sx = {
 const Chunks = ({ index }) => {
   const [playing, setPlaying] = usePlay(index)
   const selector = useStore(
-    (state) => state.variable.selectors && state.variable.selectors[index]
+    (state) =>
+      state.dataset.variable.selectors && state.variable.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
-  const chunk_shape = useStore((state) => state.variable.chunk_shape)
+  const chunk_shape = useStore((state) => state.dataset.variable.chunk_shape)
   const finalChunk = useStore(
     (state) =>
       Math.ceil(
-        state.variable.shape[index] / state.variable.chunk_shape[index]
+        state.dataset.variable.shape[index] /
+          state.dataset.variable.chunk_shape[index]
       ) - 1
   )
-  const axes = useStore((state) => state.variable.axes)
+  const axes = useStore((state) => state.dataset.variable.axes)
 
   const setSelectorIndex = useCallback(
     (value) => {

@@ -36,7 +36,7 @@ const Plots = () => {
   const center = useStore((state) => state.center)
   const setMode = useStore((state) => state.setMode)
   const setCenter = useStore((state) => state.setCenter)
-  const selectors = useStore((state) => state.variable?.selectors)
+  const selectors = useStore((state) => state.dataset?.variable?.selectors)
 
   const handleClick = useCallback(() => {
     if (mode === 'inactive') {

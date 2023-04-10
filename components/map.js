@@ -26,11 +26,12 @@ const Map = () => {
     count: 255,
     format: 'rgb',
   })
-  const { northPole, nullValue } = useStore((state) => state.variable)
+  const { northPole, nullValue, lockZoom } = useStore(
+    (state) => state.dataset?.variable || {}
+  )
   const clim = useStore((state) => state.clim)
   const mode = useStore((state) => state.mode)
 
-  const { lockZoom } = useStore((state) => state.variable)
   const resetCenterPoint = useStore((state) => state.resetCenterPoint)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
