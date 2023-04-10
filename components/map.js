@@ -17,7 +17,7 @@ const Map = () => {
   const { theme } = useThemeUI()
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
-  const url = useStore((state) => state.url)
+  const dataset = useStore((state) => state.dataset)
   const renderable = useStore((state) => Object.values(state.chunks).length > 0)
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
@@ -57,10 +57,10 @@ const Map = () => {
   }, [!!chunkBounds, projectionName, lockZoom])
 
   useEffect(() => {
-    if (!url) {
+    if (!dataset) {
       mapPropsInitialized.current = false
     }
-  }, [url])
+  }, [dataset])
 
   useEffect(() => {
     const projection = getProjection(mapProps)
@@ -81,7 +81,7 @@ const Map = () => {
         background: alpha('secondary', 0.2),
       }}
     >
-      {url ? (
+      {dataset ? (
         <MapContainer setMapProps={setMapProps}>
           {mode === 'point' && <Point mapProps={mapProps} />}
           {mode === 'circle' && <Circle mapProps={mapProps} />}

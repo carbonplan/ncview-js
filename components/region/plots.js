@@ -59,10 +59,10 @@ const LineChart = ({ selector, index }) => {
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
   const variable = useStore((state) => state.variable)
-  const metadata = useStore((state) => state.metadata?.metadata)
+  const metadata = useStore((state) => state.dataset?.metadata?.metadata)
   const selectors = useStore((state) => state.variable.selectors)
-  const array = useStore((state) => state.arrays[selector.name])
-  const headers = useStore((state) => state.headers)
+  const array = useStore((state) => state.dataset?.arrays[selector.name])
+  const headers = useStore((state) => state.dataset?.headers)
 
   const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
@@ -154,7 +154,7 @@ const PointInformation = ({ selector }) => {
   const activeChunkKeys = useStore((state) => state.activeChunkKeys)
   const chunks = useStore((state) => state.chunks)
   const variable = useStore((state) => state.variable)
-  const metadata = useStore((state) => state.metadata?.metadata)
+  const metadata = useStore((state) => state.dataset?.metadata?.metadata)
   const selectors = useStore((state) => state.variable.selectors)
 
   const { coords, points } = getLines(

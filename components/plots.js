@@ -31,7 +31,7 @@ const sx = {
 }
 
 const Plots = () => {
-  const ready = useStore((state) => !!state.url)
+  const ready = useStore((state) => !!state.dataset)
   const mode = useStore((state) => state.mode)
   const center = useStore((state) => state.center)
   const setMode = useStore((state) => state.setMode)

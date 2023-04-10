@@ -1,10 +1,9 @@
 import create from 'zustand'
+import Dataset from './data/dataset'
 import {
   getActiveChunkKeys,
-  getArrays,
   getChunkData,
   getClim,
-  getMetadata,
   getVariableInfo,
   pointToChunkKey,
   toKeyArray,
@@ -21,12 +20,7 @@ const createDatasetSlice = (set, get) => ({
   getLoading: () => get()._loading.length > 0,
 
   // dataset
-  url: null,
-  metadata: null,
-  apiMetadata: null,
-  variables: [],
-  arrays: {},
-  headers: null,
+  dataset: null,
 
   // variable
   variable: {
@@ -76,12 +70,9 @@ const useStore = create((set, get) => ({
   setUrl: async (url, apiMetadata, clim) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
-      url,
-      apiMetadata,
       error: null,
       // Null out all dataset-related fields
-      metadata: null,
-      variables: [],
+      dataset: null,
       variable: {},
       chunks: {},
       activeChunkKeys: [],
@@ -94,26 +85,19 @@ const useStore = create((set, get) => ({
     }
 
     _registerLoading('metadata')
-
-    const { metadata, variables } = await getMetadata(url)
-    if (variables.length === 0) {
-      set({
-        error:
-          'No viewable variables found. Please provide a dataset with 2D data arrays.',
-      })
+    let dataset
+    try {
+      dataset = new Dataset(url, apiMetadata)
+      await dataset.initialize()
+      set({ dataset })
+    } catch (e) {
+      set({ error: e.message })
+      _unregisterLoading('metadata')
       return
     }
-    const { arrays, headers } = await getArrays(
-      url,
-      metadata,
-      variables,
-      apiMetadata
-    )
-
-    set({ metadata, variables, arrays, headers })
 
     // default to first variable
-    const initialVariable = variables[0]
+    const initialVariable = dataset.variables[0]
 
     if (Object.keys(apiMetadata[initialVariable] ?? {}).length < 2) {
       set({
@@ -149,7 +133,7 @@ const useStore = create((set, get) => ({
       chunk_shape,
       shape,
       array,
-    } = await getVariableInfo(name, get())
+    } = await getVariableInfo(name, get().dataset)
 
     const variable = {
       name,
@@ -232,7 +216,7 @@ const useStore = create((set, get) => ({
   fetchChunk: async (chunkKey) => {
     const {
       variable,
-      headers,
+      dataset,
       chunks: initialChunks,
       _registerLoading,
       _unregisterLoading,
@@ -242,7 +226,7 @@ const useStore = create((set, get) => ({
       return
     }
 
-    if (!headers || !variable.name) {
+    if (!dataset?.headers || !variable.name) {
       set({
         error: 'Tried to fetch chunk before store was fully initialized.',
       })
@@ -252,7 +236,7 @@ const useStore = create((set, get) => ({
     _registerLoading(chunkKey)
 
     try {
-      const result = await getChunkData(chunkKey, { variable, headers })
+      const result = await getChunkData(chunkKey, { variable, dataset })
       const { chunks } = get()
       _unregisterLoading(chunkKey)
       set({ chunks: { ...chunks, [chunkKey]: result } })

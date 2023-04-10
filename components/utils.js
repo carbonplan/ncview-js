@@ -261,13 +261,15 @@ export const getChunkData = async (
   chunkKey,
   {
     variable: { array, axes, nullValue, chunk_separator, chunk_shape, shape },
-    headers,
+    dataset,
   }
 ) => {
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-  const data = await array.get_chunk(chunkKeyArray, { headers }).then((c) => {
-    return ndarray(Float32Array.from(c.data, Number), chunk_shape)
-  })
+  const data = await array
+    .get_chunk(chunkKeyArray, { headers: dataset.headers })
+    .then((c) => {
+      return ndarray(Float32Array.from(c.data, Number), chunk_shape)
+    })
 
   const clim = getRange(data.data, { nullValue })
 
@@ -417,7 +419,7 @@ export const getActiveChunkKeys = (chunkKey, { variable }) => {
 
 export const getClim = async (
   activeChunkKeys,
-  { chunks, variable, headers }
+  { chunks, variable, dataset }
 ) => {
   const activeChunks = {}
   const allChunks = await Promise.all(
@@ -426,7 +428,7 @@ export const getClim = async (
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getChunkData(key, { variable, headers })
+        const chunk = await getChunkData(key, { variable, dataset })
         activeChunks[key] = chunk
         return chunk
       }
