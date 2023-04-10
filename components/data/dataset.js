@@ -1,6 +1,14 @@
 import FetchStore from 'zarrita/storage/fetch'
 
-import { getArrays, getMetadata, getVariableInfo } from '../utils'
+import {
+  getActiveChunkKeys,
+  getArrays,
+  getChunkData,
+  getClim,
+  getMetadata,
+  getVariableInfo,
+  pointToChunkKey,
+} from '../utils'
 
 class Dataset {
   constructor(url, apiMetadata) {
@@ -9,6 +17,8 @@ class Dataset {
   }
 
   async initialize() {
+    this.variable = {}
+    this.chunks = {}
     this.store = new FetchStore(this.url)
     const { metadata, variables } = await getMetadata(this.url)
     this.metadata = metadata
@@ -32,6 +42,8 @@ class Dataset {
   }
 
   async initializeVariable(variableName) {
+    this.variable = {}
+    this.chunks = {}
     const {
       centerPoint,
       nullValue,
@@ -59,6 +71,47 @@ class Dataset {
     }
 
     return { centerPoint, selectors }
+  }
+
+  async updateSelection(centerPoint, selectors, { initializeClim } = {}) {
+    this.chunkKey = pointToChunkKey(centerPoint, {
+      selectors,
+      variable: this.variable,
+    })
+
+    this.activeChunkKeys = getActiveChunkKeys(this.chunkKey, this)
+    if (initializeClim) {
+      const { clim, chunks } = await getClim(this.activeChunkKeys, {
+        chunks: this.chunks,
+        dataset: this,
+      })
+
+      this.chunks = {
+        ...this.chunks,
+        ...chunks,
+      }
+
+      return clim
+    }
+  }
+
+  async fetchChunk(chunkKey) {
+    if (this.chunks[chunkKey]) {
+      return
+    }
+
+    if (!this.headers || !this.variable?.name) {
+      throw new Error(
+        'Tried to fetch chunk before store was fully initialized.'
+      )
+    }
+
+    const result = await getChunkData(chunkKey, this)
+
+    this.chunks = {
+      ...this.chunks,
+      [chunkKey]: result,
+    }
   }
 }
 

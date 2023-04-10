@@ -6,7 +6,7 @@ import useStore from './store'
 const Chunk = ({ chunkKey }) => {
   const fetchChunk = useStore((state) => state.fetchChunk)
 
-  const chunk = useStore((state) => state.chunks[chunkKey])
+  const chunk = useStore((state) => state.dataset.chunks[chunkKey])
   const selectors = useStore((state) => state.selectors)
 
   const [data, setData] = useState(null)

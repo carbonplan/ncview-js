@@ -18,9 +18,14 @@ const Map = () => {
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
   const dataset = useStore((state) => state.dataset)
-  const renderable = useStore((state) => Object.values(state.chunks).length > 0)
-  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
-  const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
+  const renderable = useStore(
+    (state) => state.dataset && Object.values(state.dataset.chunks).length > 0
+  )
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunkBounds = useStore(
+    (state) =>
+      state.dataset && state.dataset.chunks[state.dataset.chunkKey]?.bounds
+  )
   const colormapName = useStore((state) => state.colormap)
   const colormap = useThemedColormap(colormapName, {
     count: 255,
@@ -129,7 +134,7 @@ const Map = () => {
                 northPole={northPole}
                 nullValue={nullValue}
               >
-                {activeChunkKeys.map((key) => (
+                {chunksToRender.map((key) => (
                   <Chunk key={key} chunkKey={key} />
                 ))}
               </Layer>

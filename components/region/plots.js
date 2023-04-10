@@ -56,17 +56,17 @@ const Point = ({ point, selector }) => {
 
 const LineChart = ({ selector, index }) => {
   const center = useStore((state) => state.center)
-  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
-  const chunks = useStore((state) => state.chunks)
-  const variable = useStore((state) => state.dataset?.variable)
-  const metadata = useStore((state) => state.dataset?.metadata?.metadata)
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunks = useStore((state) => state.dataset.chunks)
+  const variable = useStore((state) => state.dataset.variable)
+  const metadata = useStore((state) => state.dataset.metadata?.metadata)
   const selectors = useStore((state) => state.selectors)
-  const array = useStore((state) => state.dataset?.arrays[selector.name])
-  const headers = useStore((state) => state.dataset?.headers)
+  const array = useStore((state) => state.dataset.arrays[selector.name])
+  const headers = useStore((state) => state.dataset.headers)
 
   const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
-    activeChunkKeys,
+    activeChunkKeys: chunksToRender,
     chunks,
     variable,
     selectors,
@@ -151,8 +151,8 @@ const LineChart = ({ selector, index }) => {
 
 const PointInformation = ({ selector }) => {
   const center = useStore((state) => state.center)
-  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
-  const chunks = useStore((state) => state.chunks)
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunks = useStore((state) => state.dataset.chunks)
   const variable = useStore((state) => state.dataset.variable)
   const metadata = useStore((state) => state.dataset.metadata.metadata)
   const selectors = useStore((state) => state.selectors)
@@ -161,7 +161,7 @@ const PointInformation = ({ selector }) => {
     center,
     {},
     {
-      activeChunkKeys,
+      activeChunkKeys: chunksToRender,
       chunks,
       variable,
       selectors,

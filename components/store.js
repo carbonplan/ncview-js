@@ -1,13 +1,5 @@
 import create from 'zustand'
 import Dataset from './data/dataset'
-import {
-  getActiveChunkKeys,
-  getChunkData,
-  getClim,
-  pointToChunkKey,
-  toKeyArray,
-  toKeyString,
-} from './utils'
 
 const createDatasetSlice = (set, get) => ({
   // loading
@@ -20,14 +12,7 @@ const createDatasetSlice = (set, get) => ({
 
   dataset: null,
   selectors: [],
-
-  // cache of chunks
-  chunks: {},
-
-  // central chunk
-  chunkKey: null,
-  // active chunks
-  activeChunkKeys: [],
+  chunksToRender: [],
 })
 
 const createDisplaySlice = (set, get) => ({
@@ -64,8 +49,7 @@ const useStore = create((set, get) => ({
       // Null out all dataset-related fields
       dataset: null,
       selectors: [],
-      chunks: {},
-      activeChunkKeys: [],
+      chunksToRender: [],
       clim,
     })
 
@@ -105,9 +89,7 @@ const useStore = create((set, get) => ({
     set({
       // Null out variable-specific fields
       selectors: [],
-      chunkKey: null,
-      chunks: {},
-      activeChunkKeys: [],
+      chunksToRender: [],
       clim: null,
     })
     _registerLoading(name)
@@ -115,93 +97,31 @@ const useStore = create((set, get) => ({
     const { centerPoint: variableCenterPoint, selectors } =
       await dataset.initializeVariable(name)
 
-    set({
+    set({ selectors })
+
+    const clim = await dataset.updateSelection(
+      centerPoint ?? variableCenterPoint,
       selectors,
-      ...(centerPoint ? {} : { centerPoint: variableCenterPoint }),
-    })
+      { initializeClim: true }
+    )
+    set({ clim })
     _unregisterLoading(name)
 
-    let chunkKey
-    if (centerPoint) {
-      chunkKey = pointToChunkKey(centerPoint, {
-        selectors,
-        variable: dataset.variable,
-      })
-    }
-    if (!chunkKey) {
-      chunkKey = pointToChunkKey(variableCenterPoint, {
-        selectors,
-        variable: dataset.variable,
-      })
-    }
-
-    get().setChunkKey(chunkKey, { initializeClim: true })
+    get().resetCenterPoint(centerPoint ?? variableCenterPoint)
   },
-  setChunkKey: async (chunkKey, { initializeClim }) => {
-    const {
-      dataset,
-      chunkKey: existingChunkKey,
-      _registerLoading,
-      _unregisterLoading,
-    } = get()
-    if (chunkKey === existingChunkKey) {
+  resetCenterPoint: async (centerPoint) => {
+    const { dataset, selectors, setCenterPoint } = get()
+
+    if (!dataset || Object.keys(dataset.chunks).length === 0) {
       return
     }
 
-    set({ chunkKey })
-    _registerLoading(chunkKey)
-
-    try {
-      const activeChunkKeys = getActiveChunkKeys(chunkKey, dataset)
-      const toSet = { activeChunkKeys }
-      if (initializeClim) {
-        const { clim, chunks: newChunks } = await getClim(
-          activeChunkKeys,
-          get()
-        )
-        const { chunks } = get()
-        toSet.chunks = {
-          ...chunks,
-          ...newChunks,
-        }
-        toSet.clim = clim
-      }
-
-      set(toSet)
-      _unregisterLoading(chunkKey)
-    } catch (e) {
-      set({ error: 'Error loading data.' })
-      _unregisterLoading(chunkKey)
-    }
-  },
-  resetCenterPoint: (centerPoint) => {
-    const { dataset, chunks, selectors, setChunkKey, setCenterPoint } = get()
-
-    if (Object.keys(chunks).length === 0) {
-      return
-    }
-
-    const newChunkKey = pointToChunkKey(centerPoint, {
-      variable: dataset.variable,
-      selectors,
-    })
-
-    if (newChunkKey) {
-      setCenterPoint(centerPoint)
-      setChunkKey(newChunkKey, { initializeClim: false })
-    }
+    setCenterPoint(centerPoint)
+    await dataset.updateSelection(centerPoint, selectors)
+    set({ chunksToRender: dataset.activeChunkKeys })
   },
   fetchChunk: async (chunkKey) => {
-    const {
-      dataset,
-      chunks: initialChunks,
-      _registerLoading,
-      _unregisterLoading,
-    } = get()
-
-    if (initialChunks[chunkKey]) {
-      return
-    }
+    const { dataset, _registerLoading, _unregisterLoading } = get()
 
     if (!dataset?.headers || !dataset?.variable?.name) {
       set({
@@ -213,20 +133,17 @@ const useStore = create((set, get) => ({
     _registerLoading(chunkKey)
 
     try {
-      const result = await getChunkData(chunkKey, dataset)
-      const { chunks } = get()
+      await dataset.fetchChunk(chunkKey)
       _unregisterLoading(chunkKey)
-      set({ chunks: { ...chunks, [chunkKey]: result } })
     } catch (e) {
       set({ error: 'Error loading data.' })
       _unregisterLoading(chunkKey)
     }
   },
-  setSelector: (index, values) => {
-    const { dataset, selectors, chunkKey, setChunkKey } = get()
+  setSelector: async (index, values) => {
+    const { centerPoint, dataset, selectors } = get()
 
     const updatedSelector = selectors[index]
-    let updatedChunkKey = chunkKey
     let shouldUpdate = false
 
     if (
@@ -242,9 +159,6 @@ const useStore = create((set, get) => ({
       updatedSelector.chunk !== values.chunk
     ) {
       shouldUpdate = true
-      const chunkArray = toKeyArray(chunkKey, dataset.variable)
-      chunkArray[index] = values.chunk
-      updatedChunkKey = toKeyString(chunkArray, dataset.variable)
       updatedSelector.chunk = values.chunk
     }
 
@@ -254,10 +168,12 @@ const useStore = create((set, get) => ({
         updatedSelector,
         ...selectors.slice(index + 1),
       ]
-      set({ selectors: updatedSelectors })
-      if (updatedChunkKey !== chunkKey) {
-        setChunkKey(updatedChunkKey, { initializeClim: false })
-      }
+
+      await dataset.updateSelection(centerPoint, updatedSelectors)
+      set({
+        selectors: updatedSelectors,
+        chunksToRender: dataset.activeChunkKeys,
+      })
     }
   },
 }))
