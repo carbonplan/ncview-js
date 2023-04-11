@@ -30,7 +30,7 @@ const Chunks = ({ index }) => {
           state.dataset.variable.chunk_shape[index]
       ) - 1
   )
-  const axes = useStore((state) => state.dataset.variable.axes)
+  const selectorAxes = useStore((state) => state.dataset.variable.selectorAxes)
 
   const setSelectorIndex = useCallback(
     (value) => {
@@ -69,9 +69,9 @@ const Chunks = ({ index }) => {
             <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
               <Box sx={{ ...sx.subLabel, pb: 1 }}>
                 <Flex sx={{ gap: 2 }}>
-                  {axes.T?.index === index && (
+                  {selectorAxes.T?.index === index && (
                     <DateDisplay
-                      array={axes.T.array}
+                      array={selectorAxes.T.array}
                       selector={selector}
                       chunkShape={chunk_shape[index]}
                     />

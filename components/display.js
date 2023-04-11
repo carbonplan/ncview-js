@@ -19,10 +19,7 @@ const Display = () => {
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
   const variable = useStore((state) => state.dataset?.variable?.name)
-  const units = useStore(
-    (state) =>
-      variable && state.dataset?.metadata?.metadata[`${variable}/.zattrs`].units
-  )
+  const units = useStore((state) => state.dataset?.variable?.zattrs?.units)
   const colormap = useThemedColormap(!hasData ? 'greys' : colormapName, {
     count: 255,
     format: 'rgb',

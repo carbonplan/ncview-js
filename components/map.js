@@ -19,12 +19,15 @@ const Map = () => {
   const projectionName = useStore((state) => state.projection)
   const dataset = useStore((state) => state.dataset)
   const renderable = useStore(
-    (state) => state.dataset && Object.values(state.dataset.chunks).length > 0
+    (state) =>
+      state.dataset?.level &&
+      Object.values(state.dataset.level.chunks).length > 0
   )
   const chunksToRender = useStore((state) => state.chunksToRender)
   const chunkBounds = useStore(
     (state) =>
-      state.dataset && state.dataset.chunks[state.dataset.chunkKey]?.bounds
+      state.dataset?.level &&
+      state.dataset.level.chunks[state.dataset.chunkKey]?.bounds
   )
   const colormapName = useStore((state) => state.colormap)
   const colormap = useThemedColormap(colormapName, {

@@ -57,7 +57,7 @@ const Point = ({ point, selector }) => {
 const LineChart = ({ selector, index }) => {
   const center = useStore((state) => state.center)
   const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset.chunks)
+  const chunks = useStore((state) => state.dataset.level.chunks)
   const variable = useStore((state) => state.dataset.variable)
   const metadata = useStore((state) => state.dataset.metadata?.metadata)
   const selectors = useStore((state) => state.selectors)
@@ -152,7 +152,7 @@ const LineChart = ({ selector, index }) => {
 const PointInformation = ({ selector }) => {
   const center = useStore((state) => state.center)
   const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset.chunks)
+  const chunks = useStore((state) => state.dataset.level.chunks)
   const variable = useStore((state) => state.dataset.variable)
   const metadata = useStore((state) => state.dataset.metadata.metadata)
   const selectors = useStore((state) => state.selectors)
