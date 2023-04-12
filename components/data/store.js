@@ -1,5 +1,5 @@
 import create from 'zustand'
-import Dataset from './data/dataset'
+import Dataset from './dataset'
 
 const createDatasetSlice = (set, get) => ({
   // loading

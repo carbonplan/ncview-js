@@ -1,7 +1,7 @@
 import { Column, Row } from '@carbonplan/components'
 import { Box, Divider } from 'theme-ui'
 
-import useStore from './store'
+import useStore from './data/store'
 
 const ArrayMetadata = ({ array }) => {
   const zattrs = useStore((state) => state.dataset?.getZattrs(array))

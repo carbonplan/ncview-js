@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { Tile } from './minimap'
-import useStore from './store'
+import useStore from './data/store'
 
 const Chunk = ({ chunkKey }) => {
   const fetchChunk = useStore((state) => state.fetchChunk)

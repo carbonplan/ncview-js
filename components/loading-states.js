@@ -1,6 +1,6 @@
 import { SidebarAttachment } from '@carbonplan/layouts'
 import { Box, Spinner } from 'theme-ui'
-import useStore from './store'
+import useStore from './data/store'
 
 const LoadingStates = () => {
   const loading = useStore((state) => state.getLoading())

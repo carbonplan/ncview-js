@@ -1,6 +1,6 @@
 import { useThemeUI } from 'theme-ui'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
-import useStore from '../store'
+import useStore from '../data/store'
 import { getProjection } from '../utils'
 
 const Point = ({ mapProps }) => {

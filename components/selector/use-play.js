@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 
-import useStore from '../store'
+import useStore from '../data/store'
 
 const usePlay = (index, { incrementChunk = false } = {}) => {
   const [playing, setPlaying] = useState(false)

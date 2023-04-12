@@ -2,7 +2,7 @@ import { Column, Row, Slider as SliderComponent } from '@carbonplan/components'
 import { Box, Flex } from 'theme-ui'
 import { useCallback, useEffect, useState } from 'react'
 
-import useStore from '../store'
+import useStore from '../data/store'
 import { IconButton, Next, Back, Play, Pause } from '../icons'
 import DateDisplay from '../date-display'
 import usePlay from './use-play'

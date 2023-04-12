@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react'
 import { Search, X } from '@carbonplan/icons'
 import AnimateHeight from 'react-animate-height'
 
-import useStore from './store'
+import useStore from './data/store'
 import { Plots as RegionalPlots } from './region'
 
 const sx = {

@@ -4,7 +4,7 @@ import { useCallback, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
 
 import Label from './label'
-import useStore from './store'
+import useStore from './data/store'
 
 const DATASETS = [
   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',

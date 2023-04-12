@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Box } from 'theme-ui'
 
-import useStore from './store'
+import useStore from './data/store'
 
 const MapContainer = ({ children, setMapProps }) => {
   const container = useRef(null)

@@ -5,7 +5,7 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 
 import { Minimap, Path, Sphere } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
-import useStore from './store'
+import useStore from './data/store'
 import { getMapProps, getProjection, validatePoint } from './utils'
 import MapContainer from './map-container'
 import Layer from './minimap/layer'

@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
 
-import useStore from './store'
+import useStore from './data/store'
 import { Button } from '@carbonplan/components'
 import { Reset } from '@carbonplan/icons'
 import { Flex } from 'theme-ui'

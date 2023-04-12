@@ -3,7 +3,7 @@ import { Toggle, Select, Colorbar } from '@carbonplan/components'
 import { colormaps, useThemedColormap } from '@carbonplan/colormaps'
 import { format } from 'd3-format'
 
-import useStore from './store'
+import useStore from './data/store'
 import Label from './label'
 import ResetClim from './reset-clim'
 

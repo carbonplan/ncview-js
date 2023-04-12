@@ -14,7 +14,7 @@ import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
 import { useCallback, useEffect, useState } from 'react'
 
-import useStore from '../store'
+import useStore from '../data/store'
 import { getLines } from '../utils'
 
 const isNullValue = (p) => {

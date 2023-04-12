@@ -1,6 +1,6 @@
 import { useState } from 'react'
 
-import useStore from '../store'
+import useStore from '../data/store'
 import Label from '../label'
 import ArrayMetadata from '../array-metadata'
 import { TooltipContent, TooltipWrapper } from '../tooltip'

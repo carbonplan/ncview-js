@@ -1,6 +1,6 @@
 import { formatDate } from '@carbonplan/components'
 import { useCallback } from 'react'
-import useStore from './store'
+import useStore from './data/store'
 
 export const useDateFormatter = (coordinate, options) => {
   const { units, calendar } = useStore(

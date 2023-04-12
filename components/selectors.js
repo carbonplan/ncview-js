@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Label from './label'
 import Selector from './selector'
 import { TooltipContent, TooltipWrapper } from './tooltip'
-import useStore from './store'
+import useStore from './data/store'
 import ArrayMetadata from './array-metadata'
 
 const sx = {
