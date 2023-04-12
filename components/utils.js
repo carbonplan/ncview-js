@@ -243,7 +243,7 @@ export const getVariableLevelInfo = async (
   { apiMetadata, metadata }
 ) => {
   const dataArray = arrays[name]
-  const prefix = `${level}/`
+  const prefix = level ? `${level}/` : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
   const nullValue = getNullValue(dataArray)
   const { chunk_separator, chunk_shape, shape } = dataArray
