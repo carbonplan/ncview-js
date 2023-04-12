@@ -81,6 +81,10 @@ export const getMetadata = async (url, pyramid) => {
   const response = await fetch(`${url}/.zmetadata`)
   const metadata = await response.json()
 
+  if (!metadata.metadata) {
+    throw new Error(metadata?.message || 'Unable to parse metadata')
+  }
+
   const prefix = pyramid ? '0/' : ''
   const variables = Object.keys(metadata.metadata)
     .map((k) =>
