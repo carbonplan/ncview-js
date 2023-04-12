@@ -1,7 +1,8 @@
 import { Input } from '@carbonplan/components'
 import { Box, Flex, IconButton } from 'theme-ui'
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { Right, X } from '@carbonplan/icons'
+import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
@@ -81,46 +82,59 @@ const Dataset = () => {
   const [focused, setFocused] = useState(false)
   const storeError = useStore((state) => state.error)
   const setStoreUrl = useStore((state) => state.setUrl)
+  const router = useRouter()
+
+  const submitUrl = useCallback(async (value) => {
+    setDataset(null)
+    setErrorMessage(null)
+
+    if (!value) {
+      setErrorMessage('Please enter a URL')
+      return
+    }
+
+    setStoreUrl()
+    const d = await createDataset(value)
+    if (d.id) {
+      setDataset(d)
+      const pyramid = d.rechunking.find((r) => r.use_case === 'multiscales')
+      if (pyramid) {
+        // Use pyramid when present
+        setStoreUrl(pyramid.path, d.cf_axes, {
+          pyramid: true,
+        })
+      } else {
+        // Otherwise construct Zarr proxy URL
+        const u = new URL(d.url)
+        setStoreUrl(
+          'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
+            u.hostname +
+            u.pathname,
+          d.cf_axes,
+          { pyramid: false }
+        )
+      }
+    } else if (d.detail?.length > 0) {
+      setErrorMessage(d.detail[0].msg)
+    } else {
+      setErrorMessage('Unable to process dataset')
+    }
+  }, [])
 
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault()
-      setDataset(null)
-      setErrorMessage(null)
-      if (!url) {
-        setErrorMessage('Please enter a URL')
-        return
-      }
-
-      setStoreUrl()
-      const d = await createDataset(url)
-      if (d.id) {
-        setDataset(d)
-        const pyramid = d.rechunking.find((r) => r.use_case === 'multiscales')
-        if (pyramid) {
-          // Use pyramid when present
-          setStoreUrl(pyramid.path, d.cf_axes, {
-            pyramid: true,
-          })
-        } else {
-          // Otherwise construct Zarr proxy URL
-          const u = new URL(d.url)
-          setStoreUrl(
-            'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
-              u.hostname +
-              u.pathname,
-            d.cf_axes,
-            { pyramid: false }
-          )
-        }
-      } else if (d.detail?.length > 0) {
-        setErrorMessage(d.detail[0].msg)
-      } else {
-        setErrorMessage('Unable to process dataset')
-      }
+      submitUrl(url)
     },
     [url]
   )
+
+  useEffect(() => {
+    if (!url && router.query?.dataset) {
+      setUrl(router.query.dataset)
+      submitUrl(router.query.dataset)
+    }
+  }, [!url, router.query?.dataset])
 
   return (
     <form onSubmit={handleSubmit}>
