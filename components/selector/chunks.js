@@ -22,12 +22,14 @@ const Chunks = ({ index }) => {
     (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
-  const chunk_shape = useStore((state) => state.dataset.variable.chunk_shape)
+  const chunk_shape = useStore(
+    (state) => state.dataset.level.variable.chunk_shape
+  )
   const finalChunk = useStore(
     (state) =>
       Math.ceil(
-        state.dataset.variable.shape[index] /
-          state.dataset.variable.chunk_shape[index]
+        state.dataset.level.variable.shape[index] /
+          state.dataset.level.variable.chunk_shape[index]
       ) - 1
   )
   const selectorAxes = useStore((state) => state.dataset.variable.selectorAxes)

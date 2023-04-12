@@ -26,9 +26,9 @@ const Slider = ({ index }) => {
   const [sliderValue, setSliderValue] = useState(selector)
   const [sliding, setSliding] = useState(false)
   const chunk_shape = useStore(
-    (state) => state.dataset.variable.chunk_shape[index]
+    (state) => state.dataset.level.variable.chunk_shape[index]
   )
-  const shape = useStore((state) => state.dataset.variable.shape[index])
+  const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
   const selectorAxes = useStore((state) => state.dataset.variable.selectorAxes)
 
@@ -39,6 +39,7 @@ const Slider = ({ index }) => {
         index: value % chunk_shape,
         chunk: Math.floor(value / chunk_shape),
       }
+
       setSliderValue(updatedSelector)
       if (!sliding) {
         setSelector(index, updatedSelector)

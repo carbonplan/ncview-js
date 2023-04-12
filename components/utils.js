@@ -292,8 +292,6 @@ export const getVariableInfo = async (
 ) => {
   const prefix = pyramid ? '0/' : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
-  const zarray = metadata.metadata[`${prefix}${name}/.zarray`]
-  const { shape, chunks } = zarray
 
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${prefix}${zattrs.grid_mapping}/.zattrs`]
@@ -360,8 +358,6 @@ export const getVariableInfo = async (
         : undefined,
     selectors,
     selectorAxes,
-    shape: shape.map((d, i) => (isSpatialDimension(d) ? null : d)),
-    chunk_shape: chunks.map((d, i) => (isSpatialDimension(d) ? null : d)),
   }
 }
 
