@@ -32,7 +32,7 @@ const Chunks = ({ index }) => {
           state.dataset.level.variable.chunk_shape[index]
       ) - 1
   )
-  const selectorAxes = useStore((state) => state.dataset.variable.selectorAxes)
+  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
 
   const setSelectorIndex = useCallback(
     (value) => {

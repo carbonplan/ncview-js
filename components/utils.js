@@ -292,10 +292,6 @@ export const getVariableInfo = async (
 ) => {
   const prefix = pyramid ? '0/' : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
-
-  const gridMapping = zattrs.grid_mapping
-    ? metadata.metadata[`${prefix}${zattrs.grid_mapping}/.zattrs`]
-    : null
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
 
   const isSpatialDimension = (d) => {
@@ -346,16 +342,6 @@ export const getVariableInfo = async (
   })
 
   return {
-    zattrs,
-    northPole:
-      gridMapping &&
-      gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
-      gridMapping.hasOwnProperty('grid_north_pole_latitude')
-        ? [
-            gridMapping.grid_north_pole_longitude,
-            gridMapping.grid_north_pole_latitude,
-          ]
-        : undefined,
     selectors,
     selectorAxes,
   }

@@ -3,12 +3,8 @@ import { useCallback } from 'react'
 import useStore from './store'
 
 export const useDateFormatter = (coordinate, options) => {
-  const pyramid = useStore((state) => state.dataset?.pyramid)
   const { units, calendar } = useStore(
-    (state) =>
-      state.dataset?.metadata.metadata[
-        `${pyramid ? '0/' : ''}${coordinate}/.zattrs`
-      ]
+    (state) => state.dataset?.getZattrs(coordinate) ?? {}
   )
 
   if (!units) {

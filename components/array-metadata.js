@@ -4,9 +4,7 @@ import { Box, Divider } from 'theme-ui'
 import useStore from './store'
 
 const ArrayMetadata = ({ array }) => {
-  const metadata = useStore((state) => state.dataset?.metadata)
-  const pyramid = useStore((state) => state.dataset?.pyramid)
-  const zattrs = metadata.metadata[`${pyramid ? '0/' : ''}${array}/.zattrs`]
+  const zattrs = useStore((state) => state.dataset?.getZattrs(array))
   const keys = Object.keys(zattrs)
 
   return (

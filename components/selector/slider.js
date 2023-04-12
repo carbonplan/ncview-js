@@ -30,7 +30,7 @@ const Slider = ({ index }) => {
   )
   const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
-  const selectorAxes = useStore((state) => state.dataset.variable.selectorAxes)
+  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
 
   const handleChange = useCallback(
     (e) => {

@@ -120,13 +120,13 @@ class Dataset {
   }
 
   async initializeVariable(variableName) {
-    this.variable = {}
+    this.variable = null
     await Promise.all(
       Object.values(this.levels).map((level) =>
         level.initializeVariable(variableName)
       )
     )
-    const { selectorAxes, northPole, selectors } = await getVariableInfo(
+    const { selectorAxes, selectors } = await getVariableInfo(
       variableName,
       this.levels['0'],
       this
@@ -134,12 +134,9 @@ class Dataset {
 
     const level0 = this.levels['0'].variable
 
-    this.variable = {
-      name: variableName,
-      northPole,
-      selectorAxes,
-      lockZoom: this.pyramid ? false : level0.lockZoom,
-    }
+    this.selectorAxes = selectorAxes
+    this.lockZoom = this.pyramid ? false : level0.lockZoom
+    this.variable = variableName
 
     return { centerPoint: level0.centerPoint, selectors }
   }
@@ -183,6 +180,20 @@ class Dataset {
         )
       }
     })
+  }
+
+  getZattrs(arrayName) {
+    if (!this.metadata) {
+      throw new Error('Tried to inspect units before dataset was initialized')
+    }
+    const prefix = this.pyramid ? '0/' : ''
+
+    const zattrs = this.metadata.metadata[`${prefix}${arrayName}/.zattrs`]
+
+    if (!zattrs) {
+      throw new Error(`No .zattrs found for ${arrayName}`)
+    }
+    return zattrs
   }
 }
 
