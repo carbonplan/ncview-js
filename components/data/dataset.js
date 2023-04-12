@@ -29,6 +29,7 @@ class Level {
       centerPoint,
       axes,
       lockZoom,
+      nullValue,
       chunk_separator,
       chunk_shape,
       shape,
@@ -36,9 +37,11 @@ class Level {
     } = await getVariableLevelInfo(variableName, this, this.dataset)
 
     this.variable = {
+      name: variableName,
       centerPoint,
       axes,
       lockZoom,
+      nullValue,
       chunk_separator,
       chunk_shape,
       shape,
@@ -123,25 +126,16 @@ class Dataset {
         level.initializeVariable(variableName)
       )
     )
-    const {
-      selectorAxes,
-      nullValue,
-      northPole,
-      selectors,
-      chunk_separator,
-      chunk_shape,
-      shape,
-    } = await getVariableInfo(variableName, this.levels['0'], this)
+    const { selectorAxes, northPole, selectors, chunk_shape, shape } =
+      await getVariableInfo(variableName, this.levels['0'], this)
 
     const level0 = this.levels['0'].variable
 
     this.variable = {
       name: variableName,
-      nullValue,
       northPole,
       selectorAxes,
       lockZoom: this.pyramid ? false : level0.lockZoom,
-      chunk_separator,
       chunk_shape,
       shape,
     }

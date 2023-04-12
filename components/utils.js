@@ -245,8 +245,7 @@ export const getVariableLevelInfo = async (
   const dataArray = arrays[name]
   const prefix = `${level}/`
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
-  const zarray = metadata.metadata[`${prefix}${name}/.zarray`]
-  const nullValue = getNullValue(zarray)
+  const nullValue = getNullValue(dataArray)
   const { chunk_separator, chunk_shape, shape } = dataArray
 
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
@@ -294,8 +293,7 @@ export const getVariableInfo = async (
   const prefix = pyramid ? '0/' : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
   const zarray = metadata.metadata[`${prefix}${name}/.zarray`]
-  const nullValue = getNullValue(zarray)
-  const { chunk_separator, shape, chunks } = zarray
+  const { shape, chunks } = zarray
 
   const gridMapping = zattrs.grid_mapping
     ? metadata.metadata[`${prefix}${zattrs.grid_mapping}/.zattrs`]
@@ -362,8 +360,6 @@ export const getVariableInfo = async (
         : undefined,
     selectors,
     selectorAxes,
-    nullValue,
-    chunk_separator,
     shape: shape.map((d, i) => (isSpatialDimension(d) ? null : d)),
     chunk_shape: chunks.map((d, i) => (isSpatialDimension(d) ? null : d)),
   }

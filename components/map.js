@@ -35,7 +35,7 @@ const Map = () => {
     format: 'rgb',
   })
   const { northPole, nullValue, lockZoom } = useStore(
-    (state) => state.dataset?.variable || {}
+    (state) => state.dataset?.level?.variable || {}
   )
   const clim = useStore((state) => state.clim)
   const mode = useStore((state) => state.mode)
