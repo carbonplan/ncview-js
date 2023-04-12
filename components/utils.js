@@ -804,3 +804,13 @@ export const getLines = (
   })
   return result
 }
+
+export const validatePoint = ([lat, lon]) => {
+  if (!inLonRange(lon, [-180, 180])) {
+    return false
+  } else if (lat > 90 || lat < -90) {
+    return false
+  }
+
+  return true
+}

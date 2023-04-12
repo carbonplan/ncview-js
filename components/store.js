@@ -109,10 +109,10 @@ const useStore = create((set, get) => ({
     set({ clim })
     _unregisterLoading(name)
 
-    get().resetCenterPoint(centerPoint ?? variableCenterPoint)
+    get().resetMapProps(centerPoint ?? variableCenterPoint, zoom)
   },
-  resetCenterPoint: async (centerPoint) => {
-    const { dataset, selectors, zoom } = get()
+  resetMapProps: async (centerPoint, zoom) => {
+    const { dataset, selectors } = get()
 
     if (!dataset?.level || Object.keys(dataset.level.chunks).length === 0) {
       return

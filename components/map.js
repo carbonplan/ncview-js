@@ -6,7 +6,7 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 import { Minimap, Path, Sphere } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
-import { getMapProps, getProjection } from './utils'
+import { getMapProps, getProjection, validatePoint } from './utils'
 import MapContainer from './map-container'
 import Layer from './minimap/layer'
 import Nav from './nav'
@@ -18,11 +18,6 @@ const Map = () => {
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
   const dataset = useStore((state) => state.dataset)
-  const renderable = useStore(
-    (state) =>
-      state.dataset?.level &&
-      Object.values(state.dataset.level.chunks).length > 0
-  )
   const chunksToRender = useStore((state) => state.chunksToRender)
   const chunkBounds = useStore(
     (state) =>
@@ -40,7 +35,7 @@ const Map = () => {
   const clim = useStore((state) => state.clim)
   const mode = useStore((state) => state.mode)
 
-  const resetCenterPoint = useStore((state) => state.resetCenterPoint)
+  const resetMapProps = useStore((state) => state.resetMapProps)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
     scale: 1,
@@ -77,7 +72,11 @@ const Map = () => {
       Math.round((800 * ASPECTS[projection.id]) / 2),
       Math.round(800 / 2),
     ])
-    resetCenterPoint(centerPoint)
+
+    if (!validatePoint(centerPoint)) {
+      return
+    }
+    resetMapProps(centerPoint, mapProps.scale / 2)
   }, [mapProps])
 
   return (
@@ -94,7 +93,7 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {mode === 'point' && <Point mapProps={mapProps} />}
           {mode === 'circle' && <Circle mapProps={mapProps} />}
-          {renderable && (
+          {clim && (
             <Minimap {...mapProps}>
               {basemaps.oceanMask && (
                 <Path
@@ -144,7 +143,7 @@ const Map = () => {
             </Minimap>
           )}
 
-          {renderable && lockZoom && (
+          {clim && lockZoom && (
             <Nav
               mapProps={mapProps}
               setMapProps={setMapProps}
