@@ -8,12 +8,12 @@ import { Flex } from 'theme-ui'
 const ResetClim = () => {
   const loading = useStore((state) => state.getLoading())
   const setClim = useStore((state) => state.setClim)
-  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
-  const chunks = useStore((state) => state.chunks)
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunks = useStore((state) => state.dataset?.chunks || {})
 
   const resetClim = useCallback(() => {
     let clim
-    clim = activeChunkKeys.reduce(
+    clim = chunksToRender.reduce(
       (accum, key) => {
         if (chunks[key]) {
           accum[0] = Math.min(accum[0], chunks[key].clim[0])
@@ -27,7 +27,7 @@ const ResetClim = () => {
       clim = [0, 0]
     }
     setClim(clim)
-  }, [activeChunkKeys, chunks])
+  }, [chunksToRender, chunks])
 
   return (
     <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>

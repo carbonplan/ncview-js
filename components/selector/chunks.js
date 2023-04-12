@@ -19,17 +19,20 @@ const sx = {
 const Chunks = ({ index }) => {
   const [playing, setPlaying] = usePlay(index)
   const selector = useStore(
-    (state) => state.variable.selectors && state.variable.selectors[index]
+    (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
-  const chunk_shape = useStore((state) => state.variable.chunk_shape)
+  const chunk_shape = useStore(
+    (state) => state.dataset.level.variable.chunk_shape
+  )
   const finalChunk = useStore(
     (state) =>
       Math.ceil(
-        state.variable.shape[index] / state.variable.chunk_shape[index]
+        state.dataset.level.variable.shape[index] /
+          state.dataset.level.variable.chunk_shape[index]
       ) - 1
   )
-  const axes = useStore((state) => state.variable.axes)
+  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
 
   const setSelectorIndex = useCallback(
     (value) => {
@@ -68,9 +71,9 @@ const Chunks = ({ index }) => {
             <Column start={[1, 2, 2, 2]} width={[4, 3, 3, 3]}>
               <Box sx={{ ...sx.subLabel, pb: 1 }}>
                 <Flex sx={{ gap: 2 }}>
-                  {axes.T?.index === index && (
+                  {selectorAxes.T?.index === index && (
                     <DateDisplay
-                      array={axes.T.array}
+                      array={selectorAxes.T.array}
                       selector={selector}
                       chunkShape={chunk_shape[index]}
                     />

@@ -2,8 +2,20 @@ import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import ndarray from 'ndarray'
 import unpack from 'ndarray-unpack'
+import {
+  Blosc,
+  //GZip,
+  Zlib,
+  // LZ4,
+  // Zstd,
+} from 'numcodecs'
 
 import { PROJECTIONS, ASPECTS } from './constants'
+
+const COMPRESSORS = {
+  zlib: Zlib,
+  blosc: Blosc,
+}
 
 const getRange = (arr, { nullValue }) => {
   return arr
@@ -64,24 +76,36 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
-export const getMetadata = async (url) => {
+export const getMetadata = async (url, pyramid) => {
   // fetch zmetadata to figure out compression and variables
   const response = await fetch(`${url}/.zmetadata`)
   const metadata = await response.json()
 
+  if (!metadata.metadata) {
+    throw new Error(metadata?.message || 'Unable to parse metadata')
+  }
+
+  const prefix = pyramid ? '0/' : ''
   const variables = Object.keys(metadata.metadata)
-    .map((k) => k.match(/[^\/]+(?=\/\.zarray)/))
+    .map((k) =>
+      k.match(pyramid ? /(?<=0\/)\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/)
+    )
     .filter(Boolean)
     .map((a) => a[0])
     .filter((d) => !['lat', 'lon'].includes(d))
-    .filter((d) => metadata.metadata[`${d}/.zarray`].shape.length >= 2)
+    .filter((d) => metadata.metadata[`${prefix}${d}/.zarray`].shape.length >= 2)
     .filter((d) =>
-      metadata.metadata[`${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
-        (dim) => metadata.metadata[`${dim}/.zarray`]
+      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
+        (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
       )
     )
 
-  return { metadata, variables }
+  const levels = Object.keys(metadata.metadata)
+    .map((k) => k.match(new RegExp(`[0-9]+(?=\/${variables[0]}\/.zarray)`)))
+    .filter(Boolean)
+    .map((a) => a[0])
+
+  return { metadata, variables, levels }
 }
 
 const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
@@ -154,17 +178,39 @@ const getChunksHeader = (metadata, variables, apiMetadata) => {
   )
 }
 
-export const getArrays = async (url, metadata, variables, apiMetadata) => {
+export const getArrays = async (
+  level,
+  { url, metadata, variables, apiMetadata, pyramid }
+) => {
   // TODO: instantiate store with headers and clean up manual overrides
-  const headers = getChunksHeader(metadata, variables, apiMetadata)
-  const chunksOverrides = getChunksOverrides(metadata, variables, apiMetadata)
+  const headers = pyramid
+    ? {}
+    : getChunksHeader(metadata, variables, apiMetadata)
+  const chunksOverrides = pyramid
+    ? {}
+    : getChunksOverrides(metadata, variables, apiMetadata)
+
+  // TODO: validate that we can reuse compressors across the store
+  const compressorId =
+    metadata.metadata[`${level ? `${level}/` : ''}${variables[0]}/.zarray`]
+      .compressor?.id
+
+  if (compressorId) {
+    const compressor = COMPRESSORS[compressorId]
+    if (!compressor) {
+      throw new Error(`no compressor found for compressor.id=${compressorId}`)
+    }
+    zarr.registry.set(compressor.codecId, () => compressor)
+  }
 
   const store = new FetchStore(url)
 
   const coords = new Set(
     variables.flatMap(
       (variable) =>
-        metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
+        metadata.metadata[`${level ? `${level}/` : ''}${variable}/.zattrs`][
+          '_ARRAY_DIMENSIONS'
+        ]
     )
   )
 
@@ -175,42 +221,47 @@ export const getArrays = async (url, metadata, variables, apiMetadata) => {
   const keys = Object.keys(result)
 
   const arrs = await Promise.all(
-    keys.map((arrayName) => zarr.get_array(store, `/${arrayName}`))
+    keys.map((arrayName) =>
+      zarr.get_array(store, `${level ? `/${level}` : ''}/${arrayName}`)
+    )
   )
   keys.forEach((key, i) => {
     const arr = arrs[i]
     // TODO: remove if store can be instantiated with headers
     if (chunksOverrides[key]) arr.chunk_shape = chunksOverrides[key]
 
-    result[key] = arr
+    // TODO: remove when pyramid spatial coordinates are no longer renamed
+    let arrayKey = key
+    if (pyramid && ['x', 'y'].includes(key)) {
+      arrayKey = apiMetadata[variables[0]][key.toLocaleUpperCase()]
+    }
+    result[arrayKey] = arr
   })
 
   return { arrays: result, headers }
 }
 
-export const getVariableInfo = async (
+export const getVariableLevelInfo = async (
   name,
-  { arrays, headers, metadata, apiMetadata }
+  { level, arrays, headers },
+  { apiMetadata, metadata }
 ) => {
   const dataArray = arrays[name]
-  const zattrs = metadata.metadata[`${name}/.zattrs`]
-
-  const gridMapping = zattrs.grid_mapping
-    ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
-    : null
-  const dimensions = zattrs['_ARRAY_DIMENSIONS']
-  const coordinates = await Promise.all(
-    dimensions
-      .map((coord) => arrays[coord])
-      .map((arr, i) => arr.get_chunk([0], { headers }))
-  )
-
+  const prefix = level ? `${level}/` : ''
+  const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
   const nullValue = getNullValue(dataArray)
   const { chunk_separator, chunk_shape, shape } = dataArray
 
-  const axes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
+  const dimensions = zattrs['_ARRAY_DIMENSIONS']
+  const coordinates = await Promise.all(
+    ['X', 'Y']
+      .map((axis) => arrays[apiMetadata[name][axis]])
+      .map((arr, i) => arr.get_chunk([0], { headers }))
+  )
+
+  const axes = ['X', 'Y'].reduce((accum, key, i) => {
     const index = dimensions.indexOf(apiMetadata[name][key])
-    const array = coordinates[index]
+    const array = coordinates[i]
     const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
 
     return {
@@ -223,51 +274,92 @@ export const getVariableInfo = async (
     (index) => arrays[name].shape[index] / arrays[name].chunk_shape[index] > 4
   )
 
-  const selectors = dimensions.map((d, i) => {
-    const isSpatialDimension = [axes.X.index, axes.Y.index].includes(i)
-    return {
-      name: d,
-      chunk: isSpatialDimension ? null : 0,
-      index: isSpatialDimension ? null : 0,
-    }
-  })
-
   return {
     centerPoint: [
       axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
       axes.Y.array.data[Math.round((axes.Y.array.data.length - 1) / 2)],
     ],
-    northPole:
-      gridMapping &&
-      gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
-      gridMapping.hasOwnProperty('grid_north_pole_latitude')
-        ? [
-            gridMapping.grid_north_pole_longitude,
-            gridMapping.grid_north_pole_latitude,
-          ]
-        : undefined,
     axes,
     lockZoom,
-    selectors,
-    nullValue,
     chunk_separator,
     chunk_shape,
+    nullValue,
     shape,
     array: dataArray,
   }
 }
 
-export const getChunkData = async (
-  chunkKey,
-  {
-    variable: { array, axes, nullValue, chunk_separator, chunk_shape, shape },
-    headers,
-  }
+export const getVariableInfo = async (
+  name,
+  { arrays, headers },
+  { metadata, apiMetadata, pyramid }
 ) => {
-  const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-  const data = await array.get_chunk(chunkKeyArray, { headers }).then((c) => {
-    return ndarray(Float32Array.from(c.data, Number), chunk_shape)
+  const prefix = pyramid ? '0/' : ''
+  const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
+  const dimensions = zattrs['_ARRAY_DIMENSIONS']
+
+  const isSpatialDimension = (d) => {
+    if ([apiMetadata[name].X, apiMetadata[name].Y].includes(d)) {
+      return true
+    } else if (pyramid && ['x', 'y'].includes(d)) {
+      // TODO: remove when pyramid spatial coordinates are no longer renamed
+      return true
+    }
+  }
+
+  const selectorCoordinates = await Promise.all(
+    dimensions
+      .map((coord) => arrays[coord])
+      .map((arr, i) =>
+        isSpatialDimension(dimensions[i])
+          ? null
+          : arr.get_chunk([0], { headers })
+      )
+  )
+  const selectorAxes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
+    const dimension = apiMetadata[name][key]
+    const index = dimensions.indexOf(dimension)
+    const array = selectorCoordinates[index]
+
+    if (array) {
+      return {
+        ...accum,
+        [key]: {
+          array,
+          index,
+          zattrs: metadata.metadata[`${prefix}${dimension}/.zattrs`],
+        },
+      }
+    } else {
+      return accum
+    }
+  }, {})
+
+  const selectors = dimensions.map((d, i) => {
+    const spatial = isSpatialDimension(d)
+
+    return {
+      name: d,
+      chunk: spatial ? null : 0,
+      index: spatial ? null : 0,
+    }
   })
+
+  return {
+    selectors,
+    selectorAxes,
+  }
+}
+
+export const getChunkData = async (chunkKey, level) => {
+  const { array, axes, nullValue, chunk_separator, chunk_shape, shape } =
+    level.variable
+  const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
+  const data = await array
+    .get_chunk(chunkKeyArray, { headers: level.headers })
+    .then((c) => {
+      return ndarray(Float32Array.from(c.data, Number), chunk_shape)
+    })
 
   const clim = getRange(data.data, { nullValue })
 
@@ -393,8 +485,8 @@ export const getAdjacentChunk = (offset, chunkKey, variable) => {
   }
 }
 
-export const getActiveChunkKeys = (chunkKey, { variable }) => {
-  return [
+export const getActiveChunkKeys = (chunkKey, variable) => {
+  const values = [
     [-2, -1],
     [-1, -1],
     [0, -1],
@@ -413,12 +505,11 @@ export const getActiveChunkKeys = (chunkKey, { variable }) => {
   ]
     .map((offset) => getAdjacentChunk(offset, chunkKey, variable))
     .filter(Boolean)
+
+  return Array.from(new Set(values))
 }
 
-export const getClim = async (
-  activeChunkKeys,
-  { chunks, variable, headers }
-) => {
+export const getClim = async (activeChunkKeys, { chunks, level }) => {
   const activeChunks = {}
   const allChunks = await Promise.all(
     activeChunkKeys.map(async (key) => {
@@ -426,7 +517,7 @@ export const getClim = async (
         activeChunks[key] = chunks[key]
         return chunks[key]
       } else {
-        const chunk = await getChunkData(key, { variable, headers })
+        const chunk = await getChunkData(key, level)
         activeChunks[key] = chunk
         return chunk
       }
@@ -472,7 +563,7 @@ const filterData = (
 
 export const pointToChunkKey = (
   [lon, lat],
-  { selectors, axes, chunk_separator, chunk_shape, shape }
+  { selectors, variable: { axes, chunk_separator, chunk_shape, shape } }
 ) => {
   const chunkKey = shape.map((d, i) => {
     if (axes.X.index === i) {
@@ -555,7 +646,7 @@ const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
 
   const chunkStep = axis.step * chunk_shape[index]
 
-  return Math.floor(diff / chunkStep)
+  return diff < 0 ? Math.ceil(diff / chunkStep) : Math.floor(diff / chunkStep)
 }
 
 const radians = (deg) => (deg * Math.PI) / 180
@@ -698,4 +789,14 @@ export const getLines = (
     result.coords.push(coords)
   })
   return result
+}
+
+export const validatePoint = ([lon, lat]) => {
+  if (!inLonRange(lon, [-180, 180])) {
+    return false
+  } else if (lat > 90 || lat < -90) {
+    return false
+  }
+
+  return true
 }

@@ -31,12 +31,12 @@ const sx = {
 }
 
 const Plots = () => {
-  const ready = useStore((state) => !!state.url)
+  const ready = useStore((state) => !!state.dataset)
   const mode = useStore((state) => state.mode)
   const center = useStore((state) => state.center)
   const setMode = useStore((state) => state.setMode)
   const setCenter = useStore((state) => state.setCenter)
-  const selectors = useStore((state) => state.variable?.selectors)
+  const selectors = useStore((state) => state.selectors)
 
   const handleClick = useCallback(() => {
     if (mode === 'inactive') {

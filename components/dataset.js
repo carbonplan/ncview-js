@@ -74,11 +74,6 @@ const pollForCompletedRun = async (
   }
 }
 
-const CLIMS = {
-  46: [-5000, 10000], // s3://carbonplan-data-viewer/demo/MURSST.zarr
-  45: [-2, 30], // s3://carbonplan-data-viewer/demo/hadisst_2d.zarr
-}
-
 const Dataset = () => {
   const [url, setUrl] = useState('')
   const [dataset, setDataset] = useState(null)
@@ -101,14 +96,23 @@ const Dataset = () => {
       const d = await createDataset(url)
       if (d.id) {
         setDataset(d)
-        const u = new URL(d.url)
-        setStoreUrl(
-          'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
-            u.hostname +
-            u.pathname,
-          d.cf_axes,
-          CLIMS[d.id]
-        )
+        const pyramid = d.rechunking.find((r) => r.use_case === 'multiscales')
+        if (pyramid) {
+          // Use pyramid when present
+          setStoreUrl(pyramid.path, d.cf_axes, {
+            pyramid: true,
+          })
+        } else {
+          // Otherwise construct Zarr proxy URL
+          const u = new URL(d.url)
+          setStoreUrl(
+            'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
+              u.hostname +
+              u.pathname,
+            d.cf_axes,
+            { pyramid: false }
+          )
+        }
       } else if (d.detail?.length > 0) {
         setErrorMessage(d.detail[0].msg)
       } else {

@@ -8,9 +8,7 @@ const MapContainer = ({ children, setMapProps }) => {
   const moveListener = useRef(null)
   const [cursor, setCursor] = useState('grab')
   const hasData = useStore((state) => !!state.data)
-  const lockZoom = useStore((state) =>
-    state.variable ? state.variable.lockZoom : true
-  )
+  const lockZoom = useStore((state) => state.dataset?.lockZoom ?? true)
 
   const panMap = useCallback((offset) => {
     setMapProps((prev) => ({

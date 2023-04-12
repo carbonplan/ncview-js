@@ -5,11 +5,13 @@ import useStore from '../store'
 const usePlay = (index, { incrementChunk = false } = {}) => {
   const [playing, setPlaying] = useState(false)
   const selector = useStore(
-    (state) => state.variable.selectors && state.variable.selectors[index]
+    (state) => state.selectors && state.selectors[index]
   )
   const setSelector = useStore((state) => state.setSelector)
-  const chunk_shape = useStore((state) => state.variable.chunk_shape[index])
-  const shape = useStore((state) => state.variable.shape[index])
+  const chunk_shape = useStore(
+    (state) => state.dataset.level.variable.chunk_shape[index]
+  )
+  const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const intervalId = useRef(null)
 
   useEffect(() => {

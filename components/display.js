@@ -8,7 +8,7 @@ import Label from './label'
 import ResetClim from './reset-clim'
 
 const Display = () => {
-  const hasData = useStore((state) => !!state.url)
+  const hasData = useStore((state) => !!state.dataset)
   const loading = useStore((state) => state.getLoading())
   const basemaps = useStore((state) => state.basemaps)
   const setBasemaps = useStore((state) => state.setBasemaps)
@@ -18,9 +18,9 @@ const Display = () => {
   const setClim = useStore((state) => state.setClim)
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
-  const variable = useStore((state) => state.variable?.name)
-  const units = useStore(
-    (state) => variable && state.metadata?.metadata[`${variable}/.zattrs`].units
+  const variable = useStore((state) => state.dataset?.variable)
+  const { units } = useStore((state) =>
+    variable ? state.dataset?.getZattrs(variable) : {}
   )
   const colormap = useThemedColormap(!hasData ? 'greys' : colormapName, {
     count: 255,

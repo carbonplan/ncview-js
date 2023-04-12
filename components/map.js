@@ -6,7 +6,7 @@ import { useThemedColormap } from '@carbonplan/colormaps'
 import { Minimap, Path, Sphere } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
 import useStore from './store'
-import { getMapProps, getProjection } from './utils'
+import { getMapProps, getProjection, validatePoint } from './utils'
 import MapContainer from './map-container'
 import Layer from './minimap/layer'
 import Nav from './nav'
@@ -17,21 +17,25 @@ const Map = () => {
   const { theme } = useThemeUI()
   const basemaps = useStore((state) => state.basemaps)
   const projectionName = useStore((state) => state.projection)
-  const url = useStore((state) => state.url)
-  const renderable = useStore((state) => Object.values(state.chunks).length > 0)
-  const activeChunkKeys = useStore((state) => state.activeChunkKeys)
-  const chunkBounds = useStore((state) => state.chunks[state.chunkKey]?.bounds)
+  const dataset = useStore((state) => state.dataset)
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunkBounds = useStore(
+    (state) =>
+      state.dataset?.level &&
+      state.dataset.level.chunks[state.dataset.chunkKey]?.bounds
+  )
   const colormapName = useStore((state) => state.colormap)
   const colormap = useThemedColormap(colormapName, {
     count: 255,
     format: 'rgb',
   })
-  const { northPole, nullValue } = useStore((state) => state.variable)
+  const { northPole, nullValue, lockZoom } = useStore(
+    (state) => state.dataset?.level?.variable || {}
+  )
   const clim = useStore((state) => state.clim)
   const mode = useStore((state) => state.mode)
 
-  const { lockZoom } = useStore((state) => state.variable)
-  const resetCenterPoint = useStore((state) => state.resetCenterPoint)
+  const resetMapProps = useStore((state) => state.resetMapProps)
   const [mapProps, setMapProps] = useState({
     projection: PROJECTIONS[projectionName],
     scale: 1,
@@ -57,10 +61,10 @@ const Map = () => {
   }, [!!chunkBounds, projectionName, lockZoom])
 
   useEffect(() => {
-    if (!url) {
+    if (!dataset) {
       mapPropsInitialized.current = false
     }
-  }, [url])
+  }, [dataset])
 
   useEffect(() => {
     const projection = getProjection(mapProps)
@@ -68,7 +72,11 @@ const Map = () => {
       Math.round((800 * ASPECTS[projection.id]) / 2),
       Math.round(800 / 2),
     ])
-    resetCenterPoint(centerPoint)
+
+    if (!validatePoint(centerPoint)) {
+      return
+    }
+    resetMapProps(centerPoint, mapProps.scale / 2)
   }, [mapProps])
 
   return (
@@ -81,11 +89,11 @@ const Map = () => {
         background: alpha('secondary', 0.2),
       }}
     >
-      {url ? (
+      {dataset ? (
         <MapContainer setMapProps={setMapProps}>
           {mode === 'point' && <Point mapProps={mapProps} />}
           {mode === 'circle' && <Circle mapProps={mapProps} />}
-          {renderable && (
+          {clim && (
             <Minimap {...mapProps}>
               {basemaps.oceanMask && (
                 <Path
@@ -128,14 +136,14 @@ const Map = () => {
                 northPole={northPole}
                 nullValue={nullValue}
               >
-                {activeChunkKeys.map((key) => (
+                {chunksToRender.map((key) => (
                   <Chunk key={key} chunkKey={key} />
                 ))}
               </Layer>
             </Minimap>
           )}
 
-          {renderable && lockZoom && (
+          {clim && lockZoom && (
             <Nav
               mapProps={mapProps}
               setMapProps={setMapProps}
