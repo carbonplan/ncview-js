@@ -57,12 +57,15 @@ const Point = ({ point, selector }) => {
 const LineChart = ({ selector, index }) => {
   const center = useStore((state) => state.center)
   const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset.chunks)
-  const variable = useStore((state) => state.dataset.variable)
-  const metadata = useStore((state) => state.dataset.metadata?.metadata)
+  const chunks = useStore((state) => state.dataset.level.chunks)
+  const variable = useStore((state) => state.dataset.level.variable)
+  const { units } = useStore((state) => state.dataset.getZattrs(variable.name))
+  const { units: selectorUnits } = useStore((state) =>
+    state.dataset.getZattrs(selector.name)
+  )
   const selectors = useStore((state) => state.selectors)
-  const array = useStore((state) => state.dataset.arrays[selector.name])
-  const headers = useStore((state) => state.dataset.headers)
+  const array = useStore((state) => state.dataset.level.arrays[selector.name])
+  const headers = useStore((state) => state.dataset.level.headers)
 
   const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
@@ -73,7 +76,6 @@ const LineChart = ({ selector, index }) => {
   })
   const chunk_shape = variable.chunk_shape[index]
   const offset = selector.chunk * chunk_shape
-  const units = metadata[`${variable.name}/.zattrs`].units
   const domain = [offset, offset + chunk_shape - 1]
 
   useEffect(() => {
@@ -114,7 +116,7 @@ const LineChart = ({ selector, index }) => {
         >
           {variable.name}
         </AxisLabel>
-        <AxisLabel bottom units={metadata[`${selector.name}/.zattrs`].units}>
+        <AxisLabel bottom units={selectorUnits}>
           {selector.name}
         </AxisLabel>
         <Ticks left bottom />
@@ -152,9 +154,9 @@ const LineChart = ({ selector, index }) => {
 const PointInformation = ({ selector }) => {
   const center = useStore((state) => state.center)
   const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset.chunks)
-  const variable = useStore((state) => state.dataset.variable)
-  const metadata = useStore((state) => state.dataset.metadata.metadata)
+  const chunks = useStore((state) => state.dataset.level.chunks)
+  const variable = useStore((state) => state.dataset.level.variable)
+  const { units } = useStore((state) => state.dataset.getZattrs(variable.name))
   const selectors = useStore((state) => state.selectors)
 
   const { coords, points } = getLines(
@@ -189,8 +191,7 @@ const PointInformation = ({ selector }) => {
           </Box>
         ) : (
           <>
-            {format('.1f')(points[0])}{' '}
-            {metadata[`${variable.name}/.zattrs`].units}
+            {format('.1f')(points[0])} {units}
           </>
         )}
       </Flex>

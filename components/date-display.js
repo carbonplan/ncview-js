@@ -4,7 +4,7 @@ import useStore from './store'
 
 export const useDateFormatter = (coordinate, options) => {
   const { units, calendar } = useStore(
-    (state) => state.dataset?.metadata.metadata[`${coordinate}/.zattrs`]
+    (state) => state.dataset?.getZattrs(coordinate) ?? {}
   )
 
   if (!units) {

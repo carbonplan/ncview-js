@@ -9,9 +9,9 @@ const usePlay = (index, { incrementChunk = false } = {}) => {
   )
   const setSelector = useStore((state) => state.setSelector)
   const chunk_shape = useStore(
-    (state) => state.dataset.variable.chunk_shape[index]
+    (state) => state.dataset.level.variable.chunk_shape[index]
   )
-  const shape = useStore((state) => state.dataset.variable.shape[index])
+  const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const intervalId = useRef(null)
 
   useEffect(() => {

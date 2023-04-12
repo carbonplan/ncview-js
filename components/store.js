@@ -21,13 +21,13 @@ const createDisplaySlice = (set, get) => ({
   colormap: 'cool',
   clim: null,
   centerPoint: null,
+  zoom: 0,
   scrubbing: false,
   setProjection: (projection) => set({ projection }),
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
   setClim: (clim) => set({ clim }),
-  setCenterPoint: (centerPoint) => set({ centerPoint }),
   setScrubbing: (scrubbing) => set({ scrubbing }),
 })
 
@@ -42,7 +42,7 @@ const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, apiMetadata, clim) => {
+  setUrl: async (url, apiMetadata, { pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
@@ -50,7 +50,7 @@ const useStore = create((set, get) => ({
       dataset: null,
       selectors: [],
       chunksToRender: [],
-      clim,
+      clim: null,
     })
 
     // handle clearing url
@@ -61,7 +61,7 @@ const useStore = create((set, get) => ({
     _registerLoading('metadata')
     let dataset
     try {
-      dataset = new Dataset(url, apiMetadata)
+      dataset = new Dataset(url, apiMetadata, pyramid)
       await dataset.initialize()
       set({ dataset })
     } catch (e) {
@@ -85,7 +85,8 @@ const useStore = create((set, get) => ({
     _unregisterLoading('metadata')
   },
   setVariable: async (name) => {
-    const { dataset, centerPoint, _registerLoading, _unregisterLoading } = get()
+    const { dataset, centerPoint, zoom, _registerLoading, _unregisterLoading } =
+      get()
     set({
       // Null out variable-specific fields
       selectors: [],
@@ -99,31 +100,32 @@ const useStore = create((set, get) => ({
 
     set({ selectors })
 
-    const clim = await dataset.updateSelection(
+    await dataset.updateSelection(
       centerPoint ?? variableCenterPoint,
-      selectors,
-      { initializeClim: true }
+      zoom,
+      selectors
     )
+    const clim = await dataset.getClim()
     set({ clim })
     _unregisterLoading(name)
 
-    get().resetCenterPoint(centerPoint ?? variableCenterPoint)
+    get().resetMapProps(centerPoint ?? variableCenterPoint, zoom)
   },
-  resetCenterPoint: async (centerPoint) => {
-    const { dataset, selectors, setCenterPoint } = get()
+  resetMapProps: async (centerPoint, zoom) => {
+    const { dataset, selectors } = get()
 
-    if (!dataset || Object.keys(dataset.chunks).length === 0) {
+    if (!dataset?.level || Object.keys(dataset.level.chunks).length === 0) {
       return
     }
 
-    setCenterPoint(centerPoint)
-    await dataset.updateSelection(centerPoint, selectors)
+    set({ centerPoint })
+    await dataset.updateSelection(centerPoint, zoom, selectors)
     set({ chunksToRender: dataset.activeChunkKeys })
   },
   fetchChunk: async (chunkKey) => {
     const { dataset, _registerLoading, _unregisterLoading } = get()
 
-    if (!dataset?.headers || !dataset?.variable?.name) {
+    if (!dataset?.level?.headers || !dataset?.level?.variable?.name) {
       set({
         error: 'Tried to fetch chunk before store was fully initialized.',
       })
@@ -141,7 +143,7 @@ const useStore = create((set, get) => ({
     }
   },
   setSelector: async (index, values) => {
-    const { centerPoint, dataset, selectors } = get()
+    const { centerPoint, dataset, selectors, zoom } = get()
 
     const updatedSelector = selectors[index]
     let shouldUpdate = false
@@ -169,7 +171,7 @@ const useStore = create((set, get) => ({
         ...selectors.slice(index + 1),
       ]
 
-      await dataset.updateSelection(centerPoint, updatedSelectors)
+      await dataset.updateSelection(centerPoint, zoom, updatedSelectors)
       set({
         selectors: updatedSelectors,
         chunksToRender: dataset.activeChunkKeys,
