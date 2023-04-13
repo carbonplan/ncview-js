@@ -2,7 +2,7 @@ import { formatDate } from '@carbonplan/components'
 import { useCallback } from 'react'
 import useStore from './data/store'
 
-export const useDateFormatter = (coordinate, options) => {
+export const useDateGetter = (coordinate) => {
   const { units, calendar } = useStore(
     (state) => state.dataset?.getZattrs(coordinate) ?? {}
   )
@@ -23,7 +23,7 @@ export const useDateFormatter = (coordinate, options) => {
     return
   }
 
-  const formatter = useCallback(
+  const getter = useCallback(
     (v) => {
       let dateString = startDate[0]
       // append time to use local time zone if time is not already present
@@ -34,22 +34,25 @@ export const useDateFormatter = (coordinate, options) => {
       const date = new Date(dateString)
       date.setDate(date.getDate() + v)
 
-      return formatDate(date.toLocaleDateString(), options)
+      return date
     },
-    [startDate, options]
+    [startDate]
   )
 
-  return formatter
+  return getter
 }
 
 const DateDisplay = ({ array, selector, chunkShape }) => {
   const { index, chunk } = selector
+  const getter = useDateGetter(selector.name)
 
-  const formatter = useDateFormatter(selector.name)
-  if (!formatter) {
+  if (!getter) {
     return null
   }
-  return formatter(Number(array.data[index + chunk * chunkShape]))
+
+  return formatDate(
+    getter(Number(array.data[index + chunk * chunkShape])).toLocaleDateString()
+  )
 }
 
 export default DateDisplay

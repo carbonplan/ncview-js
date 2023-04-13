@@ -316,6 +316,8 @@ export const getVariableInfo = async (
           : arr.get_chunk([0], { headers })
       )
   )
+
+  // TODO: handle selectors that do not come from cf `axes` from the API
   const selectorAxes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
     const dimension = apiMetadata[name][key]
     const index = dimensions.indexOf(dimension)

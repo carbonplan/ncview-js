@@ -16,6 +16,7 @@ import { useCallback, useEffect, useState } from 'react'
 
 import useStore from '../data/store'
 import { getLines } from '../utils'
+import DateTickLabel from './date-tick-label'
 
 const isNullValue = (p) => {
   return p == null || p === variable.nullValue || Number.isNaN(p)
@@ -66,6 +67,9 @@ const LineChart = ({ selector, index }) => {
   const selectors = useStore((state) => state.selectors)
   const array = useStore((state) => state.dataset.level.arrays[selector.name])
   const headers = useStore((state) => state.dataset.level.headers)
+  const isTime = useStore(
+    (state) => state.dataset.selectorAxes.T?.index === index
+  )
 
   const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
@@ -89,12 +93,22 @@ const LineChart = ({ selector, index }) => {
       if (!selectorArray) {
         return ''
       } else if (selectorArray[x]) {
-        return Number(selectorArray[x])
+        if (isTime) {
+          return (
+            <DateTickLabel
+              name={selector.name}
+              array={selectorArray}
+              index={x}
+            />
+          )
+        } else {
+          return Number(selectorArray[x])
+        }
       } else {
         return ''
       }
     },
-    [selectorArray, offset, chunk_shape]
+    [selector.name, selectorArray, offset, chunk_shape, isTime]
   )
 
   return (
@@ -105,18 +119,20 @@ const LineChart = ({ selector, index }) => {
         <AxisLabel
           left
           units={
-            <Box
-              sx={{
-                wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
-              }}
-            >
-              {units}
-            </Box>
+            units && (
+              <Box
+                sx={{
+                  wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
+                }}
+              >
+                {units}
+              </Box>
+            )
           }
         >
           {variable.name}
         </AxisLabel>
-        <AxisLabel bottom units={selectorUnits}>
+        <AxisLabel bottom units={isTime ? null : selectorUnits}>
           {selector.name}
         </AxisLabel>
         <Ticks left bottom />
