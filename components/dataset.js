@@ -97,7 +97,7 @@ const Dataset = () => {
     const d = await createDataset(value)
     if (d.id) {
       setDataset(d)
-      const pyramid = d.rechunking.find((r) => r.use_case === 'multiscales')
+      const pyramid = d.rechunking?.find((r) => r.use_case === 'multiscales')
       if (pyramid) {
         // Use pyramid when present
         setStoreUrl(pyramid.path, d.cf_axes, {

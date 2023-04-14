@@ -15,7 +15,7 @@ class Dataset {
   }
 
   async initialize() {
-    this.variable = {}
+    this.variable = null
     this.chunks = {}
     const { metadata, variables, levels } = await getMetadata(
       this.url,
