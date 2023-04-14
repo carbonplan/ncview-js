@@ -9,7 +9,7 @@ const ResetClim = () => {
   const loading = useStore((state) => state.getLoading())
   const setClim = useStore((state) => state.setClim)
   const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset?.chunks || {})
+  const chunks = useStore((state) => state.dataset?.level?.chunks || {})
 
   const resetClim = useCallback(() => {
     let clim
