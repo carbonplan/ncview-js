@@ -118,7 +118,7 @@ const useStore = create((set, get) => ({
       return
     }
 
-    set({ centerPoint })
+    set({ centerPoint, zoom })
     await dataset.updateSelection(centerPoint, zoom, selectors)
     set({ chunksToRender: dataset.activeChunkKeys })
   },
@@ -143,7 +143,7 @@ const useStore = create((set, get) => ({
     }
   },
   setSelector: async (index, values) => {
-    const { centerPoint, dataset, selectors, zoom } = get()
+    const { dataset, selectors } = get()
 
     const updatedSelector = selectors[index]
     let shouldUpdate = false
@@ -170,6 +170,8 @@ const useStore = create((set, get) => ({
         updatedSelector,
         ...selectors.slice(index + 1),
       ]
+      const { centerPoint, zoom } = get()
+      console.log(centerPoint, zoom)
 
       await dataset.updateSelection(centerPoint, zoom, updatedSelectors)
       set({
