@@ -84,7 +84,9 @@ const Plots = () => {
           easing={'linear'}
           style={{ pointerEvents: 'none' }}
         >
-          {mode !== 'inactive' && center && selectors && <RegionalPlots />}
+          {ready && mode !== 'inactive' && center && selectors && (
+            <RegionalPlots />
+          )}
         </AnimateHeight>
       </Box>
     </SidebarFooter>
