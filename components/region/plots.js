@@ -18,7 +18,7 @@ import useStore from '../data/store'
 import { getLines } from '../utils'
 import DateTickLabel from './date-tick-label'
 
-const isNullValue = (p) => {
+const isNullValue = (p, variable) => {
   return p == null || p === variable.nullValue || Number.isNaN(p)
 }
 
@@ -140,7 +140,7 @@ const LineChart = ({ selector, index }) => {
         <TickLabels bottom format={formatter} />
         <Grid vertical horizontal />
         <Plot>
-          {points[0] && points[0].some((d) => !isNullValue(d)) && (
+          {points[0] && points[0].some((d) => !isNullValue(d, variable)) && (
             <Line
               data={points[0]
                 .map((d, i) =>
@@ -149,11 +149,11 @@ const LineChart = ({ selector, index }) => {
                 .filter(Boolean)}
             />
           )}
-          {points[0] && !isNullValue(points[0][selector.index]) && (
+          {points[0] && !isNullValue(points[0][selector.index], variable) && (
             <Circle x={offset + selector.index} y={points[0][selector.index]} />
           )}
         </Plot>
-        {points[0] && !isNullValue(points[0][selector.index]) && (
+        {points[0] && !isNullValue(points[0][selector.index], variable) && (
           <Label
             x={offset + selector.index}
             y={points[0][selector.index]}
@@ -201,7 +201,7 @@ const PointInformation = ({ selector }) => {
         }}
       >
         <Box sx={{ color: 'secondary', display: 'inline-block' }}>value:</Box>
-        {isNullValue(points[0]) ? (
+        {isNullValue(points[0], variable) ? (
           <Box sx={{ color: 'secondary', display: 'inline-block' }}>
             not defined
           </Box>
