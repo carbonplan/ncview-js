@@ -2,6 +2,7 @@ import { useThemeUI } from 'theme-ui'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import useStore from '../data/store'
 import { getProjection } from '../utils'
+import { ASPECTS } from '../constants'
 
 const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
@@ -16,7 +17,7 @@ const Point = ({ mapProps }) => {
       const width = container.current?.clientWidth
       const proj = getProjection(mapProps)
       const c = proj(center)
-      return [(c[0] / 800) * width, (c[1] / 400) * height]
+      return [(c[0] / 800) * width, (c[1] / (800 * ASPECTS[proj.id])) * height]
     }
   }, [center, mapProps])
 
@@ -27,7 +28,7 @@ const Point = ({ mapProps }) => {
       const proj = getProjection(mapProps)
       const p = proj.invert([
         (point[0] / width) * 800,
-        (point[1] / height) * 800 * 0.5,
+        (point[1] / height) * 800 * ASPECTS[proj.id],
       ])
 
       setCenter(p)
