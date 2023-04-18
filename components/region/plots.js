@@ -116,8 +116,16 @@ const LineChart = ({ selector, index }) => {
   const handleDownload = useCallback(
     (e) => {
       e.stopPropagation()
+      if (!selectorArray) {
+        return
+      }
+
       const rows = points[0]
-        .map((d, i) => (d === variable.nullValue ? null : [offset + i, d]))
+        .map((d, i) =>
+          d === variable.nullValue
+            ? null
+            : [Number(selectorArray[offset + i]), d]
+        )
         .filter(Boolean)
 
       if (rows.length === 0) {
@@ -132,7 +140,14 @@ const LineChart = ({ selector, index }) => {
       const encodedUri = encodeURI(csvContent)
       window.open(encodedUri)
     },
-    [points[0], selector.name, variable.name, variable.nullValue, offset]
+    [
+      points[0],
+      selectorArray,
+      selector.name,
+      variable.name,
+      variable.nullValue,
+      offset,
+    ]
   )
 
   return (
