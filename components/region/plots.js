@@ -138,10 +138,20 @@ const LineChart = ({ selector, index }) => {
         rows.map((row) => row.join(',')).join('\n')
 
       const encodedUri = encodeURI(csvContent)
-      window.open(encodedUri)
+      const link = document.createElement('a')
+      link.setAttribute('href', encodedUri)
+      link.setAttribute(
+        'download',
+        `${format('.1f')(coords[0][0])},${format('.1f')(coords[0][1])}.csv`
+      )
+      document.body.appendChild(link)
+
+      link.click()
+      document.body.removeChild(link)
     },
     [
       points[0],
+      coords[0],
       selectorArray,
       selector.name,
       variable.name,
