@@ -281,7 +281,12 @@ const PointInformation = ({ selector }) => {
 }
 
 const Plots = () => {
+  const variable = useStore((state) => state.dataset.level.variable.name)
   const selectors = useStore((state) => state.selectors)
+
+  if (!variable) {
+    return
+  }
 
   const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
 
