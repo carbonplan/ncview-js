@@ -17,6 +17,8 @@ import { useCallback, useEffect, useState } from 'react'
 import useStore from '../data/store'
 import { getLines } from '../utils'
 import DateTickLabel from './date-tick-label'
+import { Button, Column, Row } from '@carbonplan/components'
+import { Down } from '@carbonplan/icons'
 
 const isNullValue = (p, variable) => {
   return p == null || p === variable.nullValue || Number.isNaN(p)
@@ -111,9 +113,47 @@ const LineChart = ({ selector, index }) => {
     [selector.name, selectorArray, offset, chunk_shape, isTime]
   )
 
+  const handleDownload = useCallback(
+    (e) => {
+      e.stopPropagation()
+      const rows = points[0]
+        .map((d, i) => (d === variable.nullValue ? null : [offset + i, d]))
+        .filter(Boolean)
+
+      if (rows.length === 0) {
+        return
+      }
+
+      rows.unshift([selector.name, variable.name])
+      const csvContent =
+        'data:text/csv;charset=utf-8,' +
+        rows.map((row) => row.join(',')).join('\n')
+
+      const encodedUri = encodeURI(csvContent)
+      window.open(encodedUri)
+    },
+    [points[0], selector.name, variable.name, variable.nullValue, offset]
+  )
+
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
-      {coords[0] && <Point point={coords[0]} selector={selector} />}
+      <Row columns={[4]}>
+        <Column start={[1]} width={[2]}>
+          {coords[0] && <Point point={coords[0]} selector={selector} />}
+        </Column>
+        <Column start={[3]} width={[2]}>
+          <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>
+            <Button
+              suffix={<Down />}
+              sx={{ fontSize: 1, pointerEvents: 'all' }}
+              onClick={handleDownload}
+              inverted
+            >
+              Download CSV
+            </Button>
+          </Flex>
+        </Column>
+      </Row>
       <Chart x={domain} y={range}>
         <Axis left bottom />
         <AxisLabel
