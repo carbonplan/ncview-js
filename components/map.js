@@ -142,11 +142,17 @@ const Map = () => {
             )}
           </Minimap>
 
-          {clim && lockZoom && (
+          {clim && (
             <Nav
               mapProps={mapProps}
               setMapProps={setMapProps}
-              sx={{ position: 'fixed', bottom: '18px', right: '18px' }}
+              sx={{
+                position: 'fixed',
+                bottom: '18px',
+                right: '18px',
+                opacity: lockZoom ? 1 : 0,
+                transition: '0.1s',
+              }}
             />
           )}
         </MapContainer>
