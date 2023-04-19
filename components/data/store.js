@@ -171,7 +171,6 @@ const useStore = create((set, get) => ({
         ...selectors.slice(index + 1),
       ]
       const { centerPoint, zoom } = get()
-      console.log(centerPoint, zoom)
 
       await dataset.updateSelection(centerPoint, zoom, updatedSelectors)
       set({

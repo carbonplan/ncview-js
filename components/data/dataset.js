@@ -23,6 +23,7 @@ class Dataset {
     )
     this.metadata = metadata
     this.variables = variables
+    this.variableMetadata = {}
 
     if (variables.length === 0) {
       throw new Error(
@@ -45,27 +46,40 @@ class Dataset {
 
   async initializeVariable(variableName) {
     this.variable = null
+    let metadata = this.variableMetadata[variableName]
     await Promise.all(
       Object.values(this.levels).map((level) =>
         level.initializeVariable(variableName)
       )
     )
-    const { selectorAxes, selectors } = await getVariableInfo(
-      variableName,
-      this.levels['0'],
-      this
-    )
 
-    const level0 = this.levels['0'].variable
+    if (!metadata) {
+      const { selectorAxes, selectors } = await getVariableInfo(
+        variableName,
+        this.levels['0'],
+        this
+      )
 
-    this.selectorAxes = selectorAxes
-    this.lockZoom = this.pyramid ? false : level0.lockZoom
+      const level0 = this.levels['0'].variable
+
+      metadata = {
+        name: variableName,
+        selectorAxes,
+        selectors,
+        centerPoint: level0.centerPoint,
+        lockZoom: this.pyramid ? false : level0.lockZoom,
+      }
+      this.variableMetadata[variableName] = metadata
+    }
+
+    this.selectorAxes = metadata.selectorAxes
+    this.lockZoom = metadata.lockZoom
     this.variable = variableName
 
-    return { centerPoint: level0.centerPoint, selectors }
+    return { centerPoint: metadata.centerPoint, selectors: metadata.selectors }
   }
 
-  async updateSelection(centerPoint, zoom, selectors) {
+  updateSelection(centerPoint, zoom, selectors) {
     this.level = this.getLevel(zoom)
     this.chunkKey = pointToChunkKey(centerPoint, {
       selectors,

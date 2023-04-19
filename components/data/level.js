@@ -16,11 +16,16 @@ class Level {
 
     this.arrays = arrays
     this.headers = headers
+    this.variableMetadata = {}
   }
 
   async initializeVariable(variableName) {
-    this.variable = {}
     this.chunks = {}
+    this.variable = this.variableMetadata[variableName]
+    if (this.variable) {
+      return
+    }
+
     const {
       centerPoint,
       axes,
@@ -43,6 +48,7 @@ class Level {
       shape,
       array,
     }
+    this.variableMetadata[variableName] = this.variable
   }
 
   async fetchChunk(chunkKey) {
