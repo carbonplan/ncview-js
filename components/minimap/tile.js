@@ -17,6 +17,7 @@ const Tile = ({ id, source, bounds }) => {
     })
     return () => {
       unregisterTile(id)
+      invalidate('on unload')
     }
   }, [])
 

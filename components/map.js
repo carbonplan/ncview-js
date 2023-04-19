@@ -93,43 +93,42 @@ const Map = () => {
         <MapContainer setMapProps={setMapProps}>
           {mode === 'point' && <Point mapProps={mapProps} />}
           {mode === 'circle' && <Circle mapProps={mapProps} />}
-          {clim && (
-            <Minimap {...mapProps}>
-              {basemaps.oceanMask && (
-                <Path
-                  fill={theme.colors.background}
-                  opacity={1}
-                  source={
-                    'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
-                  }
-                  feature={'ocean'}
-                />
-              )}
+          <Minimap {...mapProps}>
+            {basemaps.oceanMask && (
+              <Path
+                fill={theme.colors.background}
+                opacity={1}
+                source={
+                  'https://storage.googleapis.com/carbonplan-maps/world-atlas/ocean-50m.json'
+                }
+                feature={'ocean'}
+              />
+            )}
 
-              {basemaps.landMask && (
-                <Path
-                  fill={theme.colors.background}
-                  source={
-                    'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
-                  }
-                  feature={'land'}
-                  opacity={1}
-                />
-              )}
+            {basemaps.landMask && (
+              <Path
+                fill={theme.colors.background}
+                source={
+                  'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
+                }
+                feature={'land'}
+                opacity={1}
+              />
+            )}
 
-              {basemaps.landBoundaries && (
-                <Path
-                  stroke={theme.colors.primary}
-                  source={
-                    'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
-                  }
-                  feature={'land'}
-                  opacity={1}
-                />
-              )}
+            {basemaps.landBoundaries && (
+              <Path
+                stroke={theme.colors.primary}
+                source={
+                  'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'
+                }
+                feature={'land'}
+                opacity={1}
+              />
+            )}
 
-              <Sphere fill={theme.colors.background} />
-
+            <Sphere fill={theme.colors.background} />
+            {clim && (
               <Layer
                 colormap={colormap}
                 clim={clim}
@@ -140,8 +139,8 @@ const Map = () => {
                   <Chunk key={key} chunkKey={key} />
                 ))}
               </Layer>
-            </Minimap>
-          )}
+            )}
+          </Minimap>
 
           {clim && lockZoom && (
             <Nav
