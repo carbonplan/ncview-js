@@ -142,7 +142,9 @@ const LineChart = ({ selector, index }) => {
       link.setAttribute('href', encodedUri)
       link.setAttribute(
         'download',
-        `${format('.1f')(coords[0][0])},${format('.1f')(coords[0][1])}.csv`
+        `${variable.name}-${format('.1f')(coords[0][0])}-${format('.1f')(
+          coords[0][1]
+        )}.csv`
       )
       document.body.appendChild(link)
 
