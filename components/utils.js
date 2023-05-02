@@ -87,11 +87,9 @@ export const getMetadata = async (url, pyramid) => {
 
   const prefix = pyramid ? '0/' : ''
   const variables = Object.keys(metadata.metadata)
-    .map((k) =>
-      k.match(pyramid ? /(?<=0\/)\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/)
-    )
+    .map((k) => k.match(pyramid ? /0\/\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/))
     .filter(Boolean)
-    .map((a) => a[0])
+    .map((a) => a[0].replace('0/', ''))
     .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${prefix}${d}/.zarray`].shape.length >= 2)
     .filter((d) =>
