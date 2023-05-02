@@ -33,7 +33,7 @@ export const useDateGetter = (coordinate) => {
         dateString = `${dateString} 12:00`
       }
 
-      const date = new Date(dateString)
+      const date = new Date(dateString.replace(/-/g, '/'))
       date.setDate(date.getDate() + v)
 
       return date
