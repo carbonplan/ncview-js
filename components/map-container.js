@@ -76,21 +76,25 @@ const MapContainer = ({ children, setMapProps }) => {
     }
   }, [handler])
 
-  const handleMouseDown = useCallback(() => {
-    const height = container.current.clientHeight
-    const width = container.current.clientWidth
+  const handleMouseDown = useCallback(
+    (e) => {
+      e.preventDefault()
+      const height = container.current.clientHeight
+      const width = container.current.clientWidth
 
-    setCursor('grabbing')
+      setCursor('grabbing')
 
-    if (moveListener.current) {
-      container.current.removeEventListener('mousemove', moveListener.current)
-    }
-    moveListener.current = (event) => {
-      panMap([(event.movementX / width) * 2, (event.movementY / height) * 2])
-    }
+      if (moveListener.current) {
+        container.current.removeEventListener('mousemove', moveListener.current)
+      }
+      moveListener.current = (event) => {
+        panMap([(event.movementX / width) * 2, (event.movementY / height) * 2])
+      }
 
-    container.current.addEventListener('mousemove', moveListener.current)
-  }, [panMap])
+      container.current.addEventListener('mousemove', moveListener.current)
+    },
+    [panMap]
+  )
 
   const handleMouseUp = useCallback(() => {
     setCursor('grab')
@@ -123,7 +127,14 @@ const MapContainer = ({ children, setMapProps }) => {
         position: 'relative',
         background: 'background',
         cursor,
-        '&:focus, &:focus-visible': { outline: 'none' },
+        '&:focus': {
+          outline: 0,
+          outline: 'none',
+        },
+        '&:focus-visible': {
+          outline: 0,
+          outline: 'none',
+        },
       }}
       ref={container}
       tabIndex={0}
