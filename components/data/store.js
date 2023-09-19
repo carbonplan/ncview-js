@@ -42,7 +42,7 @@ const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, apiMetadata, { pyramid } = {}) => {
+  setUrl: async (url, apiMetadata, { clim, pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
@@ -81,10 +81,10 @@ const useStore = create((set, get) => ({
       return
     }
 
-    get().setVariable(initialVariable)
+    get().setVariable(initialVariable, { clim })
     _unregisterLoading('metadata')
   },
-  setVariable: async (name) => {
+  setVariable: async (name, { clim: urlClim } = {}) => {
     const { dataset, centerPoint, zoom, _registerLoading, _unregisterLoading } =
       get()
     set({
@@ -106,7 +106,7 @@ const useStore = create((set, get) => ({
       selectors
     )
     const clim = await dataset.getClim()
-    set({ clim })
+    set({ clim: urlClim ?? clim })
     _unregisterLoading(name)
 
     get().resetMapProps(centerPoint ?? variableCenterPoint, zoom)

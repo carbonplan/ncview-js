@@ -84,7 +84,7 @@ const Dataset = () => {
   const setStoreUrl = useStore((state) => state.setUrl)
   const router = useRouter()
 
-  const submitUrl = useCallback(async (value) => {
+  const submitUrl = useCallback(async (value, { clim } = {}) => {
     setDataset(null)
     setErrorMessage(null)
 
@@ -102,6 +102,7 @@ const Dataset = () => {
         // Use pyramid when present
         setStoreUrl(pyramid.path, d.cf_axes, {
           pyramid: true,
+          clim,
         })
       } else {
         // Otherwise construct Zarr proxy URL
@@ -111,7 +112,7 @@ const Dataset = () => {
             u.hostname +
             u.pathname,
           d.cf_axes,
-          { pyramid: false }
+          { pyramid: false, clim }
         )
       }
     } else if (d.detail?.length > 0) {
@@ -132,7 +133,11 @@ const Dataset = () => {
   useEffect(() => {
     if (!url && router.query?.dataset) {
       setUrl(router.query.dataset)
-      submitUrl(router.query.dataset)
+      const clim = (router.query.clim ?? '').split(',').map(Number)
+
+      submitUrl(router.query.dataset, {
+        clim: clim && clim.length === 2 ? clim : null,
+      })
     }
   }, [!url, router.query?.dataset])
 
