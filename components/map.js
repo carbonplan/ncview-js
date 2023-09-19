@@ -55,7 +55,13 @@ const Map = () => {
             lat: [-90, 90],
             lon: [-180, 180],
           }
-      setMapProps(getMapProps(bounds, projectionName))
+      const p = getMapProps(bounds, projectionName)
+
+      if (p.scale < 1) {
+        setMapProps({ ...p, scale: 1, translate: [0, 0] })
+      } else {
+        setMapProps(p)
+      }
       mapPropsInitialized.current = true
     }
   }, [!!chunkBounds, projectionName, lockZoom])
