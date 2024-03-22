@@ -295,9 +295,12 @@ const Plots = () => {
     return
   }
 
-  const selectorLines = selectors.filter(
-    (s, i) => typeof s.chunk === 'number' && shape[i] > 1
-  )
+  const selectorLines = selectors
+    .map((selector, index) => ({ selector, index }))
+    .filter(
+      ({ selector, index }) =>
+        typeof selector.chunk === 'number' && shape[index] > 1
+    )
 
   if (selectorLines.length === 0) {
     return <PointInformation />
@@ -305,8 +308,8 @@ const Plots = () => {
 
   return (
     <>
-      {selectorLines.map((s, i) => (
-        <LineChart key={s.name} selector={s} index={i} />
+      {selectorLines.map(({ selector, index }) => (
+        <LineChart key={selector.name} selector={selector} index={index} />
       ))}
     </>
   )
