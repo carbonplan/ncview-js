@@ -17,7 +17,7 @@ const createDatasetSlice = (set, get) => ({
 
 const createDisplaySlice = (set, get) => ({
   projection: 'mercator',
-  basemaps: { landBoundaries: true, landMask: false, oceanMask: true },
+  basemaps: { landBoundaries: true, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
   centerPoint: null,
