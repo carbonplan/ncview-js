@@ -246,6 +246,10 @@ export const getVariableLevelInfo = async (
   const prefix = level ? `${level}/` : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
   const nullValue = getNullValue(dataArray)
+  const gridMapping = zattrs.grid_mapping
+    ? metadata.metadata[`${zattrs.grid_mapping}/.zattrs`]
+    : null
+
   const { chunk_separator, chunk_shape, shape } = dataArray
 
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
@@ -275,6 +279,15 @@ export const getVariableLevelInfo = async (
       axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
       axes.Y.array.data[Math.round((axes.Y.array.data.length - 1) / 2)],
     ],
+    northPole:
+      gridMapping &&
+      gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
+      gridMapping.hasOwnProperty('grid_north_pole_latitude')
+        ? [
+            gridMapping.grid_north_pole_longitude,
+            gridMapping.grid_north_pole_latitude,
+          ]
+        : undefined,
     axes,
     lockZoom,
     chunk_separator,
