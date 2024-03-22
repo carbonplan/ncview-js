@@ -8,17 +8,19 @@ import Label from './label'
 import useStore from './data/store'
 
 const DATASETS = [
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
-  's3://carbonplan-data-viewer/demo/MURSST.zarr',
-  's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
-  's3://mur-sst/zarr',
-  'https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/WOA_1degree_monthly-feedstock/woa18-1deg-monthly.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.day.GARD-SV.tasmax.zarr',
+  // NCVIEW 2.0
+  // reprojection
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/single_timestep/sample_australia_cordex_data.zarr',
+
+  // no pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset1.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset2.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset3.zarr',
+
+  // pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/dryspells_corn/CanESM5-ssp370-full-time-extent.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.tasmax.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.pr.zarr',
 ]
 
 const sx = {
