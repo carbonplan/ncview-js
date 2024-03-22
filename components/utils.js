@@ -128,7 +128,7 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
   })
 }
 
-const getChunksOverrides = (metadata, variables, apiMetadata) => {
+const getChunksOverrides = (metadata, variables, cfAxes) => {
   const coordinates = new Set(
     variables.flatMap(
       (variable) =>
@@ -155,7 +155,7 @@ const getChunksOverrides = (metadata, variables, apiMetadata) => {
       nativeChunks,
       shape,
       dimensions,
-      apiMetadata[variable]
+      cfAxes[variable]
     )
 
     if (chunks) {
@@ -166,8 +166,8 @@ const getChunksOverrides = (metadata, variables, apiMetadata) => {
   return result
 }
 
-const getChunksHeader = (metadata, variables, apiMetadata) => {
-  const chunks = getChunksOverrides(metadata, variables, apiMetadata)
+const getChunksHeader = (metadata, variables, cfAxes) => {
+  const chunks = getChunksOverrides(metadata, variables, cfAxes)
   return new Headers(
     Object.keys(chunks).map((key) => [
       'chunks',
@@ -178,15 +178,13 @@ const getChunksHeader = (metadata, variables, apiMetadata) => {
 
 export const getArrays = async (
   level,
-  { url, metadata, variables, apiMetadata, pyramid }
+  { url, metadata, variables, cfAxes, pyramid }
 ) => {
   // TODO: instantiate store with headers and clean up manual overrides
-  const headers = pyramid
-    ? {}
-    : getChunksHeader(metadata, variables, apiMetadata)
+  const headers = pyramid ? {} : getChunksHeader(metadata, variables, cfAxes)
   const chunksOverrides = pyramid
     ? {}
-    : getChunksOverrides(metadata, variables, apiMetadata)
+    : getChunksOverrides(metadata, variables, cfAxes)
 
   // TODO: validate that we can reuse compressors across the store
   const compressorId =
@@ -231,7 +229,7 @@ export const getArrays = async (
     // TODO: remove when pyramid spatial coordinates are no longer renamed
     let arrayKey = key
     if (pyramid && ['x', 'y'].includes(key)) {
-      arrayKey = apiMetadata[variables[0]][key.toLocaleUpperCase()]
+      arrayKey = cfAxes[variables[0]][key.toLocaleUpperCase()]
     }
     result[arrayKey] = arr
   })
@@ -242,7 +240,7 @@ export const getArrays = async (
 export const getVariableLevelInfo = async (
   name,
   { level, arrays, headers },
-  { apiMetadata, metadata }
+  { cfAxes, metadata }
 ) => {
   const dataArray = arrays[name]
   const prefix = level ? `${level}/` : ''
@@ -253,12 +251,12 @@ export const getVariableLevelInfo = async (
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
   const coordinates = await Promise.all(
     ['X', 'Y']
-      .map((axis) => arrays[apiMetadata[name][axis]])
+      .map((axis) => arrays[cfAxes[name][axis]])
       .map((arr, i) => arr.get_chunk([0], { headers }))
   )
 
   const axes = ['X', 'Y'].reduce((accum, key, i) => {
-    const index = dimensions.indexOf(apiMetadata[name][key])
+    const index = dimensions.indexOf(cfAxes[name][key])
     const array = coordinates[i]
     const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
 
@@ -290,14 +288,14 @@ export const getVariableLevelInfo = async (
 export const getVariableInfo = async (
   name,
   { arrays, headers },
-  { metadata, apiMetadata, pyramid }
+  { metadata, cfAxes, pyramid }
 ) => {
   const prefix = pyramid ? '0/' : ''
   const zattrs = metadata.metadata[`${prefix}${name}/.zattrs`]
   const dimensions = zattrs['_ARRAY_DIMENSIONS']
 
   const isSpatialDimension = (d) => {
-    if ([apiMetadata[name].X, apiMetadata[name].Y].includes(d)) {
+    if ([cfAxes[name].X, cfAxes[name].Y].includes(d)) {
       return true
     } else if (pyramid && ['x', 'y'].includes(d)) {
       // TODO: remove when pyramid spatial coordinates are no longer renamed
@@ -316,8 +314,8 @@ export const getVariableInfo = async (
   )
 
   // TODO: handle selectors that do not come from cf `axes` from the API
-  const selectorAxes = Object.keys(apiMetadata[name]).reduce((accum, key) => {
-    const dimension = apiMetadata[name][key]
+  const selectorAxes = Object.keys(cfAxes[name]).reduce((accum, key) => {
+    const dimension = cfAxes[name][key]
     const index = dimensions.indexOf(dimension)
     const array = selectorCoordinates[index]
 
