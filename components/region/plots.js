@@ -12,12 +12,12 @@ import {
 } from '@carbonplan/charts'
 import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
-import { useCallback, useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 
 import useStore from '../data/store'
 import { getLines } from '../utils'
 import DateTickLabel from './date-tick-label'
-import { Button, Column, Row } from '@carbonplan/components'
+import { Button } from '@carbonplan/components'
 import { Down } from '@carbonplan/icons'
 
 const isNullValue = (p, variable) => {
@@ -39,19 +39,27 @@ const Point = ({ point, selector }) => {
         fontSize: 0,
         mb: 3,
         gap: 2,
+        flexWrap: 'wrap',
+        flexShrink: 0,
       }}
     >
-      <Box sx={{ color: 'secondary', display: 'inline-block' }}>lon:</Box>{' '}
-      {format('.1f')(point[0])}°
-      <Box sx={{ color: 'secondary', display: 'inline-block' }}>, lat:</Box>{' '}
-      {format('.1f')(point[1])}°
+      <Box>
+        <Box sx={{ color: 'secondary', display: 'inline-block' }}>lon:</Box>{' '}
+        {format('.1f')(point[0])}°
+      </Box>
+      <Box sx={{ color: 'secondary' }}>,</Box>
+      <Box>
+        <Box sx={{ color: 'secondary', display: 'inline-block' }}>lat:</Box>{' '}
+        {format('.1f')(point[1])}°
+      </Box>
       {extraCoords.map((c) => (
-        <Box key={c.name}>
+        <React.Fragment key={c.name}>
+          <Box sx={{ color: 'secondary' }}>,</Box>
           <Box sx={{ color: 'secondary', display: 'inline-block' }}>
-            , {c.name}:
+            {c.name}:
           </Box>{' '}
           {c.index}
-        </Box>
+        </React.Fragment>
       ))}
     </Flex>
   )
@@ -164,23 +172,19 @@ const LineChart = ({ selector, index }) => {
 
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
-      <Row columns={[4]}>
-        <Column start={[1]} width={[2]}>
-          {coords[0] && <Point point={coords[0]} selector={selector} />}
-        </Column>
-        <Column start={[3]} width={[2]}>
-          <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>
-            <Button
-              suffix={<Down />}
-              sx={{ fontSize: 1, pointerEvents: 'all' }}
-              onClick={handleDownload}
-              inverted
-            >
-              Download CSV
-            </Button>
-          </Flex>
-        </Column>
-      </Row>
+      <Flex sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
+        {coords[0] && <Point point={coords[0]} selector={selector} />}
+        <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>
+          <Button
+            suffix={<Down />}
+            sx={{ fontSize: 1, pointerEvents: 'all' }}
+            onClick={handleDownload}
+            inverted
+          >
+            Download CSV
+          </Button>
+        </Flex>
+      </Flex>
       <Chart x={domain} y={range}>
         <Axis left bottom />
         <AxisLabel
@@ -285,12 +289,15 @@ const PointInformation = ({ selector }) => {
 const Plots = () => {
   const variable = useStore((state) => state.dataset.level.variable?.name)
   const selectors = useStore((state) => state.selectors)
+  const shape = useStore((state) => state.dataset.level.variable.shape)
 
   if (!variable) {
     return
   }
 
-  const selectorLines = selectors.filter((s) => typeof s.chunk === 'number')
+  const selectorLines = selectors.filter(
+    (s, i) => typeof s.chunk === 'number' && shape[i] > 1
+  )
 
   if (selectorLines.length === 0) {
     return <PointInformation />
