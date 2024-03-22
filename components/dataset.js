@@ -76,10 +76,7 @@ const Dataset = () => {
       const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, cf_axes, {
-          pyramid: true,
-          clim,
-        })
+        setStoreUrl(pyramid.path, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
         const u = new URL(value)
@@ -87,8 +84,7 @@ const Dataset = () => {
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
-          cf_axes,
-          { pyramid: false, clim }
+          { cfAxes: cf_axes, pyramid: false, clim }
         )
       }
     } catch (e) {

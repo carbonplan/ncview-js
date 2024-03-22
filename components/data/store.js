@@ -42,7 +42,7 @@ const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, cfAxes, { clim, pyramid } = {}) => {
+  setUrl: async (url, { cfAxes, clim, pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
