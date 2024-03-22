@@ -30,16 +30,24 @@ const sx = {
   },
 }
 
-const createDataset = async (url, force) => {
-  const res = await fetch('https://ncview-backend.fly.dev/datasets/', {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ url, force }),
-  })
-  return res.json()
+const inspectDataset = async (url) => {
+  console.log('inspecting')
+  // fetch zmetadata to figure out compression and variables
+  const response = await fetch(`${url}/.zmetadata`)
+  const metadata = await response.json()
+
+  if (!metadata.metadata) {
+    throw new Error(metadata?.message || 'Unable to parse metadata')
+  }
+
+  const cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
+  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
+
+  if (!cf_axes) {
+    throw new Error('Missing CF axes information')
+  }
+
+  return { cf_axes, rechunking, metadata }
 }
 
 const Dataset = () => {
@@ -60,37 +68,36 @@ const Dataset = () => {
       return
     }
 
+    // Clear store URL
     setStoreUrl()
-    const d = await createDataset(value)
-    if (d.id) {
-      setDataset(d)
-      const pyramid = d.rechunking?.find((r) => r.use_case === 'multiscales')
+
+    try {
+      const { cf_axes, rechunking } = await inspectDataset(value)
+      const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, d.cf_axes, {
+        setStoreUrl(pyramid.path, cf_axes, {
           pyramid: true,
           clim,
         })
       } else {
         // Otherwise construct Zarr proxy URL
-        const u = new URL(d.url)
+        const u = new URL(value)
         setStoreUrl(
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
-          d.cf_axes,
+          cf_axes,
           { pyramid: false, clim }
         )
       }
-    } else if (d.detail?.length > 0) {
-      setErrorMessage(d.detail[0].msg)
-    } else {
-      setErrorMessage('Unable to process dataset')
+    } catch (e) {
+      setErrorMessage(e.message ?? 'Unable to process dataset')
     }
   }, [])
 
   const handleSubmit = useCallback(
-    async (e) => {
+    (e) => {
       e.preventDefault()
       submitUrl(url)
     },
