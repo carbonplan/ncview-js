@@ -31,7 +31,6 @@ const sx = {
 }
 
 const inspectDataset = async (url) => {
-  console.log('inspecting')
   // fetch zmetadata to figure out compression and variables
   const response = await fetch(`${url}/.zmetadata`)
   const metadata = await response.json()
