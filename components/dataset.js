@@ -42,39 +42,6 @@ const createDataset = async (url, force) => {
   return res.json()
 }
 
-const pollForCompletedRun = async (
-  id,
-  setCompletedRun,
-  interval = 1000,
-  polls = 30
-) => {
-  const res = await fetch(`https://ncview-backend.fly.dev/datasets/${id}`, {
-    method: 'GET',
-    mode: 'cors',
-  })
-  const payload = await res.json()
-
-  if (payload.rechunk_runs?.length > 0) {
-    const run = payload.rechunk_runs[0]
-    if (run.status === 'completed') {
-      setCompletedRun(run)
-      return
-    }
-  }
-
-  if (polls > 1) {
-    setTimeout(
-      () => pollForCompletedRun(id, setCompletedRun, interval, polls - 1),
-      interval
-    )
-  } else {
-    setCompletedRun({
-      error_message:
-        'Dataset processing still in-progress. Try submitting the dataset again to continue receiving updates, or come back later.',
-    })
-  }
-}
-
 const Dataset = () => {
   const [url, setUrl] = useState('')
   const [dataset, setDataset] = useState(null)
