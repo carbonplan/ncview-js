@@ -22,6 +22,13 @@ const DATASETS = [
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/dryspells_corn/CanESM5-ssp370-full-time-extent.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.tasmax.zarr',
   'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.pr.zarr',
+
+  //s3 URL
+  's3://carbonplan-data-viewer/demo/ncview-2.0/test_dataset2.zarr/',
+  // blocked by CORS
+  'gs://leap-persistent-ro/data-library-manual/CESM.zarr',
+  // missing CF axes
+  'https://cpdataeuwest.blob.core.windows.net/cp-cmip/version1/data/MACA/CMIP.NCC.NorESM2-LM.historical.r1i1p1f1.day.MACA.tasmax.zarr',
 ]
 
 const sx = {
@@ -36,7 +43,33 @@ const sx = {
 const inspectDataset = async (url) => {
   // fetch zmetadata to figure out compression and variables
   const sanitized = sanitizeUrl(url)
-  const response = await fetch(`${sanitized}/.zmetadata`)
+
+  let response
+  try {
+    response = await fetch(`${sanitized}/.zmetadata`)
+  } catch (e) {
+    // Show generic error message when request fails before response can be inspected.
+    throw new Error(
+      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
+    )
+  }
+
+  if (!response.ok) {
+    const statusText = response.statusText ?? 'Dataset request failed.'
+    if (response.status === 403) {
+      throw new Error(
+        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
+      )
+    } else if (response.status === 404) {
+      throw new Error(
+        `STATUS 404: ${statusText} Ensure that URL path is correct.`
+      )
+    } else {
+      throw new Error(
+        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
+      )
+    }
+  }
   const metadata = await response.json()
 
   if (!metadata.metadata) {
