@@ -6,6 +6,7 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
+import { sanitizeUrl } from './utils/url'
 
 const DATASETS = [
   // NCVIEW 2.0
@@ -34,7 +35,8 @@ const sx = {
 
 const inspectDataset = async (url) => {
   // fetch zmetadata to figure out compression and variables
-  const response = await fetch(`${url}/.zmetadata`)
+  const sanitized = sanitizeUrl(url)
+  const response = await fetch(`${sanitized}/.zmetadata`)
   const metadata = await response.json()
 
   if (!metadata.metadata) {
@@ -48,7 +50,7 @@ const inspectDataset = async (url) => {
     throw new Error('Missing CF axes information')
   }
 
-  return { cf_axes, rechunking, metadata }
+  return { url: sanitized, cf_axes, rechunking, metadata }
 }
 
 const Dataset = () => {
@@ -73,14 +75,14 @@ const Dataset = () => {
     setStoreUrl()
 
     try {
-      const { cf_axes, rechunking } = await inspectDataset(value)
+      const { url, cf_axes, rechunking } = await inspectDataset(value)
       const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
       if (pyramid) {
         // Use pyramid when present
         setStoreUrl(pyramid.path, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
-        const u = new URL(value)
+        const u = new URL(url)
         setStoreUrl(
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
