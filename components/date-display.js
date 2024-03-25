@@ -10,7 +10,7 @@ export const useDateGetter = (coordinate) => {
   if (!units) {
     return
   }
-  if (calendar !== 'proleptic_gregorian') {
+  if (!['standard', 'proleptic_gregorian'].includes(calendar)) {
     console.warn(`Unhandled calendar: ${calendar}`)
     return
   }
@@ -33,7 +33,7 @@ export const useDateGetter = (coordinate) => {
         dateString = `${dateString} 12:00`
       }
 
-      const date = new Date(dateString.replace(/-/g, '/'))
+      const date = new Date(dateString)
       date.setDate(date.getDate() + v)
 
       return date

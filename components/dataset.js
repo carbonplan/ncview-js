@@ -6,19 +6,29 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
+import { sanitizeUrl } from './utils/url'
 
 const DATASETS = [
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
-  's3://carbonplan-data-viewer/demo/MURSST.zarr',
-  's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
-  's3://mur-sst/zarr',
-  'https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/WOA_1degree_monthly-feedstock/woa18-1deg-monthly.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.day.GARD-SV.tasmax.zarr',
+  // NCVIEW 2.0
+  // reprojection
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/single_timestep/sample_australia_cordex_data.zarr',
+
+  // no pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset1.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset2.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset3.zarr',
+
+  // pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/dryspells_corn/CanESM5-ssp370-full-time-extent.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.tasmax.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.pr.zarr',
+
+  //s3 URL
+  's3://carbonplan-data-viewer/demo/ncview-2.0/test_dataset2.zarr/',
+  // blocked by CORS
+  'gs://leap-persistent-ro/data-library-manual/CESM.zarr',
+  // missing CF axes
+  'https://cpdataeuwest.blob.core.windows.net/cp-cmip/version1/data/MACA/CMIP.NCC.NorESM2-LM.historical.r1i1p1f1.day.MACA.tasmax.zarr',
 ]
 
 const sx = {
@@ -30,49 +40,50 @@ const sx = {
   },
 }
 
-const createDataset = async (url, force) => {
-  const res = await fetch('https://ncview-backend.fly.dev/datasets/', {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ url, force }),
-  })
-  return res.json()
-}
+const inspectDataset = async (url) => {
+  // fetch zmetadata to figure out compression and variables
+  const sanitized = sanitizeUrl(url)
 
-const pollForCompletedRun = async (
-  id,
-  setCompletedRun,
-  interval = 1000,
-  polls = 30
-) => {
-  const res = await fetch(`https://ncview-backend.fly.dev/datasets/${id}`, {
-    method: 'GET',
-    mode: 'cors',
-  })
-  const payload = await res.json()
+  let response
+  try {
+    response = await fetch(`${sanitized}/.zmetadata`)
+  } catch (e) {
+    // Show generic error message when request fails before response can be inspected.
+    throw new Error(
+      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
+    )
+  }
 
-  if (payload.rechunk_runs?.length > 0) {
-    const run = payload.rechunk_runs[0]
-    if (run.status === 'completed') {
-      setCompletedRun(run)
-      return
+  if (!response.ok) {
+    const statusText = response.statusText ?? 'Dataset request failed.'
+    if (response.status === 403) {
+      throw new Error(
+        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
+      )
+    } else if (response.status === 404) {
+      throw new Error(
+        `STATUS 404: ${statusText} Ensure that URL path is correct.`
+      )
+    } else {
+      throw new Error(
+        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
+      )
     }
   }
+  const metadata = await response.json()
 
-  if (polls > 1) {
-    setTimeout(
-      () => pollForCompletedRun(id, setCompletedRun, interval, polls - 1),
-      interval
-    )
-  } else {
-    setCompletedRun({
-      error_message:
-        'Dataset processing still in-progress. Try submitting the dataset again to continue receiving updates, or come back later.',
-    })
+  if (!metadata.metadata) {
+    throw new Error(metadata?.message || 'Unable to parse metadata')
   }
+
+  const cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
+  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
+
+  if (!cf_axes) {
+    throw new Error('Missing CF axes information')
+  }
+
+  return { url: sanitized, cf_axes, rechunking, metadata }
 }
 
 const Dataset = () => {
@@ -93,37 +104,32 @@ const Dataset = () => {
       return
     }
 
+    // Clear store URL
     setStoreUrl()
-    const d = await createDataset(value)
-    if (d.id) {
-      setDataset(d)
-      const pyramid = d.rechunking?.find((r) => r.use_case === 'multiscales')
+
+    try {
+      const { url, cf_axes, rechunking } = await inspectDataset(value)
+      const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, d.cf_axes, {
-          pyramid: true,
-          clim,
-        })
+        setStoreUrl(pyramid.path, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
-        const u = new URL(d.url)
+        const u = new URL(url)
         setStoreUrl(
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
-          d.cf_axes,
-          { pyramid: false, clim }
+          { cfAxes: cf_axes, pyramid: false, clim }
         )
       }
-    } else if (d.detail?.length > 0) {
-      setErrorMessage(d.detail[0].msg)
-    } else {
-      setErrorMessage('Unable to process dataset')
+    } catch (e) {
+      setErrorMessage(e.message ?? 'Unable to process dataset')
     }
   }, [])
 
   const handleSubmit = useCallback(
-    async (e) => {
+    (e) => {
       e.preventDefault()
       submitUrl(url)
     },

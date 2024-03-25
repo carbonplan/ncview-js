@@ -3,14 +3,14 @@ import {
   getMetadata,
   getVariableInfo,
   pointToChunkKey,
-} from '../utils'
+} from '../utils/data'
 
 import Level from './level'
 
 class Dataset {
-  constructor(url, apiMetadata, pyramid) {
+  constructor(url, cfAxes, pyramid) {
     this.url = url
-    this.apiMetadata = apiMetadata
+    this.cfAxes = cfAxes
     this.pyramid = pyramid
   }
 

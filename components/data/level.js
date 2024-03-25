@@ -3,7 +3,7 @@ import {
   getChunkData,
   getClim,
   getVariableLevelInfo,
-} from '../utils'
+} from '../utils/data'
 
 class Level {
   constructor(level, dataset) {
@@ -31,6 +31,7 @@ class Level {
       axes,
       lockZoom,
       nullValue,
+      northPole,
       chunk_separator,
       chunk_shape,
       shape,
@@ -43,6 +44,7 @@ class Level {
       axes,
       lockZoom,
       nullValue,
+      northPole,
       chunk_separator,
       chunk_shape,
       shape,

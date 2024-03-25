@@ -51,11 +51,9 @@ const Selectors = () => {
         </>
       )}
 
-      {selectors
-        .filter((s) => typeof s.chunk === 'number')
-        .map((s, i) => (
-          <Selector key={s.name} index={i} />
-        ))}
+      {selectors.map((s, i) =>
+        typeof s.chunk === 'number' ? <Selector key={s.name} index={i} /> : null
+      )}
     </>
   )
 }

@@ -4,7 +4,7 @@ import { geoPath } from 'd3-geo'
 
 import { Minimap, Path } from './minimap'
 import { PROJECTIONS, ASPECTS } from './constants'
-import { getProjection } from './utils'
+import { getProjection } from './utils/data'
 
 const PROJECTION = 'naturalEarth1'
 const MINIMAP_PROPS = {
