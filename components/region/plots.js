@@ -75,11 +75,9 @@ const LineChart = ({ selector, index }) => {
     state.dataset.getZattrs(selector.name)
   )
   const selectors = useStore((state) => state.selectors)
-  const array = useStore((state) => state.dataset.level.arrays[selector.name])
+  const { array, cfAxis } = useStore((state) => state.selectors[index].metadata)
   const headers = useStore((state) => state.dataset.level.headers)
-  const isTime = useStore(
-    (state) => state.dataset.selectorAxes.T?.index === index
-  )
+  const isTime = cfAxis === 'T'
 
   const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {

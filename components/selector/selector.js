@@ -12,22 +12,21 @@ const SingleValue = ({ index }) => {
   const selector = useStore(
     (state) => state.selectors && state.selectors[index]
   )
-  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
+  const { array, cfAxis } = selector.metadata
   const chunk_shape = useStore(
     (state) => state.dataset.level.variable.chunk_shape[index]
   )
 
-  if (selectorAxes.T?.index === index) {
+  if (cfAxis === 'T') {
     return (
-      <DateDisplay
-        array={selectorAxes.T.array}
-        selector={selector}
-        chunkShape={chunk_shape}
-      />
+      <DateDisplay array={array} selector={selector} chunkShape={chunk_shape} />
     )
-  } else if (selectorAxes.Z?.index === -1) {
-    return selectorAxes.Z.array.data[0]
+  } else if (array) {
+    return array.data[0]
   } else {
+    console.warn(
+      `No array found for ${selector?.name} dimension (index=${index})`
+    )
     return (
       <>
         <Box as='span' sx={{ color: 'secondary' }}>

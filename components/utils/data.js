@@ -310,7 +310,7 @@ export const getVariableInfo = async (
   const isSpatialDimension = (d) => {
     if ([cfAxes[name].X, cfAxes[name].Y].includes(d)) {
       return true
-    } else if (pyramid && ['x', 'y'].includes(d)) {
+    } else if (pyramid && ['x', 'y', 'lat', 'lon'].includes(d)) {
       // TODO: remove when pyramid spatial coordinates are no longer renamed
       return true
     }
@@ -322,43 +322,32 @@ export const getVariableInfo = async (
       .map((arr, i) =>
         isSpatialDimension(dimensions[i])
           ? null
-          : arr.get_chunk([0], { headers })
+          : // TODO: handle chunked coordinate arrays
+            arr.get_chunk([0], { headers })
       )
   )
 
-  // TODO: handle selectors that do not come from cf `axes` from the API
-  const selectorAxes = Object.keys(cfAxes[name]).reduce((accum, key) => {
-    const dimension = cfAxes[name][key]
-    const index = dimensions.indexOf(dimension)
-    const array = selectorCoordinates[index]
-
-    if (array) {
-      return {
-        ...accum,
-        [key]: {
-          array,
-          index,
-          zattrs: metadata.metadata[`${prefix}${dimension}/.zattrs`],
-        },
-      }
-    } else {
-      return accum
-    }
-  }, {})
-
   const selectors = dimensions.map((d, i) => {
     const spatial = isSpatialDimension(d)
+    const array = selectorCoordinates[i]
 
     return {
       name: d,
       chunk: spatial ? null : 0,
       index: spatial ? null : 0,
+      value: array && array[0],
+      metadata: {
+        array,
+        zattrs: metadata.metadata[`${prefix}${d}/.zattrs`],
+        cfAxis: Object.keys(cfAxes[name]).find(
+          (key) => cfAxes[name][key] === d
+        ),
+      },
     }
   })
 
   return {
     selectors,
-    selectorAxes,
   }
 }
 
