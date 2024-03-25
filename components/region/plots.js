@@ -15,7 +15,7 @@ import { format } from 'd3-format'
 import React, { useCallback, useEffect, useState } from 'react'
 
 import useStore from '../data/store'
-import { getLines } from '../utils'
+import { getLines } from '../utils/data'
 import DateTickLabel from './date-tick-label'
 import { Button } from '@carbonplan/components'
 import { Down } from '@carbonplan/icons'

@@ -3,7 +3,7 @@ import {
   getChunkData,
   getClim,
   getVariableLevelInfo,
-} from '../utils'
+} from '../utils/data'
 
 class Level {
   constructor(level, dataset) {

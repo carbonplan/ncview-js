@@ -10,7 +10,7 @@ import {
   // Zstd,
 } from 'numcodecs'
 
-import { PROJECTIONS, ASPECTS } from './constants'
+import { PROJECTIONS, ASPECTS } from '../constants'
 
 const COMPRESSORS = {
   zlib: Zlib,

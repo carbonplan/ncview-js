@@ -3,7 +3,7 @@ import {
   getMetadata,
   getVariableInfo,
   pointToChunkKey,
-} from '../utils'
+} from '../utils/data'
 
 import Level from './level'
 
