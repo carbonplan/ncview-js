@@ -17,6 +17,17 @@ const PyramidMap = () => {
     format: 'rgb',
   })
   const clim = useStore((state) => state.clim)
+  const xOrder = useStore(() =>
+    useStore((state) =>
+      state.dataset?.level?.variable?.axes?.X?.reversed ? -1 : 1
+    )
+  )
+  const yOrder = useStore(() =>
+    useStore((state) =>
+      // Orientation expectations are swapped for minimap Raster relative to maps Raster
+      state.dataset?.level?.variable?.axes?.Y?.reversed ? 1 : -1
+    )
+  )
 
   const selectorHash = useMemo(() => {
     return selectors
@@ -32,9 +43,8 @@ const PyramidMap = () => {
   }, [selectors])
 
   // TODO
-  // 1. infer value of `order` prop (handle flipped lat, lon coordinates)
-  // 2. infer value of `projection` prop
-  // 3. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
+  // 1. infer value of `projection` prop
+  // 2. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
 
   return (
     <Map>
@@ -76,6 +86,7 @@ const PyramidMap = () => {
           source={dataset.url}
           variable={dataset.variable}
           selector={selectorHash}
+          order={[xOrder, yOrder]}
         />
       )}
     </Map>

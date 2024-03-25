@@ -263,10 +263,11 @@ export const getVariableLevelInfo = async (
     const index = dimensions.indexOf(cfAxes[name][key])
     const array = coordinates[i]
     const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
+    const reversed = array.data[0] > array.data[array.data.length - 1]
 
     return {
       ...accum,
-      [key]: { array, step, index },
+      [key]: { array, step, index, reversed },
     }
   }, {})
 
@@ -370,15 +371,11 @@ export const getChunkData = async (chunkKey, level) => {
   })
 
   const { X, Y } = axes
-  const [xReversed, yReversed] = [
-    X.array.data[0] > X.array.data[X.array.data.length - 1],
-    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
-  ]
 
   const steps = filteredData.shape.map((c, i) => {
-    if (xReversed && i === X.index) {
+    if (X.reversed && i === X.index) {
       return -1
-    } else if (yReversed && i === Y.index) {
+    } else if (Y.reversed && i === Y.index) {
       return -1
     } else {
       return 1
