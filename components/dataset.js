@@ -76,14 +76,68 @@ const inspectDataset = async (url) => {
     throw new Error(metadata?.message || 'Unable to parse metadata')
   }
 
-  const cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
+  const multiscales = metadata.metadata['.zattrs']['multiscales']
+  let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
   const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
 
-  if (!cf_axes) {
+  if (!multiscales && !cf_axes) {
     throw new Error('Missing CF axes information')
   }
 
-  return { url: sanitized, cf_axes, rechunking, metadata }
+  let pyramid = false
+  let visualizedUrl = sanitized
+
+  if (multiscales) {
+    pyramid = true
+
+    // Infer axes for pyramids
+    cf_axes = Object.keys(metadata.metadata)
+      .map((k) => {
+        if (!k.startsWith('0/') || !k.endsWith('.zattrs')) {
+          return false
+        }
+
+        const [variable] = k.match(/(?<=0\/)(\w+)(?=\/\.zattrs)/g) ?? []
+
+        if (!variable) {
+          return false
+        }
+
+        const dims = metadata.metadata[k]['_ARRAY_DIMENSIONS']
+        if (!dims) {
+          return false
+        }
+
+        const time = dims.find(
+          (dim) => metadata.metadata[`0/${dim}/.zattrs`]?.calendar
+        )
+        const base = { variable, ...(time ? { T: time } : {}) }
+        if (['x', 'y'].every((d) => dims.includes(d))) {
+          return { ...base, X: 'x', Y: 'y' }
+        } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
+          return { ...base, X: 'lon', Y: 'lat' }
+        }
+      })
+      .filter(Boolean)
+      .reduce((accum, { variable: v, ...rest }) => {
+        accum[v] = rest
+        return accum
+      }, {})
+
+    if (Object.keys(cf_axes).length === 0) {
+      throw new Error('Cannot infer CF axes information from pyramid')
+    }
+  } else if (rechunking) {
+    const pyramidRechunked = rechunking.find(
+      (r) => r.use_case === 'multiscales'
+    )
+    if (pyramidRechunked) {
+      pyramid = true
+      visualizedUrl = pyramidRechunked.path
+    }
+  }
+
+  return { url: visualizedUrl, cf_axes, metadata, pyramid }
 }
 
 const Dataset = () => {
@@ -108,11 +162,10 @@ const Dataset = () => {
     setStoreUrl()
 
     try {
-      const { url, cf_axes, rechunking } = await inspectDataset(value)
-      const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
+      const { url, cf_axes, pyramid } = await inspectDataset(value)
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, { cfAxes: cf_axes, pyramid: true, clim })
+        setStoreUrl(url, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
         const u = new URL(url)
