@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
-import { sanitizeUrl } from './utils/url'
+import { inspectDataset } from './utils/data'
 
 const DATASETS = [
   // NCVIEW 2.0
@@ -38,106 +38,6 @@ const sx = {
     mt: '5px',
     strokeWidth: '2px',
   },
-}
-
-const inspectDataset = async (url) => {
-  // fetch zmetadata to figure out compression and variables
-  const sanitized = sanitizeUrl(url)
-
-  let response
-  try {
-    response = await fetch(`${sanitized}/.zmetadata`)
-  } catch (e) {
-    // Show generic error message when request fails before response can be inspected.
-    throw new Error(
-      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
-    )
-  }
-
-  if (!response.ok) {
-    const statusText = response.statusText ?? 'Dataset request failed.'
-    if (response.status === 403) {
-      throw new Error(
-        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
-      )
-    } else if (response.status === 404) {
-      throw new Error(
-        `STATUS 404: ${statusText} Ensure that URL path is correct.`
-      )
-    } else {
-      throw new Error(
-        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
-      )
-    }
-  }
-  const metadata = await response.json()
-
-  if (!metadata.metadata) {
-    throw new Error(metadata?.message || 'Unable to parse metadata')
-  }
-
-  const multiscales = metadata.metadata['.zattrs']['multiscales']
-  let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
-  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
-
-  if (!multiscales && !cf_axes) {
-    throw new Error('Missing CF axes information')
-  }
-
-  let pyramid = false
-  let visualizedUrl = sanitized
-
-  if (multiscales) {
-    pyramid = true
-
-    // Infer axes for pyramids
-    cf_axes = Object.keys(metadata.metadata)
-      .map((k) => {
-        if (!k.startsWith('0/') || !k.endsWith('.zattrs')) {
-          return false
-        }
-
-        const [variable] = k.match(/(?<=0\/)(\w+)(?=\/\.zattrs)/g) ?? []
-
-        if (!variable) {
-          return false
-        }
-
-        const dims = metadata.metadata[k]['_ARRAY_DIMENSIONS']
-        if (!dims) {
-          return false
-        }
-
-        const time = dims.find(
-          (dim) => metadata.metadata[`0/${dim}/.zattrs`]?.calendar
-        )
-        const base = { variable, ...(time ? { T: time } : {}) }
-        if (['x', 'y'].every((d) => dims.includes(d))) {
-          return { ...base, X: 'x', Y: 'y' }
-        } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
-          return { ...base, X: 'lon', Y: 'lat' }
-        }
-      })
-      .filter(Boolean)
-      .reduce((accum, { variable: v, ...rest }) => {
-        accum[v] = rest
-        return accum
-      }, {})
-
-    if (Object.keys(cf_axes).length === 0) {
-      throw new Error('Cannot infer CF axes information from pyramid')
-    }
-  } else if (rechunking) {
-    const pyramidRechunked = rechunking.find(
-      (r) => r.use_case === 'multiscales'
-    )
-    if (pyramidRechunked) {
-      pyramid = true
-      visualizedUrl = pyramidRechunked.path
-    }
-  }
-
-  return { url: visualizedUrl, cf_axes, metadata, pyramid }
 }
 
 const Dataset = () => {
