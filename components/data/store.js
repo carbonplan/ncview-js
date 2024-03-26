@@ -51,6 +51,7 @@ const useStore = create((set, get) => ({
       selectors: [],
       chunksToRender: [],
       clim: null,
+      projection: 'mercator',
     })
 
     // handle clearing url
