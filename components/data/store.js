@@ -34,8 +34,10 @@ const createDisplaySlice = (set, get) => ({
 const createPlotsSlice = (set, get) => ({
   plotMode: 'inactive',
   plotCenter: null,
+  plotData: null,
   setPlotMode: (plotMode) => set({ plotMode }),
   setPlotCenter: (plotCenter) => set({ plotCenter }),
+  setPlotData: (plotData) => set({ plotData }),
 })
 
 const useStore = create((set, get) => ({
