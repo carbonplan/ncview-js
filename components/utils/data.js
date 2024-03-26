@@ -800,15 +800,22 @@ export const validatePoint = ([lon, lat]) => {
   return true
 }
 
-// Infer axes from pyramid consolidated metadata
-const inferCfAxes = (metadata) => {
+// Infer axes from consolidated metadata
+const inferCfAxes = (metadata, pyramid) => {
+  const prefix = pyramid ? '0/' : ''
+  const suffix = '/.zattrs'
+
   return Object.keys(metadata)
     .map((k) => {
-      if (!k.startsWith('0/') || !k.endsWith('.zattrs')) {
+      if (!k.endsWith(suffix)) {
         return false
       }
 
-      const [variable] = k.match(/(?<=0\/)(\w+)(?=\/\.zattrs)/g) ?? []
+      if (prefix && !k.startsWith(prefix)) {
+        return false
+      }
+
+      const variable = k.replace(prefix, '').replace(suffix, '')
 
       if (!variable) {
         return false
@@ -819,12 +826,17 @@ const inferCfAxes = (metadata) => {
         return false
       }
 
-      const time = dims.find((dim) => metadata[`0/${dim}/.zattrs`]?.calendar)
+      const time = dims.find(
+        (dim) => metadata[`${prefix}${dim}${suffix}`]?.calendar
+      )
       const base = { variable, ...(time ? { T: time } : {}) }
       if (['x', 'y'].every((d) => dims.includes(d))) {
         return { ...base, X: 'x', Y: 'y' }
       } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
         return { ...base, X: 'lon', Y: 'lat' }
+      } else if (!pyramid && ['rlat', 'rlon'].every((d) => dims.includes(d))) {
+        // For non-pyramids, also check for rotated X/Y coordinate names
+        return { ...base, X: 'rlon', Y: 'rlat' }
       }
     })
     .filter(Boolean)
@@ -874,29 +886,28 @@ export const inspectDataset = async (url) => {
   let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
   const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
 
-  if (!multiscales && !cf_axes) {
-    throw new Error('Missing CF axes information')
-  }
-
   let pyramid = false
   let visualizedUrl = sanitized
 
   if (multiscales) {
     pyramid = true
-
-    cf_axes = inferCfAxes(metadata.metadata)
-
-    if (Object.keys(cf_axes).length === 0) {
-      throw new Error('Cannot infer CF axes information from pyramid')
-    }
-  } else if (rechunking) {
+  } else if (rechunking && rechunking.length > 0) {
     const pyramidRechunked = rechunking.find(
       (r) => r.use_case === 'multiscales'
     )
     if (pyramidRechunked) {
       pyramid = true
       visualizedUrl = pyramidRechunked.path
+      const { cf_axes: pyramidCfAxes } = await inspectDataset(visualizedUrl)
+      cf_axes ||= pyramidCfAxes
     }
+  }
+
+  cf_axes ||= inferCfAxes(metadata.metadata, pyramid)
+  if (!cf_axes || Object.keys(cf_axes).length === 0) {
+    throw new Error(
+      'No CF axes information provided and unable to infer from metadata.'
+    )
   }
 
   return { url: visualizedUrl, cf_axes, metadata, pyramid }
