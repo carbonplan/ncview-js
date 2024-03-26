@@ -32,7 +32,7 @@ const ProxyMap = () => {
     (state) => state.dataset?.level?.variable || {}
   )
   const clim = useStore((state) => state.clim)
-  const mode = useStore((state) => state.mode)
+  const plotMode = useStore((state) => state.plotMode)
 
   const resetMapProps = useStore((state) => state.resetMapProps)
   const [mapProps, setMapProps] = useState({
@@ -86,8 +86,8 @@ const ProxyMap = () => {
 
   return (
     <MapContainer setMapProps={setMapProps}>
-      {mode === 'point' && <Point mapProps={mapProps} />}
-      {mode === 'circle' && <Circle mapProps={mapProps} />}
+      {plotMode === 'point' && <Point mapProps={mapProps} />}
+      {plotMode === 'circle' && <Circle mapProps={mapProps} />}
       <Minimap {...mapProps}>
         {basemaps.oceanMask && (
           <Path

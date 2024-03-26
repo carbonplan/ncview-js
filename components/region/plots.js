@@ -66,7 +66,7 @@ const Point = ({ point, selector }) => {
 }
 
 const LineChart = ({ selector, index }) => {
-  const center = useStore((state) => state.center)
+  const plotCenter = useStore((state) => state.plotCenter)
   const chunksToRender = useStore((state) => state.chunksToRender)
   const chunks = useStore((state) => state.dataset.level.chunks)
   const variable = useStore((state) => state.dataset.level.variable)
@@ -78,7 +78,7 @@ const LineChart = ({ selector, index }) => {
   const { array, cfAxis } = useStore((state) => state.selectors[index].metadata)
   const isTime = cfAxis === 'T'
 
-  const { range, coords, points } = getLines(center, selector, {
+  const { range, coords, points } = getLines(plotCenter, selector, {
     activeChunkKeys: chunksToRender,
     chunks,
     variable,
@@ -223,7 +223,7 @@ const LineChart = ({ selector, index }) => {
 }
 
 const PointInformation = ({ selector }) => {
-  const center = useStore((state) => state.center)
+  const plotCenter = useStore((state) => state.plotCenter)
   const chunksToRender = useStore((state) => state.chunksToRender)
   const chunks = useStore((state) => state.dataset.level.chunks)
   const variable = useStore((state) => state.dataset.level.variable)
@@ -231,7 +231,7 @@ const PointInformation = ({ selector }) => {
   const selectors = useStore((state) => state.selectors)
 
   const { coords, points } = getLines(
-    center,
+    plotCenter,
     {},
     {
       activeChunkKeys: chunksToRender,

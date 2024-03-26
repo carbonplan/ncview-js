@@ -8,18 +8,18 @@ const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
   const container = useRef(null)
   const moveListener = useRef(null)
-  const center = useStore((state) => state.center)
-  const setCenter = useStore((state) => state.setCenter)
+  const plotCenter = useStore((state) => state.plotCenter)
+  const setPlotCenter = useStore((state) => state.setPlotCenter)
 
   const projectedCenter = useMemo(() => {
-    if (center) {
+    if (plotCenter) {
       const height = container.current?.clientHeight
       const width = container.current?.clientWidth
       const proj = getProjection(mapProps)
-      const c = proj(center)
+      const c = proj(plotCenter)
       return [(c[0] / 800) * width, (c[1] / (800 * ASPECTS[proj.id])) * height]
     }
-  }, [center, mapProps])
+  }, [plotCenter, mapProps])
 
   const updatePoint = useCallback(
     (point) => {
@@ -31,9 +31,9 @@ const Point = ({ mapProps }) => {
         (point[1] / height) * 800 * ASPECTS[proj.id],
       ])
 
-      setCenter(p)
+      setPlotCenter(p)
     },
-    [mapProps, setCenter]
+    [mapProps, setPlotCenter]
   )
 
   useEffect(() => {

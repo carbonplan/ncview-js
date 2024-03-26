@@ -32,25 +32,26 @@ const sx = {
 
 const Plots = () => {
   const ready = useStore((state) => !!state.dataset)
-  const mode = useStore((state) => state.mode)
-  const center = useStore((state) => state.center)
-  const setMode = useStore((state) => state.setMode)
-  const setCenter = useStore((state) => state.setCenter)
+  const pyramid = useStore((state) => state.dataset?.pyramid)
+  const plotMode = useStore((state) => state.plotMode)
+  const plotCenter = useStore((state) => state.plotCenter)
+  const setPlotMode = useStore((state) => state.setPlotMode)
+  const setPlotCenter = useStore((state) => state.setPlotCenter)
   const selectors = useStore((state) => state.selectors)
 
   const handleClick = useCallback(() => {
-    if (mode === 'inactive') {
-      setMode('point')
+    if (plotMode === 'inactive') {
+      setPlotMode(pyramid ? 'circle' : 'point')
     } else {
-      setMode('inactive')
-      setCenter(null)
+      setPlotMode('inactive')
+      setPlotCenter(null)
     }
-  }, [mode])
+  }, [plotMode, pyramid])
 
   useEffect(() => {
     if (!ready) {
-      setMode('inactive')
-      setCenter(null)
+      setPlotMode('inactive')
+      setPlotCenter(null)
     }
   }, [ready])
 
@@ -70,21 +71,21 @@ const Plots = () => {
         >
           Plots
           <Box sx={{ position: 'relative', ml: [2], mt: '-1px' }}>
-            {mode === 'inactive' && (
+            {plotMode === 'inactive' && (
               <Search sx={{ strokeWidth: 2, width: '18px' }} />
             )}
-            {mode !== 'inactive' && (
+            {plotMode !== 'inactive' && (
               <X sx={{ strokeWidth: 2, width: '18px' }} />
             )}
           </Box>
         </Flex>
         <AnimateHeight
           duration={150}
-          height={mode !== 'inactive' ? 'auto' : 0}
+          height={plotMode !== 'inactive' ? 'auto' : 0}
           easing={'linear'}
           style={{ pointerEvents: 'none' }}
         >
-          {ready && mode !== 'inactive' && center && selectors && (
+          {ready && plotMode !== 'inactive' && plotCenter && selectors && (
             <RegionalPlots />
           )}
         </AnimateHeight>
