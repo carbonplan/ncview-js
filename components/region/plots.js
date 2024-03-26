@@ -13,12 +13,12 @@ import {
 import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
 import React, { useCallback } from 'react'
+import { Button } from '@carbonplan/components'
+import { Down } from '@carbonplan/icons'
 
 import useStore from '../data/store'
 import { getLines } from '../utils/data'
 import DateTickLabel from './date-tick-label'
-import { Button } from '@carbonplan/components'
-import { Down } from '@carbonplan/icons'
 
 const isNullValue = (p, variable) => {
   return p == null || p === variable.nullValue || Number.isNaN(p)
@@ -213,6 +213,7 @@ const LineChart = ({ selector, index }) => {
             x={offset + selector.index}
             y={points[0][selector.index]}
             sx={{ mt: 2, ml: 1, color: 'primary' }}
+            align={selector.index >= chunk_shape / 2 ? 'right' : 'left'}
           >
             {format('.1f')(points[0][selector.index])} {units}
           </Label>
