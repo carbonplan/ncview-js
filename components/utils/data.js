@@ -257,6 +257,7 @@ export const getVariableLevelInfo = async (
   const coordinates = await Promise.all(
     ['X', 'Y']
       .map((axis) => arrays[cfAxes[name][axis]])
+      // TODO: handle chunked spatial coordinates
       .map((arr, i) => arr.get_chunk([0], { headers }))
   )
 
