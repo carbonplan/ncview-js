@@ -334,6 +334,14 @@ export const getVariableInfo = async (
     const spatial = isSpatialDimension(d)
     const array = selectorCoordinates[i]
 
+    // Convert from UnicodeStringArray to basic Array object
+    if (array?.data?.get) {
+      array.data = Array(array.shape[0])
+        .fill(null)
+        .map((d, i) => array.data.get(i))
+      console.log(array.data)
+    }
+
     return {
       name: d,
       chunk: spatial ? null : 0,
