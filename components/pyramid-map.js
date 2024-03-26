@@ -43,8 +43,7 @@ const PyramidMap = () => {
   }, [selectors])
 
   // TODO
-  // 1. infer value of `projection` prop
-  // 2. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
+  // 1. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
 
   return (
     <Map>
