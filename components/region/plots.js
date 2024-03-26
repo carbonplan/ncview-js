@@ -12,7 +12,7 @@ import {
 } from '@carbonplan/charts'
 import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useCallback } from 'react'
 
 import useStore from '../data/store'
 import { getLines } from '../utils/data'
@@ -76,10 +76,8 @@ const LineChart = ({ selector, index }) => {
   )
   const selectors = useStore((state) => state.selectors)
   const { array, cfAxis } = useStore((state) => state.selectors[index].metadata)
-  const headers = useStore((state) => state.dataset.level.headers)
   const isTime = cfAxis === 'T'
 
-  const [selectorArray, setSelectorArray] = useState(null)
   const { range, coords, points } = getLines(center, selector, {
     activeChunkKeys: chunksToRender,
     chunks,
@@ -90,47 +88,35 @@ const LineChart = ({ selector, index }) => {
   const offset = selector.chunk * chunk_shape
   const domain = [offset, offset + chunk_shape - 1]
 
-  useEffect(() => {
-    array.get_chunk([0], { headers }).then((result) => {
-      setSelectorArray(result.data)
-    })
-  }, [array, offset])
-
   const formatter = useCallback(
     (x) => {
-      if (!selectorArray) {
+      if (!array) {
         return ''
-      } else if (selectorArray[x]) {
+      } else if (array.data[x]) {
         if (isTime) {
           return (
-            <DateTickLabel
-              name={selector.name}
-              array={selectorArray}
-              index={x}
-            />
+            <DateTickLabel name={selector.name} array={array.data} index={x} />
           )
         } else {
-          return Number(selectorArray[x])
+          return Number(array.data[x])
         }
       } else {
         return ''
       }
     },
-    [selector.name, selectorArray, offset, chunk_shape, isTime]
+    [selector.name, array, offset, chunk_shape, isTime]
   )
 
   const handleDownload = useCallback(
     (e) => {
       e.stopPropagation()
-      if (!selectorArray) {
+      if (!array) {
         return
       }
 
       const rows = points[0]
         .map((d, i) =>
-          d === variable.nullValue
-            ? null
-            : [Number(selectorArray[offset + i]), d]
+          d === variable.nullValue ? null : [Number(array.data[offset + i]), d]
         )
         .filter(Boolean)
 
@@ -160,7 +146,7 @@ const LineChart = ({ selector, index }) => {
     [
       points[0],
       coords[0],
-      selectorArray,
+      array,
       selector.name,
       variable.name,
       variable.nullValue,
