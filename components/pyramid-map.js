@@ -83,7 +83,6 @@ const RasterWrapper = () => {
     )
   )
   const { region } = useRegion()
-  const zoom = region?.properties?.zoom || 0
 
   const yOrder = useStore(() =>
     useStore((state) =>
