@@ -4,31 +4,23 @@ import React from 'react'
 
 import PointSummary from './point-summary'
 import useStore from '../data/store'
-import { getLines, isNullValue } from '../utils/data'
+import { isNullValue } from '../utils/data'
 
-// TODO: handle summaries for 2D pyramids
 const RegionSummary = ({ selector }) => {
-  const plotCenter = useStore((state) => state.plotCenter)
-  const chunksToRender = useStore((state) => state.chunksToRender)
-  const chunks = useStore((state) => state.dataset.level.chunks)
+  const plotData = useStore((state) => state.plotData)
+  const plotMode = useStore((state) => state.plotMode)
   const variable = useStore((state) => state.dataset.level.variable)
   const { units } = useStore((state) => state.dataset.getZattrs(variable.name))
-  const selectors = useStore((state) => state.selectors)
 
-  const { coords, points } = getLines(
-    plotCenter,
-    {},
-    {
-      activeChunkKeys: chunksToRender,
-      chunks,
-      variable,
-      selectors,
-    }
-  )
+  if (!plotData) {
+    return
+  }
+
+  const { yValues, centerPoint } = plotData
 
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
-      {coords[0] && <PointSummary point={coords[0]} selector={selector} />}
+      {centerPoint && <PointSummary point={centerPoint} selector={selector} />}
 
       <Flex
         sx={{
@@ -40,14 +32,16 @@ const RegionSummary = ({ selector }) => {
           gap: 2,
         }}
       >
-        <Box sx={{ color: 'secondary', display: 'inline-block' }}>value:</Box>
-        {isNullValue(points[0], variable) ? (
+        <Box sx={{ color: 'secondary', display: 'inline-block' }}>
+          {plotMode === 'circle' ? 'average value:' : 'value:'}
+        </Box>
+        {!yValues || isNullValue(yValues[0], variable) ? (
           <Box sx={{ color: 'secondary', display: 'inline-block' }}>
             not defined
           </Box>
         ) : (
           <>
-            {format('.1f')(points[0])} {units}
+            {format('.1f')(yValues[0])} {units}
           </>
         )}
       </Flex>

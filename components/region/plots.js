@@ -13,12 +13,11 @@ const Plots = () => {
     return
   }
 
-  const selectorLines = selectors
-    .map((selector, index) => ({ selector, index }))
-    .filter(
-      ({ selector, index }) =>
-        typeof selector.chunk === 'number' && shape[index] > 1
-    )
+  const selectorLines = selectors.filter(
+    (selector) =>
+      typeof selector.chunk === 'number' &&
+      shape[selector.metadata.dimensionIndex] > 1
+  )
 
   if (selectorLines.length === 0) {
     return <RegionSummary />

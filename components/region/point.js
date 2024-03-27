@@ -52,11 +52,7 @@ const Point = ({ mapProps }) => {
     } else {
       const selector = getPlotSelector(selectors, chunk_shape)
 
-      if (!selector) {
-        setPlotData(null)
-        return
-      }
-      const { range, coords, points } = getLines(plotCenter, selector, {
+      const { range, coords, points } = getLines(plotCenter, selector ?? {}, {
         activeChunkKeys: chunksToRender,
         chunks,
         variable,
@@ -64,9 +60,9 @@ const Point = ({ mapProps }) => {
       })
 
       setPlotData({
-        yValues: points[0],
+        yValues: Array.isArray(points[0]) ? points[0] : [points[0]],
         range,
-        selectorName: selector.name,
+        selectorName: selector?.name,
         centerPoint: coords[0],
       })
     }

@@ -101,6 +101,17 @@ const PyramidMap = () => {
         return
       }
 
+      // Handle 2D pyramid
+      if (Array.isArray(regionData.value[variable.name])) {
+        setPlotData({
+          yValues: [average(regionData.value[variable.name], variable)],
+          range: null,
+          selectorName: null,
+        })
+        return
+      }
+
+      // Handle 3D+ pyramids
       const selectorName = Object.keys(regionOptionsSelector).find((key) =>
         Array.isArray(regionOptionsSelector[key])
       )
