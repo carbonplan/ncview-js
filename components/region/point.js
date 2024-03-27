@@ -2,9 +2,9 @@ import { useThemeUI } from 'theme-ui'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 
 import useStore from '../data/store'
-import { getProjection, getLines } from '../utils/data'
+import { getProjection } from '../utils/data'
 import { ASPECTS } from '../constants'
-import { getPlotSelector } from '../utils/plots'
+import { getPlotSelector, getLines } from '../utils/plots'
 
 const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
