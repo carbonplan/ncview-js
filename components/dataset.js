@@ -31,6 +31,8 @@ const DATASETS = [
   'https://cpdataeuwest.blob.core.windows.net/cp-cmip/version1/data/MACA/CMIP.NCC.NorESM2-LM.historical.r1i1p1f1.day.MACA.tasmax.zarr',
   // 4D pyramid
   'https://storage.googleapis.com/carbonplan-maps/v2/demo/4d/tavg-prec-month/',
+  // 2D pyramid
+  'https://storage.googleapis.com/carbonplan-maps/v2/demo/2d/tavg',
 ]
 
 const sx = {

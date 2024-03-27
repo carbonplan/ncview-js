@@ -1,8 +1,10 @@
 import { useThemeUI } from 'theme-ui'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
+
 import useStore from '../data/store'
-import { getProjection } from '../utils/data'
+import { getProjection, getLines } from '../utils/data'
 import { ASPECTS } from '../constants'
+import { getPlotSelector } from '../utils/plots'
 
 const Point = ({ mapProps }) => {
   const { theme } = useThemeUI()
@@ -10,6 +12,14 @@ const Point = ({ mapProps }) => {
   const moveListener = useRef(null)
   const plotCenter = useStore((state) => state.plotCenter)
   const setPlotCenter = useStore((state) => state.setPlotCenter)
+  const setPlotData = useStore((state) => state.setPlotData)
+  const selectors = useStore((state) => state.selectors)
+  const chunksToRender = useStore((state) => state.chunksToRender)
+  const chunks = useStore((state) => state.dataset.level.chunks)
+  const variable = useStore((state) => state.dataset.level.variable)
+  const chunk_shape = useStore(
+    (state) => state.dataset.level?.variable?.chunk_shape
+  )
 
   const projectedCenter = useMemo(() => {
     if (plotCenter) {
@@ -35,6 +45,39 @@ const Point = ({ mapProps }) => {
     },
     [mapProps, setPlotCenter]
   )
+
+  useEffect(() => {
+    if (!plotCenter || !variable) {
+      setPlotData(null)
+    } else {
+      const selector = getPlotSelector(selectors, chunk_shape)
+
+      if (!selector) {
+        setPlotData(null)
+        return
+      }
+      const { range, coords, points } = getLines(plotCenter, selector, {
+        activeChunkKeys: chunksToRender,
+        chunks,
+        variable,
+        selectors,
+      })
+
+      setPlotData({
+        yValues: points[0],
+        range,
+        selectorName: selector.name,
+        centerPoint: coords[0],
+      })
+    }
+  }, [
+    plotCenter,
+    setPlotData,
+    selectors,
+    variable?.name,
+    chunksToRender,
+    chunks,
+  ])
 
   useEffect(() => {
     if (!projectedCenter) {

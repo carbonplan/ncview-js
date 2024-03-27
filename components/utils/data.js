@@ -338,7 +338,7 @@ export const getVariableInfo = async (
     if (array?.data?.get) {
       array.data = Array(array.shape[0])
         .fill(null)
-        .map((d, i) => array.data.get(i))
+        .map((d, j) => array.data.get(j))
     }
 
     return {
@@ -347,6 +347,7 @@ export const getVariableInfo = async (
       index: spatial ? null : 0,
       metadata: {
         array,
+        dimensionIndex: i,
         zattrs: metadata.metadata[`${prefix}${d}/.zattrs`],
         cfAxis: Object.keys(cfAxes[name]).find(
           (key) => cfAxes[name][key] === d

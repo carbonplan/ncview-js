@@ -1,9 +1,59 @@
-import { useMemo } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
 import { Map, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
 
 import useStore from './data/store'
+import { average, getPlotSelector } from './utils/plots'
+
+const getSelector = (selectors, chunk_shape) => {
+  return selectors
+    .filter(
+      (selector) =>
+        typeof selector.chunk === 'number' && typeof selector.index === 'number'
+    )
+    .reduce(
+      (accum, selector) => ({
+        ...accum,
+        [selector.name]:
+          selector.metadata.array.data[
+            selector.chunk * chunk_shape[selector.metadata.dimensionIndex] +
+              selector.index
+          ],
+      }),
+      {}
+    )
+}
+
+const getRegionSelector = (selectors, chunk_shape) => {
+  const base = selectors
+    .filter(
+      (selector) =>
+        typeof selector.chunk === 'number' && typeof selector.index === 'number'
+    )
+    .reduce((accum, { name, metadata, chunk, index }) => {
+      const chunkSize = chunk_shape[metadata.dimensionIndex]
+
+      accum[name] = metadata.array.data[chunk * chunkSize + index]
+      return accum
+    }, {})
+
+  const selector = getPlotSelector(selectors, chunk_shape)
+
+  if (selector) {
+    const chunkSize = chunk_shape[selector.metadata.dimensionIndex]
+    return {
+      ...base,
+      [selector.name]: Array(chunkSize)
+        .fill(null)
+        .map(
+          (d, i) => selector.metadata.array.data[selector.chunk * chunkSize + i]
+        ),
+    }
+  } else {
+    return null
+  }
+}
 
 const PyramidMap = () => {
   const { theme } = useThemeUI()
@@ -34,51 +84,41 @@ const PyramidMap = () => {
   )
 
   const selectorHash = useMemo(
-    () =>
-      selectors
-        .map((selector, index) => ({ selector, index }))
-        .filter(
-          ({ selector }) =>
-            typeof selector.chunk === 'number' &&
-            typeof selector.index === 'number'
-        )
-        .reduce(
-          (accum, { selector, index }) => ({
-            ...accum,
-            [selector.name]:
-              selector.metadata.array.data[
-                selector.chunk * chunk_shape[index] + selector.index
-              ],
-          }),
-          {}
-        ),
+    () => getSelector(selectors, chunk_shape),
     [selectors, chunk_shape]
   )
 
   const regionOptionsSelector = useMemo(
-    () =>
-      selectors
-        .map((selector, index) => ({ selector, index }))
-        .filter(
-          ({ selector }) =>
-            typeof selector.chunk === 'number' &&
-            typeof selector.index === 'number'
-        )
-        .reduce(
-          (accum, { selector, index }) => ({
-            ...accum,
-            [selector.name]: Array(chunk_shape[index])
-              .fill(null)
-              .map(
-                (d, i) =>
-                  selector.metadata.array.data[
-                    selector.chunk * chunk_shape[index] + i
-                  ]
-              ),
-          }),
-          {}
-        ),
-    [selectors]
+    () => getRegionSelector(selectors, chunk_shape),
+    [selectors, chunk_shape]
+  )
+
+  const setRegionData = useCallback(
+    (regionData) => {
+      const variable = dataset.level?.variable
+
+      if (!variable || !regionData?.value || !regionData.value[variable.name]) {
+        return
+      }
+
+      const selectorName = Object.keys(regionOptionsSelector).find((key) =>
+        Array.isArray(regionOptionsSelector[key])
+      )
+      const coordinateValues = regionOptionsSelector[selectorName]
+
+      const unweighted = coordinateValues.map((coord) => {
+        const arrayAtCoord = regionData.value[variable.name][coord]
+        return average(arrayAtCoord, variable)
+      })
+
+      const range = unweighted.reduce(
+        ([min, max], d) => [Math.min(d, min), Math.max(d, max)],
+        [Infinity, -Infinity]
+      )
+
+      setPlotData({ yValues: unweighted, range, selectorName })
+    },
+    [setPlotData, regionOptionsSelector, selectors, dataset.level?.variable]
   )
 
   // TODO
@@ -136,7 +176,7 @@ const PyramidMap = () => {
           selector={selectorHash}
           order={[xOrder, yOrder]}
           regionOptions={{
-            setData: setPlotData,
+            setData: setRegionData,
             selector: regionOptionsSelector,
           }}
         />

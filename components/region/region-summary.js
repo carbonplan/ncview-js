@@ -6,6 +6,7 @@ import PointSummary from './point-summary'
 import useStore from '../data/store'
 import { getLines, isNullValue } from '../utils/data'
 
+// TODO: handle summaries for 2D pyramids
 const RegionSummary = ({ selector }) => {
   const plotCenter = useStore((state) => state.plotCenter)
   const chunksToRender = useStore((state) => state.chunksToRender)
