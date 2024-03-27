@@ -7,34 +7,10 @@ import AnimateHeight from 'react-animate-height'
 import useStore from './data/store'
 import { Plots as RegionalPlots } from './region'
 
-const sx = {
-  radioLabel: {
-    '&:hover': { cursor: 'pointer' },
-    fontFamily: 'mono',
-    letterSpacing: 'mono',
-    fontSize: [1, 1, 1, 2],
-    textTransform: 'uppercase',
-    mt: '3px',
-    position: 'relative',
-  },
-  radio: {
-    color: 'muted',
-    transition: 'color 0.15s',
-    mt: ['-3px', '-3px', '-3px', '-1px'],
-    'input:hover ~ &': { color: 'primary' },
-    'input:focus ~ &': { background: 'none' },
-    'input:focus-visible ~ &': {
-      outline: 'dashed 1px rgb(110, 110, 110, 0.625)',
-      background: 'rgb(110, 110, 110, 0.625)',
-    },
-  },
-}
-
 const Plots = () => {
   const ready = useStore((state) => !!state.dataset)
   const pyramid = useStore((state) => state.dataset?.pyramid)
   const plotMode = useStore((state) => state.plotMode)
-  const plotCenter = useStore((state) => state.plotCenter)
   const setPlotMode = useStore((state) => state.setPlotMode)
   const setPlotCenter = useStore((state) => state.setPlotCenter)
   const selectors = useStore((state) => state.selectors)
@@ -85,9 +61,7 @@ const Plots = () => {
           easing={'linear'}
           style={{ pointerEvents: 'none' }}
         >
-          {ready && plotMode !== 'inactive' && plotCenter && selectors && (
-            <RegionalPlots />
-          )}
+          {ready && plotMode !== 'inactive' && selectors && <RegionalPlots />}
         </AnimateHeight>
       </Box>
     </SidebarFooter>

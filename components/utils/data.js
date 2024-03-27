@@ -339,14 +339,12 @@ export const getVariableInfo = async (
       array.data = Array(array.shape[0])
         .fill(null)
         .map((d, i) => array.data.get(i))
-      console.log(array.data)
     }
 
     return {
       name: d,
       chunk: spatial ? null : 0,
       index: spatial ? null : 0,
-      value: array && array[0],
       metadata: {
         array,
         zattrs: metadata.metadata[`${prefix}${d}/.zattrs`],
@@ -919,4 +917,8 @@ export const inspectDataset = async (url) => {
   }
 
   return { url: visualizedUrl, cf_axes, metadata, pyramid }
+}
+
+export const isNullValue = (p, variable) => {
+  return p == null || p === variable.nullValue || Number.isNaN(p)
 }
