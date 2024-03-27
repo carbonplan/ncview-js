@@ -30,7 +30,6 @@ const Slider = ({ index }) => {
   )
   const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
-  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
 
   const handleChange = useCallback(
     (e) => {
@@ -134,12 +133,16 @@ const Slider = ({ index }) => {
 
       <Box sx={{ ...sx.subLabel, pb: 1 }}>
         <Flex sx={{ gap: 2 }}>
-          {selectorAxes.T?.index === index && (
+          {selector.metadata.cfAxis === 'T' ? (
             <DateDisplay
-              array={selectorAxes.T.array}
+              array={selector.metadata.array}
               selector={{ ...selector, ...sliderValue }}
               chunkShape={chunk_shape}
             />
+          ) : (
+            selector.metadata.array.data[
+              sliderValue.chunk * chunk_shape + sliderValue.index
+            ]
           )}
           <Box>
             (

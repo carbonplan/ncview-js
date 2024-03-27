@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
-import { sanitizeUrl } from './utils/url'
+import { inspectDataset } from './utils/data'
 
 const DATASETS = [
   // NCVIEW 2.0
@@ -29,6 +29,10 @@ const DATASETS = [
   'gs://leap-persistent-ro/data-library-manual/CESM.zarr',
   // missing CF axes
   'https://cpdataeuwest.blob.core.windows.net/cp-cmip/version1/data/MACA/CMIP.NCC.NorESM2-LM.historical.r1i1p1f1.day.MACA.tasmax.zarr',
+  // 4D pyramid
+  'https://storage.googleapis.com/carbonplan-maps/v2/demo/4d/tavg-prec-month/',
+  // 2D pyramid
+  'https://storage.googleapis.com/carbonplan-maps/v2/demo/2d/tavg',
 ]
 
 const sx = {
@@ -38,52 +42,6 @@ const sx = {
     mt: '5px',
     strokeWidth: '2px',
   },
-}
-
-const inspectDataset = async (url) => {
-  // fetch zmetadata to figure out compression and variables
-  const sanitized = sanitizeUrl(url)
-
-  let response
-  try {
-    response = await fetch(`${sanitized}/.zmetadata`)
-  } catch (e) {
-    // Show generic error message when request fails before response can be inspected.
-    throw new Error(
-      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
-    )
-  }
-
-  if (!response.ok) {
-    const statusText = response.statusText ?? 'Dataset request failed.'
-    if (response.status === 403) {
-      throw new Error(
-        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
-      )
-    } else if (response.status === 404) {
-      throw new Error(
-        `STATUS 404: ${statusText} Ensure that URL path is correct.`
-      )
-    } else {
-      throw new Error(
-        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
-      )
-    }
-  }
-  const metadata = await response.json()
-
-  if (!metadata.metadata) {
-    throw new Error(metadata?.message || 'Unable to parse metadata')
-  }
-
-  const cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
-  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
-
-  if (!cf_axes) {
-    throw new Error('Missing CF axes information')
-  }
-
-  return { url: sanitized, cf_axes, rechunking, metadata }
 }
 
 const Dataset = () => {
@@ -108,11 +66,10 @@ const Dataset = () => {
     setStoreUrl()
 
     try {
-      const { url, cf_axes, rechunking } = await inspectDataset(value)
-      const pyramid = rechunking?.find((r) => r.use_case === 'multiscales')
+      const { url, cf_axes, pyramid } = await inspectDataset(value)
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, { cfAxes: cf_axes, pyramid: true, clim })
+        setStoreUrl(url, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
         const u = new URL(url)
