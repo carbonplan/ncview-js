@@ -11,7 +11,7 @@ const RegionChart = () => {
     return
   }
 
-  const { range, yValues, selectorName, centerPoint } = plotData
+  const { range, yValues, selectorName, centerPoint, circleInfo } = plotData
 
   if (!selectorName) {
     return
@@ -23,7 +23,7 @@ const RegionChart = () => {
 
   return (
     <LineChart
-      centerPoint={centerPoint}
+      centerPoint={circleInfo?.centerPoint ?? centerPoint}
       selector={selector}
       range={range}
       yValues={yValues}

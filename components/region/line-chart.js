@@ -19,7 +19,7 @@ import { Down } from '@carbonplan/icons'
 import useStore from '../data/store'
 import { isNullValue } from '../utils/data'
 import DateTickLabel from './date-tick-label'
-import PointSummary from './point-summary'
+import RegionInfo from './region-info'
 
 const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const variable = useStore((state) => state.dataset.level.variable)
@@ -101,9 +101,7 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   return (
     <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
       <Flex sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
-        {centerPoint && (
-          <PointSummary point={centerPoint} selector={selector} />
-        )}
+        <RegionInfo selector={selector} />
         <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>
           <Button
             suffix={<Down />}

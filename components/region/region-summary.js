@@ -2,11 +2,11 @@ import { Box, Flex } from 'theme-ui'
 import { format } from 'd3-format'
 import React from 'react'
 
-import PointSummary from './point-summary'
+import RegionInfo from './region-info'
 import useStore from '../data/store'
 import { isNullValue } from '../utils/data'
 
-const RegionSummary = ({ selector }) => {
+const RegionSummary = () => {
   const plotData = useStore((state) => state.plotData)
   const plotMode = useStore((state) => state.plotMode)
   const variable = useStore((state) => state.dataset.level.variable)
@@ -16,11 +16,11 @@ const RegionSummary = ({ selector }) => {
     return
   }
 
-  const { yValues, centerPoint } = plotData
+  const { yValues } = plotData
 
   return (
     <Box sx={{ width: '100%', mt: 3 }}>
-      {centerPoint && <PointSummary point={centerPoint} selector={selector} />}
+      <RegionInfo />
 
       <Flex
         sx={{
