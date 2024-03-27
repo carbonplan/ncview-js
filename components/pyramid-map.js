@@ -1,7 +1,14 @@
 import { useCallback, useMemo } from 'react'
 import { useThemeUI } from 'theme-ui'
 import { useThemedColormap } from '@carbonplan/colormaps'
-import { Map, Raster, Fill, Line, RegionPicker } from '@carbonplan/maps'
+import {
+  Map,
+  Raster,
+  Fill,
+  Line,
+  RegionPicker,
+  useRegion,
+} from '@carbonplan/maps'
 
 import useStore from './data/store'
 import { average, getPlotSelector } from './utils/plots'
@@ -55,9 +62,9 @@ const getRegionSelector = (selectors, chunk_shape) => {
   }
 }
 
-const PyramidMap = () => {
-  const { theme } = useThemeUI()
-  const basemaps = useStore((state) => state.basemaps)
+// TODO
+// 1. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
+const RasterWrapper = () => {
   const dataset = useStore((state) => state.dataset)
   const chunk_shape = useStore(
     (state) => state.dataset.level?.variable?.chunk_shape
@@ -69,13 +76,15 @@ const PyramidMap = () => {
     format: 'rgb',
   })
   const clim = useStore((state) => state.clim)
-  const plotMode = useStore((state) => state.plotMode)
   const setPlotData = useStore((state) => state.setPlotData)
   const xOrder = useStore(() =>
     useStore((state) =>
       state.dataset?.level?.variable?.axes?.X?.reversed ? -1 : 1
     )
   )
+  const { region } = useRegion()
+  const zoom = region?.properties?.zoom || 0
+
   const yOrder = useStore(() =>
     useStore((state) =>
       // Orientation expectations are swapped for minimap Raster relative to maps Raster
@@ -101,12 +110,29 @@ const PyramidMap = () => {
         return
       }
 
+      const circleInfo = {
+        centerPoint: [
+          region?.properties?.center?.lng,
+          region?.properties?.center?.lat,
+        ],
+        radius: region?.properties?.radius,
+        units: region?.properties?.units,
+        area: region?.properties?.area,
+      }
+
       // Handle 2D pyramid
       if (Array.isArray(regionData.value[variable.name])) {
         setPlotData({
-          yValues: [average(regionData.value[variable.name], variable)],
+          yValues: [
+            average(regionData.value[variable.name], {
+              variable,
+              coordinates: regionData.value.coordinates,
+              zoom: region?.properties?.zoom,
+            }),
+          ],
           range: null,
           selectorName: null,
+          circleInfo,
         })
         return
       }
@@ -119,7 +145,11 @@ const PyramidMap = () => {
 
       const unweighted = coordinateValues.map((coord) => {
         const arrayAtCoord = regionData.value[variable.name][coord]
-        return average(arrayAtCoord, variable)
+        return average(arrayAtCoord, {
+          variable,
+          coordinates: regionData.value.coordinates,
+          zoom: region?.properties?.zoom,
+        })
       })
 
       const range = unweighted.reduce(
@@ -127,13 +157,42 @@ const PyramidMap = () => {
         [Infinity, -Infinity]
       )
 
-      setPlotData({ yValues: unweighted, range, selectorName })
+      setPlotData({
+        yValues: unweighted,
+        range,
+        selectorName,
+        circleInfo,
+      })
     },
-    [setPlotData, regionOptionsSelector, selectors, dataset.level?.variable]
+    [
+      setPlotData,
+      regionOptionsSelector,
+      selectors,
+      dataset.level?.variable,
+      region,
+    ]
   )
+  return clim ? (
+    <Raster
+      colormap={colormap}
+      clim={clim}
+      mode='texture'
+      source={dataset.url}
+      variable={dataset.variable}
+      selector={selectorHash}
+      order={[xOrder, yOrder]}
+      regionOptions={{
+        setData: setRegionData,
+        selector: regionOptionsSelector,
+      }}
+    />
+  ) : null
+}
 
-  // TODO
-  // 1. (eventually) infer value of Zarr `version` prop ('v2' vs 'v3')
+const PyramidMap = () => {
+  const { theme } = useThemeUI()
+  const basemaps = useStore((state) => state.basemaps)
+  const plotMode = useStore((state) => state.plotMode)
 
   return (
     <Map>
@@ -177,21 +236,7 @@ const PyramidMap = () => {
         />
       )}
 
-      {clim && (
-        <Raster
-          colormap={colormap}
-          clim={clim}
-          mode='texture'
-          source={dataset.url}
-          variable={dataset.variable}
-          selector={selectorHash}
-          order={[xOrder, yOrder]}
-          regionOptions={{
-            setData: setRegionData,
-            selector: regionOptionsSelector,
-          }}
-        />
-      )}
+      <RasterWrapper />
     </Map>
   )
 }

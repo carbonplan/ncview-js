@@ -1,12 +1,28 @@
 import unpack from 'ndarray-unpack'
 import { isNullValue, inLonRange, toKeyArray, getLonDiff } from './data'
 
+const radians = (deg) => (deg * Math.PI) / 180
+const degrees = (rad) => (rad * 180) / Math.PI
+
 // TODO: weight by coords
-export const average = (arr, variable, coords) => {
-  return (
-    arr.reduce((s, d) => s + (!isNullValue(d, variable) ? d : 0), 0) /
-    arr.length
+
+const areaOfPixelProjected = (lat, zoom) => {
+  const c = 40075016.686 / 1000
+  return Math.pow(
+    (c * Math.cos(radians(lat))) / Math.pow(2, Math.floor(zoom) + 7),
+    2
   )
+}
+
+export const average = (arr, { variable, coordinates, zoom }) => {
+  const areas = coordinates.lat
+    .filter((l, i) => !isNullValue(arr[i], variable))
+    .map((lat) => areaOfPixelProjected(lat, zoom))
+  const totalArea = areas.reduce((a, d) => a + d, 0)
+
+  return arr
+    .filter((el) => !isNullValue(el, variable))
+    .reduce((avg, el, i) => avg + el * (areas[i] / totalArea), 0)
 }
 
 export const getPlotSelector = (selectors, chunk_shape) => {
@@ -29,9 +45,6 @@ export const getPlotSelector = (selectors, chunk_shape) => {
 }
 
 // START: helpers to handle querying lines for rotated datasets
-
-const radians = (deg) => (deg * Math.PI) / 180
-const degrees = (rad) => (rad * 180) / Math.PI
 
 // TODO: debug issues with rotation
 const rotate = (coords, phi, theta) => {
