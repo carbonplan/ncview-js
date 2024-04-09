@@ -753,7 +753,7 @@ export const inspectDataset = async (url) => {
     )
     if (pyramidRechunked) {
       pyramid = true
-      visualizedUrl = pyramidRechunked.path
+      visualizedUrl = sanitizeUrl(pyramidRechunked.path)
       const { cf_axes: pyramidCfAxes } = await inspectDataset(visualizedUrl)
       cf_axes ||= pyramidCfAxes
     }
