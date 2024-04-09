@@ -2,13 +2,18 @@ import { formatDate } from '@carbonplan/components'
 import { useDateGetter } from '../date-display'
 
 const DateTickLabel = ({ name, array, index }) => {
+  const coord = Number(array[index])
   const getDate = useDateGetter(name)
 
-  const date = getDate(Number(array[index]))
+  if (!getDate) {
+    return coord
+  }
+
+  const date = getDate(coord)
   const diff = Math.abs(Number(array[1]) - Number(array[0]))
 
   if (!date) {
-    return Number(array[index])
+    return coord
   }
 
   if (diff >= 360 && diff <= 366) {
