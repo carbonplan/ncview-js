@@ -732,18 +732,25 @@ export const inspectDataset = async (url) => {
       )
     }
   }
-  const metadata = await response.json()
+  let metadata = await response.json()
 
   if (!metadata.metadata) {
     throw new Error(metadata?.message || 'Unable to parse metadata')
   }
 
+  let pyramid = false
+  let visualizedUrl = sanitized
+
   const multiscales = metadata.metadata['.zattrs']['multiscales']
   let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
   const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
+  const store_url = metadata.metadata['.zattrs']['ncviewjs:store_url']
 
-  let pyramid = false
-  let visualizedUrl = sanitized
+  if (store_url) {
+    visualizedUrl = sanitizeUrl(store_url)
+    const { metadata: storeMetadata } = await inspectDataset(visualizedUrl)
+    metadata = storeMetadata
+  }
 
   if (multiscales) {
     pyramid = true
