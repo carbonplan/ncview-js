@@ -702,13 +702,23 @@ const inferCfAxes = (metadata, pyramid) => {
     }, {})
 }
 
+const fetchMetadata = (path) => {
+  const reqUrl = new URL(`/api/metadata`, window.location.origin)
+
+  const params = new URLSearchParams()
+  params.append('path', path)
+  reqUrl.search = params.toString()
+
+  return fetch(reqUrl)
+}
+
 export const inspectDataset = async (url) => {
   // fetch zmetadata to figure out compression and variables
   const sanitized = sanitizeUrl(url)
 
   let response
   try {
-    response = await fetch(`${sanitized}/.zmetadata`)
+    response = await fetchMetadata(sanitized)
   } catch (e) {
     // Show generic error message when request fails before response can be inspected.
     throw new Error(
@@ -748,8 +758,14 @@ export const inspectDataset = async (url) => {
 
   if (store_url) {
     visualizedUrl = sanitizeUrl(store_url)
-    const { metadata: storeMetadata } = await inspectDataset(visualizedUrl)
-    metadata = storeMetadata
+    let storeInfo
+    try {
+      storeInfo = await inspectDataset(visualizedUrl)
+      metadata = storeInfo.metadata
+      cf_axes ||= storeInfo.cf_axes
+    } catch (e) {
+      // Do not surface CF axes based on ability to deduce for nested_store
+    }
   }
 
   if (multiscales) {
