@@ -17,16 +17,35 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
-const getRange = (arr, { nullValue }) => {
-  return arr
-    .filter((d) => !Number.isNaN(d) && d !== nullValue && d !== -1000) // TODO: remove after demo
-    .reduce(
-      ([min, max], d) => [
-        Math.min(Number(min), Number(d)),
-        Math.max(Number(max), Number(d)),
-      ],
-      [Infinity, -Infinity]
+const calculateRange = (arr, { nullValue }) => {
+  const filteredData = arr.filter((d) => !Number.isNaN(d) && d !== nullValue)
+  if (filteredData.length < 2) {
+    return [Infinity, -Infinity]
+  }
+
+  // Step 1: Sort the data
+  const sortedData = filteredData.sort((a, b) => a - b)
+
+  // Step 2: Helper function to calculate the nth percentile
+  function getPercentile(n) {
+    const index = (n / 100) * (sortedData.length - 1)
+    const lower = Math.floor(index)
+    const upper = Math.ceil(index)
+    const weight = index % 1
+
+    if (upper >= sortedData.length) upper = sortedData.length - 1 // Cap the index to the maximum array length
+
+    return (
+      Number(sortedData[lower]) * (1 - weight) +
+      Number(sortedData[upper]) * weight
     )
+  }
+
+  // Calculate 5th and 95th percentiles
+  const min = getPercentile(5)
+  const max = getPercentile(95)
+
+  return [min, max]
 }
 
 const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
@@ -370,7 +389,7 @@ export const getChunkData = async (chunkKey, level) => {
       return ndarray(Float32Array.from(c.data, Number), chunk_shape)
     })
 
-  const clim = getRange(data.data, { nullValue })
+  const clim = calculateRange(data.data, { nullValue })
 
   const filteredData = filterData(chunkKey, data, {
     chunk_separator,
