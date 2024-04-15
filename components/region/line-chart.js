@@ -99,7 +99,7 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   )
 
   return (
-    <Box sx={{ width: '100%', height: '200px', mt: 2, mb: 5 }}>
+    <Box sx={{ my: 2 }}>
       <Flex sx={{ justifyContent: 'space-between', alignItems: 'baseline' }}>
         <RegionInfo selector={selector} />
         <Flex sx={{ width: '100%', justifyContent: 'flex-end' }}>
@@ -113,56 +113,60 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
           </Button>
         </Flex>
       </Flex>
-      <Chart x={domain} y={range}>
-        <Axis left bottom />
-        <AxisLabel
-          left
-          units={
-            units && (
-              <Box
-                sx={{
-                  wordBreak: units?.includes(' ') ? 'break-word' : 'break-all',
-                }}
-              >
-                {units}
-              </Box>
-            )
-          }
-        >
-          {variable.name}
-        </AxisLabel>
-        <AxisLabel bottom units={isTime ? null : selectorUnits}>
-          {selector.name}
-        </AxisLabel>
-        <Ticks left bottom />
-        <TickLabels left />
-        <TickLabels bottom format={formatter} />
-        <Grid vertical horizontal />
-        <Plot>
-          {yValues && yValues.some((d) => !isNullValue(d, variable)) && (
-            <Line
-              data={yValues
-                .map((y, i) =>
-                  isNullValue(y, variable) ? null : [offset + i, y]
-                )
-                .filter(Boolean)}
-            />
-          )}
-          {yValues && !isNullValue(yValues[selector.index], variable) && (
-            <Circle x={offset + selector.index} y={yValues[selector.index]} />
-          )}
-        </Plot>
-        {yValues && !isNullValue(yValues[selector.index], variable) && (
-          <Label
-            x={offset + selector.index}
-            y={yValues[selector.index]}
-            sx={{ mt: 2, ml: 1, color: 'primary' }}
-            align={selector.index >= chunk_shape / 2 ? 'right' : 'left'}
+      <Box sx={{ mt: 2, width: '100%', height: '200px' }}>
+        <Chart x={domain} y={range}>
+          <Axis left bottom />
+          <AxisLabel
+            left
+            units={
+              units && (
+                <Box
+                  sx={{
+                    wordBreak: units?.includes(' ')
+                      ? 'break-word'
+                      : 'break-all',
+                  }}
+                >
+                  {units}
+                </Box>
+              )
+            }
           >
-            {format('.1f')(yValues[selector.index])} {units}
-          </Label>
-        )}
-      </Chart>
+            {variable.name}
+          </AxisLabel>
+          <AxisLabel bottom units={isTime ? null : selectorUnits}>
+            {selector.name}
+          </AxisLabel>
+          <Ticks left bottom />
+          <TickLabels left />
+          <TickLabels bottom format={formatter} />
+          <Grid vertical horizontal />
+          <Plot>
+            {yValues && yValues.some((d) => !isNullValue(d, variable)) && (
+              <Line
+                data={yValues
+                  .map((y, i) =>
+                    isNullValue(y, variable) ? null : [offset + i, y]
+                  )
+                  .filter(Boolean)}
+              />
+            )}
+            {yValues && !isNullValue(yValues[selector.index], variable) && (
+              <Circle x={offset + selector.index} y={yValues[selector.index]} />
+            )}
+          </Plot>
+          {yValues && !isNullValue(yValues[selector.index], variable) && (
+            <Label
+              x={offset + selector.index}
+              y={yValues[selector.index]}
+              sx={{ mt: 2, ml: 1, color: 'primary' }}
+              align={selector.index >= chunk_shape / 2 ? 'right' : 'left'}
+            >
+              {format('.1f')(yValues[selector.index])} {units}
+            </Label>
+          )}
+        </Chart>
+      </Box>
     </Box>
   )
 }
