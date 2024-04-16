@@ -13,17 +13,17 @@ function constructSearch(search = {}) {
   return params.toString()
 }
 export default async function handler(req, res) {
+  let errorStatus
   try {
     const { path } = req.query
     const serverRes = await fetch(`${path}/.zmetadata`)
     if (!serverRes.ok) {
-      throw new Error(
-        `Metadata request failed: ${serverRes.status} ${serverRes.statusText}`
-      )
+      errorStatus = serverRes.status ?? 400
+      throw new Error(`Metadata request failed with "${serverRes.statusText}"`)
     }
     const result = await serverRes.json()
     res.status(200).send(result)
   } catch (e) {
-    res.status(400).send({ error: e.message })
+    res.status(errorStatus).send({ error: e.message })
   }
 }
