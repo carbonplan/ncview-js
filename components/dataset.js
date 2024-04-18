@@ -6,19 +6,33 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
+import { inspectDataset } from './utils/data'
 
 const DATASETS = [
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr',
-  'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
-  'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/sample_australia_cordex_data.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/gpcp_180_180_chunks.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/AGDC_rechunked_single_time_slice.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/cmip6_2d_2015.zarr',
-  's3://carbonplan-data-viewer/demo/MURSST.zarr',
-  's3://carbonplan-data-viewer/demo/hadisst_2d.zarr',
-  's3://mur-sst/zarr',
-  'https://ncsa.osn.xsede.org/Pangeo/pangeo-forge/WOA_1degree_monthly-feedstock/woa18-1deg-monthly.zarr',
-  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.day.GARD-SV.tasmax.zarr',
+  // NCVIEW 2.0
+  // reprojection
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/single_timestep/sample_australia_cordex_data.zarr',
+
+  // no pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset1.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset2.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/test_dataset3.zarr',
+
+  // pyramids
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/dryspells_corn/CanESM5-ssp370-full-time-extent.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.tasmax.zarr',
+  'https://carbonplan-data-viewer.s3.us-west-2.amazonaws.com/demo/ncview-2.0/ScenarioMIP.CCCma.CanESM5.ssp245.r1i1p1f1.annual.GARD-SV.pr.zarr',
+
+  //s3 URL
+  's3://carbonplan-data-viewer/demo/ncview-2.0/test_dataset2.zarr/',
+  // blocked by CORS
+  'gs://leap-persistent-ro/data-library-manual/CESM.zarr',
+  // missing CF axes
+  'https://cpdataeuwest.blob.core.windows.net/cp-cmip/version1/data/MACA/CMIP.NCC.NorESM2-LM.historical.r1i1p1f1.day.MACA.tasmax.zarr',
+  // 4D pyramid
+  'https://storage.googleapis.com/carbonplan-maps/v2/demo/4d/tavg-prec-month/',
+  // 2D pyramid
+  'https://storage.googleapis.com/carbonplan-maps/v2/demo/2d/tavg',
 ]
 
 const sx = {
@@ -28,51 +42,6 @@ const sx = {
     mt: '5px',
     strokeWidth: '2px',
   },
-}
-
-const createDataset = async (url, force) => {
-  const res = await fetch('https://ncview-backend.fly.dev/datasets/', {
-    method: 'POST',
-    mode: 'cors',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ url, force }),
-  })
-  return res.json()
-}
-
-const pollForCompletedRun = async (
-  id,
-  setCompletedRun,
-  interval = 1000,
-  polls = 30
-) => {
-  const res = await fetch(`https://ncview-backend.fly.dev/datasets/${id}`, {
-    method: 'GET',
-    mode: 'cors',
-  })
-  const payload = await res.json()
-
-  if (payload.rechunk_runs?.length > 0) {
-    const run = payload.rechunk_runs[0]
-    if (run.status === 'completed') {
-      setCompletedRun(run)
-      return
-    }
-  }
-
-  if (polls > 1) {
-    setTimeout(
-      () => pollForCompletedRun(id, setCompletedRun, interval, polls - 1),
-      interval
-    )
-  } else {
-    setCompletedRun({
-      error_message:
-        'Dataset processing still in-progress. Try submitting the dataset again to continue receiving updates, or come back later.',
-    })
-  }
 }
 
 const Dataset = () => {
@@ -93,37 +62,31 @@ const Dataset = () => {
       return
     }
 
+    // Clear store URL
     setStoreUrl()
-    const d = await createDataset(value)
-    if (d.id) {
-      setDataset(d)
-      const pyramid = d.rechunking?.find((r) => r.use_case === 'multiscales')
+
+    try {
+      const { url, cf_axes, pyramid } = await inspectDataset(value)
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(pyramid.path, d.cf_axes, {
-          pyramid: true,
-          clim,
-        })
+        setStoreUrl(url, { cfAxes: cf_axes, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
-        const u = new URL(d.url)
+        const u = new URL(url)
         setStoreUrl(
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
-          d.cf_axes,
-          { pyramid: false, clim }
+          { cfAxes: cf_axes, pyramid: false, clim }
         )
       }
-    } else if (d.detail?.length > 0) {
-      setErrorMessage(d.detail[0].msg)
-    } else {
-      setErrorMessage('Unable to process dataset')
+    } catch (e) {
+      setErrorMessage(e.message ?? 'Unable to process dataset')
     }
   }, [])
 
   const handleSubmit = useCallback(
-    async (e) => {
+    (e) => {
       e.preventDefault()
       submitUrl(url)
     },

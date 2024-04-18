@@ -15,7 +15,7 @@
 ![GitHub deployments](https://img.shields.io/github/deployments/carbonplan/ncview-js/production?label=vercel)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains the prototype for tool to visualize and explore arbitrary cloud-stored Zarr datasets, loosely inspired by [`Ncview`](http://meteora.ucsd.edu/~pierce/ncview_home_page.html). Pre-processing is performed via a rechunking service ([code](https://github.com/carbonplan/ncviewjs-backend), [docs](https://ncview-backend.fly.dev/docs)).
+This repository contains the prototype for tool to visualize and explore arbitrary cloud-stored Zarr datasets, loosely inspired by [`Ncview`](http://meteora.ucsd.edu/~pierce/ncview_home_page.html). On-the-fly rechunking is performed via a [`Zarr Proxy`](https://github.com/pangeo-data/zarr-proxy) service when multiscale pyramids have not been pregenerated.
 
 ## to build the site locally
 

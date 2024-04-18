@@ -30,7 +30,6 @@ const Slider = ({ index }) => {
   )
   const shape = useStore((state) => state.dataset.level.variable.shape[index])
   const numChunks = Math.ceil(shape / chunk_shape)
-  const selectorAxes = useStore((state) => state.dataset.selectorAxes)
 
   const handleChange = useCallback(
     (e) => {
@@ -71,89 +70,89 @@ const Slider = ({ index }) => {
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
-      {shape > 1 && (
-        <>
-          <Row columns={[4]}>
-            <Column start={1} width={[4, 2, 2, 2]} sx={{ mb: 3 }}>
-              <Flex sx={{ gap: 4 }}>
-                {numChunks > 1 && (
-                  <IconButton
-                    aria-label={`View previous ${selector.name} chunk`}
-                    onClick={() => {
-                      setSelector(index, { chunk: selector.chunk - 1 })
-                    }}
-                    disabled={selector.chunk === 0}
-                    sx={{ width: 16, height: 16 }}
-                  >
-                    <Back sx={{ flexShrink: 0 }} />
-                  </IconButton>
-                )}
+      <Row columns={[4]}>
+        <Column start={1} width={[4, 2, 2, 2]} sx={{ mb: 3 }}>
+          <Flex sx={{ gap: 4 }}>
+            {numChunks > 1 && (
+              <IconButton
+                aria-label={`View previous ${selector.name} chunk`}
+                onClick={() => {
+                  setSelector(index, { chunk: selector.chunk - 1 })
+                }}
+                disabled={selector.chunk === 0}
+                sx={{ width: 16, height: 16 }}
+              >
+                <Back sx={{ flexShrink: 0 }} />
+              </IconButton>
+            )}
 
-                <IconButton
-                  aria-label={`Play across ${selector.name} dimension`}
-                  onClick={() => setPlaying(true)}
-                  disabled={playing}
-                  sx={{ width: 14, height: 16 }}
-                >
-                  <Play sx={{ flexShrink: 0 }} />
-                </IconButton>
+            <IconButton
+              aria-label={`Play across ${selector.name} dimension`}
+              onClick={() => setPlaying(true)}
+              disabled={playing}
+              sx={{ width: 14, height: 16 }}
+            >
+              <Play sx={{ flexShrink: 0 }} />
+            </IconButton>
 
-                <IconButton
-                  aria-label={`Pause across ${selector.name} dimension`}
-                  onClick={() => setPlaying(false)}
-                  disabled={!playing}
-                  sx={{ width: 14, height: 16 }}
-                >
-                  <Pause sx={{ flexShrink: 0 }} />
-                </IconButton>
+            <IconButton
+              aria-label={`Pause across ${selector.name} dimension`}
+              onClick={() => setPlaying(false)}
+              disabled={!playing}
+              sx={{ width: 14, height: 16 }}
+            >
+              <Pause sx={{ flexShrink: 0 }} />
+            </IconButton>
 
-                {numChunks > 1 && (
-                  <IconButton
-                    aria-label={`View next ${selector.name} chunk`}
-                    onClick={() => {
-                      setSelector(index, { chunk: selector.chunk + 1 })
-                    }}
-                    disabled={selector.chunk === numChunks - 1}
-                    sx={{ width: 16, height: 16 }}
-                  >
-                    <Next sx={{ flexShrink: 0 }} />
-                  </IconButton>
-                )}
-              </Flex>
-            </Column>
-          </Row>
+            {numChunks > 1 && (
+              <IconButton
+                aria-label={`View next ${selector.name} chunk`}
+                onClick={() => {
+                  setSelector(index, { chunk: selector.chunk + 1 })
+                }}
+                disabled={selector.chunk === numChunks - 1}
+                sx={{ width: 16, height: 16 }}
+              >
+                <Next sx={{ flexShrink: 0 }} />
+              </IconButton>
+            )}
+          </Flex>
+        </Column>
+      </Row>
 
-          <SliderComponent
-            value={sliderValue.chunk * chunk_shape + sliderValue.index}
-            min={0}
-            max={shape - 1}
-            onChange={handleChange}
-            onMouseDown={handleMouseDown}
-            onMouseUp={handleMouseUp}
-            step={1}
-            sx={{ mb: 3 }}
-          />
+      <SliderComponent
+        value={sliderValue.chunk * chunk_shape + sliderValue.index}
+        min={0}
+        max={shape - 1}
+        onChange={handleChange}
+        onMouseDown={handleMouseDown}
+        onMouseUp={handleMouseUp}
+        step={1}
+        sx={{ mb: 3 }}
+      />
 
-          <Box sx={{ ...sx.subLabel, pb: 1 }}>
-            <Flex sx={{ gap: 2 }}>
-              {selectorAxes.T?.index === index && (
-                <DateDisplay
-                  array={selectorAxes.T.array}
-                  selector={{ ...selector, ...sliderValue }}
-                  chunkShape={chunk_shape}
-                />
-              )}
-              <Box>
-                (
-                <Box as='span' sx={{ color: 'primary' }}>
-                  {sliderValue.chunk * chunk_shape + sliderValue.index}
-                </Box>
-              </Box>
-              /<Box>{shape - 1})</Box>
-            </Flex>
+      <Box sx={{ ...sx.subLabel, pb: 1 }}>
+        <Flex sx={{ gap: 2 }}>
+          {selector.metadata.cfAxis === 'T' ? (
+            <DateDisplay
+              array={selector.metadata.array}
+              selector={{ ...selector, ...sliderValue }}
+              chunkShape={chunk_shape}
+            />
+          ) : (
+            selector.metadata.array.data[
+              sliderValue.chunk * chunk_shape + sliderValue.index
+            ]
+          )}
+          <Box>
+            (
+            <Box as='span' sx={{ color: 'primary' }}>
+              {sliderValue.chunk * chunk_shape + sliderValue.index}
+            </Box>
           </Box>
-        </>
-      )}
+          /<Box>{shape - 1})</Box>
+        </Flex>
+      </Box>
     </Flex>
   )
 }

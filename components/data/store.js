@@ -17,7 +17,7 @@ const createDatasetSlice = (set, get) => ({
 
 const createDisplaySlice = (set, get) => ({
   projection: 'mercator',
-  basemaps: { landBoundaries: true, landMask: false, oceanMask: true },
+  basemaps: { landBoundaries: true, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
   centerPoint: null,
@@ -32,17 +32,19 @@ const createDisplaySlice = (set, get) => ({
 })
 
 const createPlotsSlice = (set, get) => ({
-  mode: 'inactive',
-  center: null,
-  setMode: (mode) => set({ mode }),
-  setCenter: (center) => set({ center }),
+  plotMode: 'inactive',
+  plotCenter: null,
+  plotData: null,
+  setPlotMode: (plotMode) => set({ plotMode }),
+  setPlotCenter: (plotCenter) => set({ plotCenter }),
+  setPlotData: (plotData) => set({ plotData }),
 })
 
 const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, apiMetadata, { clim, pyramid } = {}) => {
+  setUrl: async (url, { cfAxes, clim, pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
@@ -51,6 +53,8 @@ const useStore = create((set, get) => ({
       selectors: [],
       chunksToRender: [],
       clim: null,
+      projection: 'mercator',
+      plotData: null,
     })
 
     // handle clearing url
@@ -61,7 +65,7 @@ const useStore = create((set, get) => ({
     _registerLoading('metadata')
     let dataset
     try {
-      dataset = new Dataset(url, apiMetadata, pyramid)
+      dataset = new Dataset(url, cfAxes, pyramid)
       await dataset.initialize()
       set({ dataset })
     } catch (e) {
@@ -73,7 +77,7 @@ const useStore = create((set, get) => ({
     // default to first variable
     const initialVariable = dataset.variables[0]
 
-    if (Object.keys(apiMetadata[initialVariable] ?? {}).length < 2) {
+    if (Object.keys(cfAxes[initialVariable] ?? {}).length < 2) {
       set({
         error: 'Unable to parse coordinates. Please use CF conventions.',
       })

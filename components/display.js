@@ -19,6 +19,7 @@ const Display = () => {
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
   const variable = useStore((state) => state.dataset?.variable)
+  const pyramid = useStore((state) => state.dataset?.pyramid)
   const { units } = useStore((state) =>
     variable ? state.dataset?.getZattrs(variable) : {}
   )
@@ -43,9 +44,16 @@ const Display = () => {
         <Select
           onChange={(e) => setProjection(e.target.value)}
           value={projection}
-          disabled={loading}
+          disabled={loading || pyramid}
           id='projection'
           size='xs'
+          sx={{
+            '& select:disabled': {
+              color: 'secondary',
+              borderBottomColor: 'muted',
+              cursor: 'initial',
+            },
+          }}
         >
           <option value='naturalEarth1'>naturalEarth1</option>
           <option value='orthographic'>orthographic</option>
