@@ -54,7 +54,7 @@ class Dataset {
     )
 
     if (!metadata) {
-      const { selectorAxes, selectors } = await getVariableInfo(
+      const { selectors } = await getVariableInfo(
         variableName,
         this.levels['0'],
         this
@@ -64,7 +64,6 @@ class Dataset {
 
       metadata = {
         name: variableName,
-        selectorAxes,
         selectors,
         centerPoint: level0.centerPoint,
         lockZoom: this.pyramid ? false : level0.lockZoom,
@@ -72,7 +71,6 @@ class Dataset {
       this.variableMetadata[variableName] = metadata
     }
 
-    this.selectorAxes = metadata.selectorAxes
     this.lockZoom = metadata.lockZoom
     this.variable = variableName
 

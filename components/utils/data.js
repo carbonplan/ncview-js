@@ -1,7 +1,6 @@
 import * as zarr from 'zarrita/v2'
 import FetchStore from 'zarrita/storage/fetch'
 import ndarray from 'ndarray'
-import unpack from 'ndarray-unpack'
 import {
   Blosc,
   //GZip,
@@ -10,6 +9,7 @@ import {
   // Zstd,
 } from 'numcodecs'
 
+import { sanitizeUrl } from './url'
 import { PROJECTIONS, ASPECTS } from '../constants'
 
 const COMPRESSORS = {
@@ -17,16 +17,35 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
-const getRange = (arr, { nullValue }) => {
-  return arr
-    .filter((d) => !Number.isNaN(d) && d !== nullValue && d !== -1000) // TODO: remove after demo
-    .reduce(
-      ([min, max], d) => [
-        Math.min(Number(min), Number(d)),
-        Math.max(Number(max), Number(d)),
-      ],
-      [Infinity, -Infinity]
+const calculateRange = (arr, { nullValue }) => {
+  const filteredData = arr.filter((d) => !Number.isNaN(d) && d !== nullValue)
+  if (filteredData.length < 2) {
+    return [Infinity, -Infinity]
+  }
+
+  // Step 1: Sort the data
+  const sortedData = filteredData.sort((a, b) => a - b)
+
+  // Step 2: Helper function to calculate the nth percentile
+  function getPercentile(n) {
+    const index = (n / 100) * (sortedData.length - 1)
+    const lower = Math.floor(index)
+    const upper = Math.ceil(index)
+    const weight = index % 1
+
+    if (upper >= sortedData.length) upper = sortedData.length - 1 // Cap the index to the maximum array length
+
+    return (
+      Number(sortedData[lower]) * (1 - weight) +
+      Number(sortedData[upper]) * weight
     )
+  }
+
+  // Calculate 5th and 95th percentiles
+  const min = getPercentile(5)
+  const max = getPercentile(95)
+
+  return [min, max]
 }
 
 const getChunkBounds = (chunkKeyArray, { axes, chunk_shape }) => {
@@ -256,6 +275,7 @@ export const getVariableLevelInfo = async (
   const coordinates = await Promise.all(
     ['X', 'Y']
       .map((axis) => arrays[cfAxes[name][axis]])
+      // TODO: handle chunked spatial coordinates
       .map((arr, i) => arr.get_chunk([0], { headers }))
   )
 
@@ -263,10 +283,11 @@ export const getVariableLevelInfo = async (
     const index = dimensions.indexOf(cfAxes[name][key])
     const array = coordinates[i]
     const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
+    const reversed = array.data[0] > array.data[array.data.length - 1]
 
     return {
       ...accum,
-      [key]: { array, step, index },
+      [key]: { array, step, index, reversed },
     }
   }, {})
 
@@ -310,7 +331,7 @@ export const getVariableInfo = async (
   const isSpatialDimension = (d) => {
     if ([cfAxes[name].X, cfAxes[name].Y].includes(d)) {
       return true
-    } else if (pyramid && ['x', 'y'].includes(d)) {
+    } else if (pyramid && ['x', 'y', 'lat', 'lon'].includes(d)) {
       // TODO: remove when pyramid spatial coordinates are no longer renamed
       return true
     }
@@ -322,43 +343,39 @@ export const getVariableInfo = async (
       .map((arr, i) =>
         isSpatialDimension(dimensions[i])
           ? null
-          : arr.get_chunk([0], { headers })
+          : // TODO: handle chunked coordinate arrays
+            arr.get_chunk([0], { headers })
       )
   )
 
-  // TODO: handle selectors that do not come from cf `axes` from the API
-  const selectorAxes = Object.keys(cfAxes[name]).reduce((accum, key) => {
-    const dimension = cfAxes[name][key]
-    const index = dimensions.indexOf(dimension)
-    const array = selectorCoordinates[index]
-
-    if (array) {
-      return {
-        ...accum,
-        [key]: {
-          array,
-          index,
-          zattrs: metadata.metadata[`${prefix}${dimension}/.zattrs`],
-        },
-      }
-    } else {
-      return accum
-    }
-  }, {})
-
   const selectors = dimensions.map((d, i) => {
     const spatial = isSpatialDimension(d)
+    const array = selectorCoordinates[i]
+
+    // Convert from UnicodeStringArray to basic Array object
+    if (array?.data?.get) {
+      array.data = Array(array.shape[0])
+        .fill(null)
+        .map((d, j) => array.data.get(j))
+    }
 
     return {
       name: d,
       chunk: spatial ? null : 0,
       index: spatial ? null : 0,
+      metadata: {
+        array,
+        dimensionIndex: i,
+        zattrs: metadata.metadata[`${prefix}${d}/.zattrs`],
+        cfAxis: Object.keys(cfAxes[name]).find(
+          (key) => cfAxes[name][key] === d
+        ),
+      },
     }
   })
 
   return {
     selectors,
-    selectorAxes,
   }
 }
 
@@ -372,7 +389,7 @@ export const getChunkData = async (chunkKey, level) => {
       return ndarray(Float32Array.from(c.data, Number), chunk_shape)
     })
 
-  const clim = getRange(data.data, { nullValue })
+  const clim = calculateRange(data.data, { nullValue })
 
   const filteredData = filterData(chunkKey, data, {
     chunk_separator,
@@ -381,15 +398,11 @@ export const getChunkData = async (chunkKey, level) => {
   })
 
   const { X, Y } = axes
-  const [xReversed, yReversed] = [
-    X.array.data[0] > X.array.data[X.array.data.length - 1],
-    Y.array.data[0] > Y.array.data[Y.array.data.length - 1],
-  ]
 
   const steps = filteredData.shape.map((c, i) => {
-    if (xReversed && i === X.index) {
+    if (X.reversed && i === X.index) {
       return -1
-    } else if (yReversed && i === Y.index) {
+    } else if (Y.reversed && i === Y.index) {
       return -1
     } else {
       return 1
@@ -601,7 +614,7 @@ export const pointToChunkKey = (
   }
 }
 
-const inLonRange = (lon, range) => {
+export const inLonRange = (lon, range) => {
   if (range[0] <= lon && range[1] >= lon) {
     return true
   } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
@@ -611,7 +624,7 @@ const inLonRange = (lon, range) => {
   return false
 }
 
-const getLonDiff = (lon, range) => {
+export const getLonDiff = (lon, range) => {
   if (range[0] <= lon && range[1] >= lon) {
     return lon - range[0]
   } else if (range[0] - 360 <= lon && range[1] - 360 >= lon) {
@@ -620,14 +633,6 @@ const getLonDiff = (lon, range) => {
 
   throw new Error(
     `Incompatible longitude and range, lon: ${lon}; range: ${range.join(', ')}`
-  )
-}
-
-const inBounds = (point, bounds) => {
-  const [lon, lat] = point
-
-  return (
-    inLonRange(lon, bounds.lon) && bounds.lat[0] <= lat && bounds.lat[1] >= lat
   )
 }
 
@@ -660,148 +665,6 @@ const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
   return diff < 0 ? Math.ceil(diff / chunkStep) : Math.floor(diff / chunkStep)
 }
 
-const radians = (deg) => (deg * Math.PI) / 180
-const degrees = (rad) => (rad * 180) / Math.PI
-
-// TODO: debug issues with rotation
-const rotate = (coords, phi, theta) => {
-  const lon = radians(coords[0])
-  const lat = radians(coords[1])
-
-  // Convert from spherical to cartesian coordinates
-  const unrotatedCoord = [
-    Math.cos(lon) * Math.cos(lat),
-    Math.sin(lon) * Math.cos(lat),
-    Math.sin(lat),
-  ]
-
-  // From https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
-  const intrinsicRotation = [
-    [
-      Math.cos(phi) * Math.cos(theta),
-      -1 * Math.sin(phi),
-      Math.cos(phi) * Math.sin(theta),
-    ],
-    [
-      Math.sin(phi) * Math.cos(theta),
-      Math.cos(phi),
-      Math.sin(phi) * Math.sin(theta),
-    ],
-    [-1.0 * Math.sin(theta), 0, Math.cos(theta)],
-  ]
-
-  const rotatedCoord = [
-    intrinsicRotation[0][0] * unrotatedCoord[0] +
-      intrinsicRotation[0][1] * unrotatedCoord[1] +
-      intrinsicRotation[0][2] * unrotatedCoord[2],
-    intrinsicRotation[1][0] * unrotatedCoord[0] +
-      intrinsicRotation[1][1] * unrotatedCoord[1] +
-      intrinsicRotation[1][2] * unrotatedCoord[2],
-    intrinsicRotation[2][0] * unrotatedCoord[0] +
-      intrinsicRotation[2][1] * unrotatedCoord[1] +
-      intrinsicRotation[2][2] * unrotatedCoord[2],
-  ]
-
-  // Convert from cartesian to spherical coordinates
-  const rotatedLon = degrees(Math.atan2(rotatedCoord[1], rotatedCoord[0]))
-  const rotatedLat = degrees(Math.asin(rotatedCoord[2]))
-
-  return [rotatedLon, rotatedLat]
-}
-
-const rotateCoords = (coords, northPole) => {
-  const phiOffset = northPole[1] == 90 ? 0 : 180
-  const phi = radians(phiOffset + northPole[0])
-  const theta = radians(-1 * (90 - northPole[1]))
-
-  return rotate(coords, phi, theta)
-}
-
-const unrotateCoords = (coords, northPole) => {
-  const phiOffset = northPole[1] == 90 ? 0 : 180
-  const phi = -1 * radians(phiOffset + northPole[0])
-  const theta = -1 * radians(-1 * (90 - northPole[1]))
-
-  return rotate(coords, phi, theta)
-}
-
-// TODO: avoid returning data when chunk is not yet present in `chunks`
-// TODO: handle circular areas
-//       - handle non-equal area pixels in aggregation
-export const getLines = (
-  center,
-  selector,
-  { activeChunkKeys, chunks, variable, selectors }
-) => {
-  const { chunk_separator, axes, chunk_shape, northPole } = variable
-  const result = { coords: [], points: [], range: [Infinity, -Infinity] }
-
-  const unrotatedCenter = northPole ? unrotateCoords(center, northPole) : center
-  const selectedChunks = activeChunkKeys.filter(
-    (c) => chunks[c] && inBounds(unrotatedCenter, chunks[c].bounds)
-  )
-
-  selectedChunks.forEach((chunkKey) => {
-    const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
-    const { clim, bounds, data } = chunks[chunkKey]
-    result.range = [
-      Math.min(result.range[0], clim[0]),
-      Math.max(result.range[1], clim[1]),
-    ]
-
-    const spatialIndices = [
-      {
-        axis: axes.X,
-        diff: getLonDiff(unrotatedCenter[0], bounds.lon),
-      },
-      {
-        axis: axes.Y,
-        diff: unrotatedCenter[1] - bounds.lat[0],
-      },
-    ].map(({ axis, diff }) => {
-      const { step } = axis
-
-      return Math.round(diff / step - 1 / 2)
-    })
-
-    const indices = selectors.map((s, i) => {
-      if (s.name === selector.name) {
-        // return all values for selector being plotted
-        return null
-      } else if (i === axes.X.index) {
-        // return selected index for X dimensions
-        return spatialIndices[0]
-      } else if (i === axes.Y.index) {
-        // return selected index for Y dimension
-        return spatialIndices[1]
-      } else {
-        // return displayed index for all other dimensions
-        return selectors[i].index
-      }
-    })
-
-    const values = indices.every((i) => typeof i === 'number')
-      ? data.get(...indices)
-      : unpack(data.pick(...indices))
-    result.points.push(values)
-
-    let coords = [
-      axes.X.array.data[
-        chunk_shape[axes.X.index] * chunkKeyArray[axes.X.index] +
-          spatialIndices[0]
-      ],
-      axes.Y.array.data[
-        chunk_shape[axes.Y.index] * chunkKeyArray[axes.Y.index] +
-          spatialIndices[1]
-      ],
-    ]
-    coords = northPole ? rotateCoords(coords, northPole) : coords
-
-    result.coords.push(coords)
-  })
-  return result
-}
-
 export const validatePoint = ([lon, lat]) => {
   if (!inLonRange(lon, [-180, 180])) {
     return false
@@ -810,4 +673,144 @@ export const validatePoint = ([lon, lat]) => {
   }
 
   return true
+}
+
+// Infer axes from consolidated metadata
+const inferCfAxes = (metadata, pyramid) => {
+  const prefix = pyramid ? '0/' : ''
+  const suffix = '/.zattrs'
+
+  return Object.keys(metadata)
+    .map((k) => {
+      if (!k.endsWith(suffix)) {
+        return false
+      }
+
+      if (prefix && !k.startsWith(prefix)) {
+        return false
+      }
+
+      const variable = k.replace(prefix, '').replace(suffix, '')
+
+      if (!variable) {
+        return false
+      }
+
+      const dims = metadata[k]['_ARRAY_DIMENSIONS']
+      if (!dims) {
+        return false
+      }
+
+      const time = dims.find(
+        (dim) => metadata[`${prefix}${dim}${suffix}`]?.calendar
+      )
+      const base = { variable, ...(time ? { T: time } : {}) }
+      if (['x', 'y'].every((d) => dims.includes(d))) {
+        return { ...base, X: 'x', Y: 'y' }
+      } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
+        return { ...base, X: 'lon', Y: 'lat' }
+      } else if (!pyramid && ['rlat', 'rlon'].every((d) => dims.includes(d))) {
+        // For non-pyramids, also check for rotated X/Y coordinate names
+        return { ...base, X: 'rlon', Y: 'rlat' }
+      }
+    })
+    .filter(Boolean)
+    .reduce((accum, { variable: v, ...rest }) => {
+      accum[v] = rest
+      return accum
+    }, {})
+}
+
+const fetchMetadata = (path) => {
+  const reqUrl = new URL(`/api/metadata`, window.location.origin)
+
+  const params = new URLSearchParams()
+  params.append('path', path)
+  reqUrl.search = params.toString()
+
+  return fetch(reqUrl)
+}
+
+export const inspectDataset = async (url) => {
+  // fetch zmetadata to figure out compression and variables
+  const sanitized = sanitizeUrl(url)
+
+  let response
+  try {
+    response = await fetchMetadata(sanitized)
+  } catch (e) {
+    // Show generic error message when request fails before response can be inspected.
+    throw new Error(
+      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
+    )
+  }
+
+  if (!response.ok) {
+    const statusText = response.statusText ?? 'Dataset request failed.'
+    if (response.status === 403) {
+      throw new Error(
+        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
+      )
+    } else if (response.status === 404) {
+      throw new Error(
+        `STATUS 404: ${statusText} Ensure that URL path is correct.`
+      )
+    } else {
+      throw new Error(
+        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
+      )
+    }
+  }
+  let metadata = await response.json()
+
+  if (!metadata.metadata) {
+    throw new Error(metadata?.message || 'Unable to parse metadata')
+  }
+
+  let pyramid = false
+  let visualizedUrl = sanitized
+
+  const multiscales = metadata.metadata['.zattrs']['multiscales']
+  let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
+  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
+  const store_url = metadata.metadata['.zattrs']['ncviewjs:store_url']
+
+  if (store_url) {
+    visualizedUrl = sanitizeUrl(store_url)
+    let storeInfo
+    try {
+      storeInfo = await inspectDataset(visualizedUrl)
+      metadata = storeInfo.metadata
+      cf_axes ||= storeInfo.cf_axes
+    } catch (e) {
+      // Do not surface CF axes based on ability to deduce for nested_store
+    }
+  }
+
+  if (multiscales) {
+    pyramid = true
+  } else if (rechunking && rechunking.length > 0) {
+    const pyramidRechunked = rechunking.find(
+      (r) => r.use_case === 'multiscales'
+    )
+    if (pyramidRechunked) {
+      pyramid = true
+      visualizedUrl = sanitizeUrl(pyramidRechunked.path)
+      const { cf_axes: pyramidCfAxes } = await inspectDataset(visualizedUrl)
+      cf_axes = pyramidCfAxes ?? cf_axes
+    }
+  }
+
+  cf_axes ||= inferCfAxes(metadata.metadata, pyramid)
+  if (!cf_axes || Object.keys(cf_axes).length === 0) {
+    throw new Error(
+      'No CF axes information provided and unable to infer from metadata.'
+    )
+  }
+
+  return { url: visualizedUrl, cf_axes, metadata, pyramid }
+}
+
+export const isNullValue = (p, variable) => {
+  return p == null || p === variable.nullValue || Number.isNaN(p)
 }

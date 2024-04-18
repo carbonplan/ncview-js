@@ -20,7 +20,7 @@ export const useDateGetter = (coordinate) => {
     ?.map((d) => d.replace('days since ', ''))
   if (!startDate) {
     console.warn(
-      `No date found in: ${units}. Expected 'days since [DATE STRING]' format.`
+      `Unable to render formatted date coordinates. No date found in: ${units}; expected 'days since [DATE STRING]' format.`
     )
     return
   }

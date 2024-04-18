@@ -32,10 +32,12 @@ const createDisplaySlice = (set, get) => ({
 })
 
 const createPlotsSlice = (set, get) => ({
-  mode: 'inactive',
-  center: null,
-  setMode: (mode) => set({ mode }),
-  setCenter: (center) => set({ center }),
+  plotMode: 'inactive',
+  plotCenter: null,
+  plotData: null,
+  setPlotMode: (plotMode) => set({ plotMode }),
+  setPlotCenter: (plotCenter) => set({ plotCenter }),
+  setPlotData: (plotData) => set({ plotData }),
 })
 
 const useStore = create((set, get) => ({
@@ -51,6 +53,8 @@ const useStore = create((set, get) => ({
       selectors: [],
       chunksToRender: [],
       clim: null,
+      projection: 'mercator',
+      plotData: null,
     })
 
     // handle clearing url
