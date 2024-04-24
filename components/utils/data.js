@@ -709,6 +709,8 @@ const inferCfAxes = (metadata, pyramid) => {
         return { ...base, X: 'x', Y: 'y' }
       } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
         return { ...base, X: 'lon', Y: 'lat' }
+      } else if (['latitude', 'longitude'].every((d) => dims.includes(d))) {
+        return { ...base, X: 'longitude', Y: 'latitude' }
       } else if (!pyramid && ['rlat', 'rlon'].every((d) => dims.includes(d))) {
         // For non-pyramids, also check for rotated X/Y coordinate names
         return { ...base, X: 'rlon', Y: 'rlat' }
