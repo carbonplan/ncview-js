@@ -293,10 +293,6 @@ export const getVariableLevelInfo = async (
     }
   }, {})
 
-  const lockZoom = [axes.X.index, axes.Y.index].some(
-    (index) => arrays[name].shape[index] / arrays[name].chunk_shape[index] > 4
-  )
-
   return {
     centerPoint: [
       axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
@@ -312,7 +308,6 @@ export const getVariableLevelInfo = async (
           ]
         : undefined,
     axes,
-    lockZoom,
     chunk_separator,
     chunk_shape,
     nullValue,
@@ -713,6 +708,8 @@ const inferCfAxes = (metadata, pyramid) => {
         return { ...base, X: 'lon', Y: 'lat' }
       } else if (['latitude', 'longitude'].every((d) => dims.includes(d))) {
         return { ...base, X: 'longitude', Y: 'latitude' }
+      } else if (['nlat', 'nlon'].every((d) => dims.includes(d))) {
+        return { ...base, X: 'nlon', Y: 'nlat' }
       } else if (!pyramid && ['rlat', 'rlon'].every((d) => dims.includes(d))) {
         // For non-pyramids, also check for rotated X/Y coordinate names
         return { ...base, X: 'rlon', Y: 'rlat' }
