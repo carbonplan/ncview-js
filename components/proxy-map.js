@@ -28,7 +28,7 @@ const ProxyMap = () => {
     count: 255,
     format: 'rgb',
   })
-  const { northPole, nullValue, lockZoom } = useStore(
+  const { northPole, nullValue } = useStore(
     (state) => state.dataset?.level?.variable || {}
   )
   const clim = useStore((state) => state.clim)
@@ -48,22 +48,12 @@ const ProxyMap = () => {
 
   useEffect(() => {
     if (!mapPropsInitialized.current && chunkBounds) {
-      const bounds = lockZoom
-        ? chunkBounds
-        : {
-            lat: [-90, 90],
-            lon: [-180, 180],
-          }
-      const p = getMapProps(bounds, projectionName)
+      const p = getMapProps(chunkBounds, projectionName)
 
-      if (p.scale < 1) {
-        setMapProps({ ...p, scale: 1, translate: [0, 0] })
-      } else {
-        setMapProps(p)
-      }
+      setMapProps(p)
       mapPropsInitialized.current = true
     }
-  }, [!!chunkBounds, projectionName, lockZoom])
+  }, [!!chunkBounds, projectionName])
 
   useEffect(() => {
     if (!dataset) {
@@ -141,7 +131,6 @@ const ProxyMap = () => {
             position: 'fixed',
             bottom: '18px',
             right: '18px',
-            opacity: lockZoom ? 1 : 0,
             transition: '0.1s',
           }}
         />
