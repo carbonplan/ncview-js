@@ -132,14 +132,14 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
 
   const fullSpace =
     dimensions
-      .filter((d) => [axes.X, axes.Y].includes(d))
+      .filter((d) => [axes?.X, axes?.Y].includes(d))
       .every((d) => d <= 360) &&
     chunkShape.reduce((product, d) => product * d, 1) < 1000000
 
   return dimensions.map((d, i) => {
-    if ([axes.X, axes.Y].includes(d)) {
+    if ([axes?.X, axes?.Y].includes(d)) {
       return fullSpace ? chunkShape[i] : Math.min(128, chunkShape[i])
-    } else if (d === axes.T) {
+    } else if (d === axes?.T) {
       return Math.min(30, shape[i])
     } else {
       return 1
@@ -170,6 +170,7 @@ const getChunksOverrides = (metadata, variables, cfAxes) => {
     const shape = metadata.metadata[`${variable}/.zarray`].shape
     const dimensions =
       metadata.metadata[`${variable}/.zattrs`]['_ARRAY_DIMENSIONS']
+
     const chunks = getChunkShapeOverride(
       nativeChunks,
       shape,
@@ -200,6 +201,7 @@ export const getArrays = async (
   { url, metadata, variables, cfAxes, pyramid }
 ) => {
   // TODO: instantiate store with headers and clean up manual overrides
+
   const headers = pyramid ? {} : getChunksHeader(metadata, variables, cfAxes)
   const chunksOverrides = pyramid
     ? {}
