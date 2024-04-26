@@ -684,14 +684,14 @@ const inferCfAxes = (metadata, pyramid) => {
       }
 
       if (prefix && !k.startsWith(prefix)) {
-        return false // skip keys that do not start with the prefix
+        return false
       }
 
       const variablePath = k.replace(prefix, '')
       const variable = variablePath.replace(suffix, '')
 
       if (!variable) {
-        return false // skip if no variable name is found
+        return false
       }
 
       const attrs = metadata[k]
