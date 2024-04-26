@@ -25,12 +25,6 @@ class Dataset {
     this.variables = variables
     this.variableMetadata = {}
 
-    if (variables.length === 0) {
-      throw new Error(
-        'No viewable variables found. Please provide a dataset with at least 2D data arrays.'
-      )
-    }
-
     if (levels.length > 0) {
       this.levels = levels.reduce((accum, level) => {
         accum[level] = new Level(level, this)
