@@ -687,21 +687,44 @@ const inferCfAxes = (metadata, pyramid) => {
         return false
       }
 
-      const variable = k.replace(prefix, '').replace(suffix, '')
+      const variablePath = k.replace(prefix, '')
+      const variable = variablePath.replace(suffix, '')
 
       if (!variable) {
         return false
       }
 
-      const dims = metadata[k]['_ARRAY_DIMENSIONS']
-      if (!dims) {
-        return false
+      const attrs = metadata[k]
+
+      if (!attrs?._ARRAY_DIMENSIONS) {
+        return false // skip if there no array dimensions
       }
 
-      const time = dims.find(
-        (dim) => metadata[`${prefix}${dim}${suffix}`]?.calendar
-      )
-      const base = { variable, ...(time ? { T: time } : {}) }
+      const dims = attrs['_ARRAY_DIMENSIONS']
+      const axisInfo = dims.reduce((accum, dim) => {
+        const dimAttrsPath = `${prefix}${dim}${suffix}`
+        const dimAttrs = metadata[dimAttrsPath]
+        if (dimAttrs) {
+          if (dimAttrs.axis) {
+            accum[dimAttrs.axis] = dim // collect axis information
+          }
+          // ensure time is captured if it has a 'calendar' attribute
+          if (dimAttrs.calendar && !accum.T) {
+            accum.T = dim // set time dimension based on 'calendar' attribute
+          }
+        }
+        return accum
+      }, {})
+
+      // construct the base object including time dimension if found
+      const base = { variable, ...(axisInfo.T ? { T: axisInfo.T } : {}) }
+
+      // use axis information directly if available and complete
+      if (axisInfo.X && axisInfo.Y) {
+        return { ...base, X: axisInfo.X, Y: axisInfo.Y }
+      }
+
+      // fallback to hardcoded checks if axis info is incomplete
       if (['x', 'y'].every((d) => dims.includes(d))) {
         return { ...base, X: 'x', Y: 'y' }
       } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
