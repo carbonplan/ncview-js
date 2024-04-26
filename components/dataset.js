@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
-import { inspectDataset } from './utils/data'
+import { inspectDataset } from './utils/metadata'
 
 const DATASETS = [
   // NCVIEW 2.0
