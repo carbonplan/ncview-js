@@ -40,6 +40,7 @@ const ProxyMap = () => {
     scale: 1,
     translate: [0, 0],
   })
+  const [lockZoom, setLockZoom] = useState(true)
   const mapPropsInitialized = useRef(0)
 
   useEffect(() => {
@@ -50,7 +51,13 @@ const ProxyMap = () => {
     if (!mapPropsInitialized.current && chunkBounds) {
       const p = getMapProps(chunkBounds, projectionName)
 
-      setMapProps(p)
+      if (p.scale < 1.5) {
+        setMapProps({ ...p, scale: 1, translate: [0, 0] })
+        setLockZoom(false)
+      } else {
+        setMapProps(p)
+        setLockZoom(true)
+      }
       mapPropsInitialized.current = true
     }
   }, [!!chunkBounds, projectionName])
@@ -75,7 +82,7 @@ const ProxyMap = () => {
   }, [mapProps])
 
   return (
-    <MapContainer setMapProps={setMapProps}>
+    <MapContainer setMapProps={setMapProps} lockZoom={lockZoom}>
       {plotMode === 'point' && <Point mapProps={mapProps} />}
       {plotMode === 'circle' && <Circle mapProps={mapProps} />}
       <Minimap {...mapProps}>
@@ -131,6 +138,7 @@ const ProxyMap = () => {
             position: 'fixed',
             bottom: '18px',
             right: '18px',
+            opacity: lockZoom && mapProps.scale > 3 ? 1 : 0,
             transition: '0.1s',
           }}
         />
