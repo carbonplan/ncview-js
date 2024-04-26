@@ -105,17 +105,41 @@ export const getMetadata = async (url, pyramid) => {
   }
 
   const prefix = pyramid ? '0/' : ''
-  const variables = Object.keys(metadata.metadata)
+
+  const multiDimensionalVariables = Object.keys(metadata.metadata)
     .map((k) => k.match(pyramid ? /0\/\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/))
     .filter(Boolean)
     .map((a) => a[0].replace('0/', ''))
     .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${prefix}${d}/.zarray`].shape.length >= 2)
-    .filter((d) =>
-      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
-        (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
-      )
+
+  if (multiDimensionalVariables.length === 0) {
+    throw new Error('Please provide a dataset with at least 2D data arrays.')
+  }
+
+  const variables = multiDimensionalVariables.filter((d) =>
+    metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
+      (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
     )
+  )
+
+  if (variables.length === 0) {
+    const missingCoordinates = multiDimensionalVariables.reduce((a, d) => {
+      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].forEach(
+        (dim) => {
+          if (!metadata.metadata[`${prefix}${dim}/.zarray`]) {
+            a.add(dim)
+          }
+        }
+      )
+      return a
+    }, new Set())
+    throw new Error(
+      `No viewable variables found. Missing coordinate information for ${
+        missingCoordinates.size > 1 ? 'dimensions' : 'dimension'
+      }: ${Array.from(missingCoordinates).join(', ')}.`
+    )
+  }
 
   const levels = Object.keys(metadata.metadata)
     .map((k) => k.match(new RegExp(`[0-9]+(?=\/${variables[0]}\/.zarray)`)))
