@@ -1,27 +1,28 @@
 import {
   getActiveChunkKeys,
-  getMetadata,
+  getVariables,
   getVariableInfo,
   pointToChunkKey,
+  inferCfAxes,
 } from '../utils/data'
 
 import Level from './level'
 
 class Dataset {
-  constructor(url, cfAxes, pyramid) {
+  constructor(url, metadata, pyramid) {
     this.url = url
-    this.cfAxes = cfAxes
+    this.metadata = metadata
     this.pyramid = pyramid
+    this.cfAxes = inferCfAxes(metadata.metadata, pyramid)
   }
 
   async initialize() {
     this.variable = null
     this.chunks = {}
-    const { metadata, variables, levels } = await getMetadata(
-      this.url,
+    const { variables, levels } = await getVariables(
+      this.metadata,
       this.pyramid
     )
-    this.metadata = metadata
     this.variables = variables
     this.variableMetadata = {}
 

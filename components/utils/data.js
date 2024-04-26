@@ -95,11 +95,7 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
-export const getMetadata = async (url, pyramid) => {
-  // fetch zmetadata to figure out compression and variables
-  const response = await fetch(`${url}/.zmetadata`)
-  const metadata = await response.json()
-
+export const getVariables = async (metadata, pyramid) => {
   if (!metadata.metadata) {
     throw new Error(metadata?.message || 'Unable to parse metadata')
   }
@@ -146,7 +142,7 @@ export const getMetadata = async (url, pyramid) => {
     .filter(Boolean)
     .map((a) => a[0])
 
-  return { metadata, variables, levels }
+  return { variables, levels }
 }
 
 const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
@@ -697,7 +693,7 @@ export const validatePoint = ([lon, lat]) => {
 }
 
 // Infer axes from consolidated metadata
-const inferCfAxes = (metadata, pyramid) => {
+export const inferCfAxes = (metadata, pyramid) => {
   const prefix = pyramid ? '0/' : ''
   const suffix = '/.zattrs'
 
@@ -819,44 +815,11 @@ export const inspectDataset = async (url) => {
   let visualizedUrl = sanitized
 
   const multiscales = metadata.metadata['.zattrs']['multiscales']
-  let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
-  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
-  const store_url = metadata.metadata['.zattrs']['ncviewjs:store_url']
-
-  if (store_url) {
-    visualizedUrl = sanitizeUrl(store_url)
-    let storeInfo
-    try {
-      storeInfo = await inspectDataset(visualizedUrl)
-      metadata = storeInfo.metadata
-      cf_axes ||= storeInfo.cf_axes
-    } catch (e) {
-      // Do not surface CF axes based on ability to deduce for nested_store
-    }
-  }
-
   if (multiscales) {
     pyramid = true
-  } else if (rechunking && rechunking.length > 0) {
-    const pyramidRechunked = rechunking.find(
-      (r) => r.use_case === 'multiscales'
-    )
-    if (pyramidRechunked) {
-      pyramid = true
-      visualizedUrl = sanitizeUrl(pyramidRechunked.path)
-      const { cf_axes: pyramidCfAxes } = await inspectDataset(visualizedUrl)
-      cf_axes = pyramidCfAxes ?? cf_axes
-    }
   }
 
-  cf_axes ||= inferCfAxes(metadata.metadata, pyramid)
-  if (!cf_axes || Object.keys(cf_axes).length === 0) {
-    throw new Error(
-      'No CF axes information provided and unable to infer from metadata.'
-    )
-  }
-
-  return { url: visualizedUrl, cf_axes, metadata, pyramid }
+  return { url: visualizedUrl, metadata, pyramid }
 }
 
 export const isNullValue = (p, variable) => {
