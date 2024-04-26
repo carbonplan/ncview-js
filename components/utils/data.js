@@ -95,7 +95,7 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
-export const getVariables = async (metadata, pyramid) => {
+export const getVariables = async (metadata, cfAxes, pyramid) => {
   if (!metadata.metadata) {
     throw new Error(metadata?.message || 'Unable to parse metadata')
   }
@@ -106,20 +106,19 @@ export const getVariables = async (metadata, pyramid) => {
     .map((k) => k.match(pyramid ? /0\/\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/))
     .filter(Boolean)
     .map((a) => a[0].replace('0/', ''))
-    .filter((d) => !['lat', 'lon'].includes(d))
     .filter((d) => metadata.metadata[`${prefix}${d}/.zarray`].shape.length >= 2)
 
   if (multiDimensionalVariables.length === 0) {
     throw new Error('Please provide a dataset with at least 2D data arrays.')
   }
 
-  const variables = multiDimensionalVariables.filter((d) =>
+  const variablesWithCoords = multiDimensionalVariables.filter((d) =>
     metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
       (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
     )
   )
 
-  if (variables.length === 0) {
+  if (variablesWithCoords.length === 0) {
     const missingCoordinates = multiDimensionalVariables.reduce((a, d) => {
       metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].forEach(
         (dim) => {
@@ -134,6 +133,23 @@ export const getVariables = async (metadata, pyramid) => {
       `No viewable variables found. Missing coordinate information for ${
         missingCoordinates.size > 1 ? 'dimensions' : 'dimension'
       }: ${Array.from(missingCoordinates).join(', ')}.`
+    )
+  }
+
+  const variables = variablesWithCoords.filter((d) => cfAxes[d])
+
+  if (variables.length === 0) {
+    throw new Error(
+      `No viewable variables found. Unable to infer spatial dimensions for ${
+        variablesWithCoords.size > 1 ? 'variables' : 'variable'
+      }: ${Array.from(variablesWithCoords)
+        .map(
+          (v) =>
+            `${v} (${metadata.metadata[`${prefix}${v}/.zattrs`][
+              '_ARRAY_DIMENSIONS'
+            ].join(', ')})`
+        )
+        .join(', ')}.`
     )
   }
 

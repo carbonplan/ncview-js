@@ -21,6 +21,7 @@ class Dataset {
     this.chunks = {}
     const { variables, levels } = await getVariables(
       this.metadata,
+      this.cfAxes,
       this.pyramid
     )
     this.variables = variables
