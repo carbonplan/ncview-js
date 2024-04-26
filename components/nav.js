@@ -90,10 +90,7 @@ const Nav = ({ mapProps, setMapProps, sx }) => {
 
       const mapProjection = getProjection(mapProps)
       const mapPoint = mapProjection(center)
-      const offset = [
-        1 - (mapPoint[0] / 800) * 2,
-        1 - (mapPoint[1] / (800 * ASPECTS[mapProjection.id])) * 2,
-      ]
+      const offset = [1 - (mapPoint[0] / 800) * 2, 1 - (mapPoint[1] / 400) * 2]
 
       setMapProps((prev) => ({
         ...prev,

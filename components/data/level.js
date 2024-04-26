@@ -29,6 +29,7 @@ class Level {
     const {
       centerPoint,
       axes,
+      lockZoom,
       nullValue,
       northPole,
       chunk_separator,
@@ -41,6 +42,7 @@ class Level {
       name: variableName,
       centerPoint,
       axes,
+      lockZoom,
       nullValue,
       northPole,
       chunk_separator,

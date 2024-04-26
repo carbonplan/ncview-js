@@ -66,10 +66,12 @@ class Dataset {
         name: variableName,
         selectors,
         centerPoint: level0.centerPoint,
+        lockZoom: this.pyramid ? false : level0.lockZoom,
       }
       this.variableMetadata[variableName] = metadata
     }
 
+    this.lockZoom = metadata.lockZoom
     this.variable = variableName
 
     return { centerPoint: metadata.centerPoint, selectors: metadata.selectors }
