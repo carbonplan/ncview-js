@@ -92,7 +92,10 @@ export const inferCfAxes = (metadata, pyramid) => {
         if (dimAttrs) {
           if (dimAttrs.axis) {
             accum[dimAttrs.axis] = dim // collect axis information
+          } else if (dimAttrs.cartesian_axis) {
+            accum[dimAttrs.cartesian_axis] = dim
           }
+
           // ensure time is captured if it has a 'calendar' attribute
           if (dimAttrs.calendar && !accum.T) {
             accum.T = dim // set time dimension based on 'calendar' attribute
