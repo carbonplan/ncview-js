@@ -628,7 +628,9 @@ const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
 
   const chunkStep = axis.step * chunk_shape[index]
 
-  return diff < 0 ? Math.ceil(diff / chunkStep) : Math.floor(diff / chunkStep)
+  return diff < 0
+    ? Math.abs(Math.ceil(diff / chunkStep))
+    : Math.floor(diff / chunkStep)
 }
 
 export const validatePoint = ([lon, lat]) => {
