@@ -44,7 +44,7 @@ const useStore = create((set, get) => ({
   ...createDatasetSlice(set, get),
   ...createDisplaySlice(set, get),
   ...createPlotsSlice(set, get),
-  setUrl: async (url, { cfAxes, clim, pyramid } = {}) => {
+  setUrl: async (url, { metadata, clim, pyramid } = {}) => {
     const { _registerLoading, _unregisterLoading } = get()
     set({
       error: null,
@@ -65,7 +65,7 @@ const useStore = create((set, get) => ({
     _registerLoading('metadata')
     let dataset
     try {
-      dataset = new Dataset(url, cfAxes, pyramid)
+      dataset = new Dataset(url, metadata, pyramid)
       await dataset.initialize()
       set({ dataset })
     } catch (e) {
@@ -76,14 +76,6 @@ const useStore = create((set, get) => ({
 
     // default to first variable
     const initialVariable = dataset.variables[0]
-
-    if (Object.keys(cfAxes[initialVariable] ?? {}).length < 2) {
-      set({
-        error: 'Unable to parse coordinates. Please use CF conventions.',
-      })
-      _unregisterLoading('metadata')
-      return
-    }
 
     get().setVariable(initialVariable, { clim })
     _unregisterLoading('metadata')

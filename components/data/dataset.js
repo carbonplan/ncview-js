@@ -1,6 +1,6 @@
+import { inferCfAxes, getVariables } from '../utils/metadata'
 import {
   getActiveChunkKeys,
-  getMetadata,
   getVariableInfo,
   pointToChunkKey,
 } from '../utils/data'
@@ -8,28 +8,23 @@ import {
 import Level from './level'
 
 class Dataset {
-  constructor(url, cfAxes, pyramid) {
+  constructor(url, metadata, pyramid) {
     this.url = url
-    this.cfAxes = cfAxes
+    this.metadata = metadata
     this.pyramid = pyramid
+    this.cfAxes = inferCfAxes(metadata, pyramid)
   }
 
   async initialize() {
     this.variable = null
     this.chunks = {}
-    const { metadata, variables, levels } = await getMetadata(
-      this.url,
+    const { variables, levels } = getVariables(
+      this.metadata,
+      this.cfAxes,
       this.pyramid
     )
-    this.metadata = metadata
     this.variables = variables
     this.variableMetadata = {}
-
-    if (variables.length === 0) {
-      throw new Error(
-        'No viewable variables found. Please provide a dataset with at least 2D data arrays.'
-      )
-    }
 
     if (levels.length > 0) {
       this.levels = levels.reduce((accum, level) => {

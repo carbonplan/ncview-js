@@ -6,7 +6,7 @@ import { useRouter } from 'next/router'
 
 import Label from './label'
 import useStore from './data/store'
-import { inspectDataset } from './utils/data'
+import { inspectDataset } from './utils/metadata'
 
 const DATASETS = [
   // NCVIEW 2.0
@@ -66,10 +66,10 @@ const Dataset = () => {
     setStoreUrl()
 
     try {
-      const { url, cf_axes, pyramid } = await inspectDataset(value)
+      const { url, pyramid, metadata } = await inspectDataset(value)
       if (pyramid) {
         // Use pyramid when present
-        setStoreUrl(url, { cfAxes: cf_axes, pyramid: true, clim })
+        setStoreUrl(url, { metadata, pyramid: true, clim })
       } else {
         // Otherwise construct Zarr proxy URL
         const u = new URL(url)
@@ -77,7 +77,7 @@ const Dataset = () => {
           'https://ok6vedl4oj7ygb4sb2nzqvvevm0qhbbc.lambda-url.us-west-2.on.aws/' +
             u.hostname +
             u.pathname,
-          { cfAxes: cf_axes, pyramid: false, clim }
+          { metadata, pyramid: false, clim }
         )
       }
     } catch (e) {

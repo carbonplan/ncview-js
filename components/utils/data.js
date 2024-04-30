@@ -9,7 +9,6 @@ import {
   // Zstd,
 } from 'numcodecs'
 
-import { sanitizeUrl } from './url'
 import { PROJECTIONS, ASPECTS } from '../constants'
 
 const COMPRESSORS = {
@@ -93,36 +92,6 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   }
 
   return chunkKey.split(chunk_separator).map(Number)
-}
-
-export const getMetadata = async (url, pyramid) => {
-  // fetch zmetadata to figure out compression and variables
-  const response = await fetch(`${url}/.zmetadata`)
-  const metadata = await response.json()
-
-  if (!metadata.metadata) {
-    throw new Error(metadata?.message || 'Unable to parse metadata')
-  }
-
-  const prefix = pyramid ? '0/' : ''
-  const variables = Object.keys(metadata.metadata)
-    .map((k) => k.match(pyramid ? /0\/\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/))
-    .filter(Boolean)
-    .map((a) => a[0].replace('0/', ''))
-    .filter((d) => !['lat', 'lon'].includes(d))
-    .filter((d) => metadata.metadata[`${prefix}${d}/.zarray`].shape.length >= 2)
-    .filter((d) =>
-      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
-        (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
-      )
-    )
-
-  const levels = Object.keys(metadata.metadata)
-    .map((k) => k.match(new RegExp(`[0-9]+(?=\/${variables[0]}\/.zarray)`)))
-    .filter(Boolean)
-    .map((a) => a[0])
-
-  return { metadata, variables, levels }
 }
 
 const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
@@ -659,7 +628,9 @@ const getAxisIndex = (value, { name, axis, chunk_shape, shape }) => {
 
   const chunkStep = axis.step * chunk_shape[index]
 
-  return diff < 0 ? Math.ceil(diff / chunkStep) : Math.floor(diff / chunkStep)
+  return diff < 0
+    ? Math.abs(Math.ceil(diff / chunkStep))
+    : Math.floor(diff / chunkStep)
 }
 
 export const validatePoint = ([lon, lat]) => {
@@ -670,171 +641,6 @@ export const validatePoint = ([lon, lat]) => {
   }
 
   return true
-}
-
-// Infer axes from consolidated metadata
-const inferCfAxes = (metadata, pyramid) => {
-  const prefix = pyramid ? '0/' : ''
-  const suffix = '/.zattrs'
-
-  return Object.keys(metadata)
-    .map((k) => {
-      if (!k.endsWith(suffix)) {
-        return false
-      }
-
-      if (prefix && !k.startsWith(prefix)) {
-        return false
-      }
-
-      const variablePath = k.replace(prefix, '')
-      const variable = variablePath.replace(suffix, '')
-
-      if (!variable) {
-        return false
-      }
-
-      const attrs = metadata[k]
-
-      if (!attrs?._ARRAY_DIMENSIONS) {
-        return false // skip if there no array dimensions
-      }
-
-      const dims = attrs['_ARRAY_DIMENSIONS']
-      const axisInfo = dims.reduce((accum, dim) => {
-        const dimAttrsPath = `${prefix}${dim}${suffix}`
-        const dimAttrs = metadata[dimAttrsPath]
-        if (dimAttrs) {
-          if (dimAttrs.axis) {
-            accum[dimAttrs.axis] = dim // collect axis information
-          } else if (dimAttrs.cartesian_axis) {
-            accum[dimAttrs.cartesian_axis] = dim
-          }
-          // ensure time is captured if it has a 'calendar' attribute
-          if (dimAttrs.calendar && !accum.T) {
-            accum.T = dim // set time dimension based on 'calendar' attribute
-          }
-        }
-        return accum
-      }, {})
-
-      // construct the base object including time dimension if found
-      const base = { variable, ...(axisInfo.T ? { T: axisInfo.T } : {}) }
-
-      // use axis information directly if available and complete
-      if (axisInfo.X && axisInfo.Y) {
-        return { ...base, X: axisInfo.X, Y: axisInfo.Y }
-      }
-
-      // fallback to hardcoded checks if axis info is incomplete
-      if (['x', 'y'].every((d) => dims.includes(d))) {
-        return { ...base, X: 'x', Y: 'y' }
-      } else if (['lat', 'lon'].every((d) => dims.includes(d))) {
-        return { ...base, X: 'lon', Y: 'lat' }
-      } else if (['latitude', 'longitude'].every((d) => dims.includes(d))) {
-        return { ...base, X: 'longitude', Y: 'latitude' }
-      } else if (['nlat', 'nlon'].every((d) => dims.includes(d))) {
-        return { ...base, X: 'nlon', Y: 'nlat' }
-      } else if (!pyramid && ['rlat', 'rlon'].every((d) => dims.includes(d))) {
-        // For non-pyramids, also check for rotated X/Y coordinate names
-        return { ...base, X: 'rlon', Y: 'rlat' }
-      }
-    })
-    .filter(Boolean)
-    .reduce((accum, { variable: v, ...rest }) => {
-      accum[v] = rest
-      return accum
-    }, {})
-}
-
-const fetchMetadata = (path) => {
-  const reqUrl = new URL(`/api/metadata`, window.location.origin)
-
-  const params = new URLSearchParams()
-  params.append('path', path)
-  reqUrl.search = params.toString()
-
-  return fetch(reqUrl)
-}
-
-export const inspectDataset = async (url) => {
-  // fetch zmetadata to figure out compression and variables
-  const sanitized = sanitizeUrl(url)
-
-  let response
-  try {
-    response = await fetchMetadata(sanitized)
-  } catch (e) {
-    // Show generic error message when request fails before response can be inspected.
-    throw new Error(
-      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
-    )
-  }
-
-  if (!response.ok) {
-    const statusText = response.statusText ?? 'Dataset request failed.'
-    if (response.status === 403) {
-      throw new Error(
-        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
-      )
-    } else if (response.status === 404) {
-      throw new Error(
-        `STATUS 404: ${statusText} Ensure that URL path is correct.`
-      )
-    } else {
-      throw new Error(
-        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
-      )
-    }
-  }
-  let metadata = await response.json()
-
-  if (!metadata.metadata) {
-    throw new Error(metadata?.message || 'Unable to parse metadata')
-  }
-
-  let pyramid = false
-  let visualizedUrl = sanitized
-
-  const multiscales = metadata.metadata['.zattrs']['multiscales']
-  let cf_axes = metadata.metadata['.zattrs']['ncviewjs:cf_axes']
-  const rechunking = metadata.metadata['.zattrs']['ncviewjs:rechunking'] ?? []
-  const store_url = metadata.metadata['.zattrs']['ncviewjs:store_url']
-
-  if (store_url) {
-    visualizedUrl = sanitizeUrl(store_url)
-    let storeInfo
-    try {
-      storeInfo = await inspectDataset(visualizedUrl)
-      metadata = storeInfo.metadata
-      cf_axes ||= storeInfo.cf_axes
-    } catch (e) {
-      // Do not surface CF axes based on ability to deduce for nested_store
-    }
-  }
-
-  if (multiscales) {
-    pyramid = true
-  } else if (rechunking && rechunking.length > 0) {
-    const pyramidRechunked = rechunking.find(
-      (r) => r.use_case === 'multiscales'
-    )
-    if (pyramidRechunked) {
-      pyramid = true
-      visualizedUrl = sanitizeUrl(pyramidRechunked.path)
-      const { cf_axes: pyramidCfAxes } = await inspectDataset(visualizedUrl)
-      cf_axes = pyramidCfAxes ?? cf_axes
-    }
-  }
-
-  cf_axes ||= inferCfAxes(metadata.metadata, pyramid)
-  if (!cf_axes || Object.keys(cf_axes).length === 0) {
-    throw new Error(
-      'No CF axes information provided and unable to infer from metadata.'
-    )
-  }
-
-  return { url: visualizedUrl, cf_axes, metadata, pyramid }
 }
 
 export const isNullValue = (p, variable) => {
