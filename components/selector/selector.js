@@ -7,6 +7,7 @@ import ArrayMetadata from '../array-metadata'
 import { TooltipContent, TooltipWrapper } from '../tooltip'
 import Slider from './slider'
 import DateDisplay from '../date-display'
+import Dropdown from './dropdown'
 
 const SingleValue = ({ index }) => {
   const selector = useStore(
@@ -44,6 +45,16 @@ const Selector = ({ index }) => {
     (state) => state.selectors && state.selectors[index]
   )
   const shape = useStore((state) => state.dataset.level.variable.shape[index])
+  console.log(selector)
+
+  let display
+  if (shape === 1) {
+    display = <SingleValue index={index} />
+  } else if (typeof selector.metadata.array.data[0] === 'string') {
+    display = <Dropdown index={index} />
+  } else {
+    display = <Slider index={index} />
+  }
 
   return (
     <Label
@@ -58,8 +69,7 @@ const Selector = ({ index }) => {
         <ArrayMetadata array={selector.name} />
       </TooltipContent>
 
-      {shape > 1 && <Slider index={index} />}
-      {shape === 1 && <SingleValue index={index} />}
+      {display}
     </Label>
   )
 }
