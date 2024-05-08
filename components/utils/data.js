@@ -109,7 +109,7 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
     if ([axes?.X, axes?.Y].includes(d)) {
       return fullSpace ? chunkShape[i] : Math.min(128, chunkShape[i])
     } else if (d === axes?.T) {
-      return Math.min(30, shape[i])
+      return Math.min(30, chunkShape[i])
     } else {
       return 1
     }
