@@ -27,11 +27,8 @@ export const useDateGetter = (coordinate) => {
 
   const getter = useCallback(
     (v) => {
-      let dateString = startDate[0]
-      // append time to use local time zone if time is not already present
-      if (!dateString.match(/\d\d:\d\d/)) {
-        dateString = `${dateString} 12:00`
-      }
+      // Remove time and trim whitespace for simplest initialization across browsers
+      const dateString = startDate[0].replace(/\d\d(:\d\d)+/, '').trim()
 
       const date = new Date(dateString)
       date.setDate(date.getDate() + v)
