@@ -45,7 +45,6 @@ const Selector = ({ index }) => {
     (state) => state.selectors && state.selectors[index]
   )
   const shape = useStore((state) => state.dataset.level.variable.shape[index])
-  console.log(selector)
 
   let display
   if (shape === 1) {
