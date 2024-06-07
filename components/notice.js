@@ -9,16 +9,14 @@ const Notice = () => {
         fontSize: [1],
       }}
     >
-      <Box sx={{ pointerEvents: 'none' }}>
-        This is an experimental tool for exploring data. Learn more on{' '}
-        <Link
-          sx={{ color: 'secondary' }}
-          href='https://github.com/carbonplan/ncview-js'
-        >
-          GitHub
-        </Link>
-        .
-      </Box>
+      This is an experimental tool for exploring data. Learn more on{' '}
+      <Link
+        sx={{ color: 'secondary' }}
+        href='https://github.com/carbonplan/ncview-js'
+      >
+        GitHub
+      </Link>
+      .
     </Box>
   )
 }
