@@ -9,6 +9,7 @@ import LoadingStates from '../components/loading-states'
 import Map from '../components/map'
 import Plots from '../components/plots'
 import Selectors from '../components/selectors'
+import Notice from '../components/notice'
 
 const Index = () => {
   return (
@@ -27,6 +28,9 @@ const Index = () => {
         <Container>
           <Row>
             <Sidebar expanded side='left' width={4} footer={<Plots />}>
+              <Notice />
+              <SidebarDivider sx={{ my: 4 }} />
+
               <Flex sx={{ flexDirection: 'column', gap: 3 }}>
                 <Dataset />
                 <Selectors />
