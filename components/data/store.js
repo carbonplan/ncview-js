@@ -91,21 +91,24 @@ const useStore = create((set, get) => ({
     })
     _registerLoading(name)
 
-    const { centerPoint: variableCenterPoint, selectors } =
-      await dataset.initializeVariable(name)
+    let cp
+    try {
+      const { centerPoint: variableCenterPoint, selectors } =
+        await dataset.initializeVariable(name)
+      set({ selectors })
+      cp = centerPoint ?? variableCenterPoint
+    } catch (e) {
+      set({ error: e.message })
+      _unregisterLoading(name)
+      return
+    }
 
-    set({ selectors })
-
-    await dataset.updateSelection(
-      centerPoint ?? variableCenterPoint,
-      zoom,
-      selectors
-    )
+    await dataset.updateSelection(cp, zoom, get().selectors)
     const clim = await dataset.getClim()
     set({ clim: urlClim ?? clim })
     _unregisterLoading(name)
 
-    get().resetMapProps(centerPoint ?? variableCenterPoint, zoom)
+    get().resetMapProps(cp, zoom)
   },
   resetMapProps: async (centerPoint, zoom) => {
     const { dataset, selectors } = get()

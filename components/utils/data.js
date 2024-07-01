@@ -230,7 +230,7 @@ export const getArrays = async (
 export const getVariableLevelInfo = async (
   name,
   { level, arrays, headers },
-  { cfAxes, metadata }
+  { cfAxes, metadata, pyramid }
 ) => {
   const dataArray = arrays[name]
   const prefix = level ? `${level}/` : ''
@@ -262,11 +262,40 @@ export const getVariableLevelInfo = async (
     }
   }, {})
 
+  const centerPoint = [
+    axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
+    axes.Y.array.data[Math.round((axes.Y.array.data.length - 1) / 2)],
+  ]
+
+  if (!pyramid) {
+    const unhandledCoords = [
+      [
+        axes.X.array.data[0],
+        axes.X.array.data[axes.X.array.data.length - 1],
+      ].some((el) => Math.abs(el) > 360)
+        ? cfAxes[name].X
+        : null,
+      [
+        axes.Y.array.data[0],
+        axes.Y.array.data[axes.Y.array.data.length - 1],
+      ].some((el) => Math.abs(el) > 180)
+        ? cfAxes[name].Y
+        : null,
+    ].filter(Boolean)
+
+    if (unhandledCoords.length > 0) {
+      throw new Error(
+        `Cannot handle coordinate${
+          unhandledCoords.length > 1 ? 's' : ''
+        }: ${unhandledCoords.join(
+          ', '
+        )}. Spatial coordinates must refer to latitude and longitude.`
+      )
+    }
+  }
+
   return {
-    centerPoint: [
-      axes.X.array.data[Math.round((axes.X.array.data.length - 1) / 2)],
-      axes.Y.array.data[Math.round((axes.Y.array.data.length - 1) / 2)],
-    ],
+    centerPoint,
     northPole:
       gridMapping &&
       gridMapping.hasOwnProperty('grid_north_pole_longitude') &&
