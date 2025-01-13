@@ -26,19 +26,12 @@ export const inspectDataset = async (url) => {
 
   if (!response.ok) {
     const statusText = response.statusText ?? 'Dataset request failed.'
-    if (response.status === 403) {
-      throw new Error(
-        `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
-      )
-    } else if (response.status === 404) {
-      throw new Error(
-        `STATUS 404: ${statusText} Ensure that URL path is correct.`
-      )
-    } else {
-      throw new Error(
-        `STATUS ${response.status}: ${statusText}. URL: ${sanitized}`
-      )
-    }
+    const errorMessage = generateErrorMessage(
+      response.status,
+      statusText,
+      sanitized
+    )
+    throw new Error(errorMessage)
   }
   let metadata = await response.json()
 
@@ -55,6 +48,21 @@ export const inspectDataset = async (url) => {
   }
 
   return { url: visualizedUrl, metadata, pyramid }
+}
+
+const generateErrorMessage = (status, statusText, sanitizedUrl) => {
+  switch (status) {
+    case 403:
+      return `STATUS 403: Access forbidden. Ensure that URL is correct and that dataset is publicly accessible.`
+    case 404:
+      return `STATUS 404: ${statusText}. Ensure that URL path is correct.`
+    case 500:
+    case 502:
+    case 503:
+      return `STATUS ${status}: ${statusText}. The server encountered an error. Please try again later.`
+    default:
+      return `STATUS ${status}: ${statusText}. URL: ${sanitizedUrl}`
+  }
 }
 
 // Infer axes from consolidated metadata
