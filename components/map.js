@@ -7,6 +7,7 @@ import PyramidMap from './pyramid-map'
 
 const Map = () => {
   const dataset = useStore((state) => state.dataset)
+  const loading = useStore((state) => state.getLoading())
 
   return (
     <Flex
@@ -31,7 +32,9 @@ const Map = () => {
             color: 'secondary',
           }}
         >
-          Provide a Zarr link to explore data
+          {loading
+            ? 'Loading Zarr store...'
+            : 'Provide a Zarr link to explore data'}
         </Box>
       )}
     </Flex>
