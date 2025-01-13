@@ -19,8 +19,9 @@ export const inspectDataset = async (url) => {
     response = await fetchMetadata(sanitized)
   } catch (e) {
     // Show generic error message when request fails before response can be inspected.
+    // Do not show URL for details because request is ultimately proxied via /api/metadata route.
     throw new Error(
-      'A network error occurred. This could be a CORS issue or a dropped internet connection.'
+      'A network error occurred while fetching metadata. This could be a CORS issue, a dropped internet connection, or another network problem.'
     )
   }
 
