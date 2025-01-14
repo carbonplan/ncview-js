@@ -1,4 +1,4 @@
-import create from 'zustand'
+import { create } from 'zustand'
 import Dataset from './dataset'
 
 const createDatasetSlice = (set, get) => ({

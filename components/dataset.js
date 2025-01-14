@@ -46,6 +46,7 @@ const sx = {
 
 const Dataset = () => {
   const [url, setUrl] = useState('')
+  const [hasInitializedQuery, setHasInitializedQuery] = useState(false)
   const [dataset, setDataset] = useState(null)
   const [errorMessage, setErrorMessage] = useState(null)
   const [focused, setFocused] = useState(false)
@@ -94,15 +95,16 @@ const Dataset = () => {
   )
 
   useEffect(() => {
-    if (!url && router.query?.dataset) {
+    if (!url && router.query?.dataset && !hasInitializedQuery) {
       setUrl(router.query.dataset)
       const clim = (router.query.clim ?? '').split(',').map(Number)
 
       submitUrl(router.query.dataset, {
         clim: clim && clim.length === 2 ? clim : null,
       })
+      setHasInitializedQuery(true)
     }
-  }, [!url, router.query?.dataset])
+  }, [!url, router.query?.dataset, hasInitializedQuery])
 
   return (
     <form onSubmit={handleSubmit}>
