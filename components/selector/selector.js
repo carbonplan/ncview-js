@@ -49,6 +49,8 @@ const Selector = ({ index }) => {
   let display
   if (shape === 1) {
     display = <SingleValue index={index} />
+  } else if (!selector.metadata.array) {
+    display = <Slider index={index} skipArrayLabels />
   } else if (typeof selector.metadata.array.data[0] === 'string') {
     display = <Dropdown index={index} />
   } else {

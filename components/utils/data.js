@@ -340,12 +340,14 @@ export const getVariableInfo = async (
   const selectorCoordinates = await Promise.all(
     dimensions
       .map((coord) => arrays[coord])
-      .map((arr, i) =>
-        isSpatialDimension(dimensions[i])
-          ? null
-          : // TODO: handle chunked coordinate arrays
-            arr.get_chunk([0], { headers: headers[name] })
-      )
+      .map((arr, i) => {
+        if (isSpatialDimension(dimensions[i]) || arr.shape > 10000) {
+          return null
+        } else {
+          // TODO: handle chunked coordinate arrays
+          return arr.get_chunk([0], { headers: headers[name] })
+        }
+      })
   )
 
   const selectors = dimensions.map((d, i) => {
