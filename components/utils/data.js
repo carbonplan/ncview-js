@@ -341,7 +341,7 @@ export const getVariableInfo = async (
     dimensions
       .map((coord) => arrays[coord])
       .map((arr, i) => {
-        if (isSpatialDimension(dimensions[i]) || arr.shape > 10000) {
+        if (isSpatialDimension(dimensions[i]) || arr.shape > 1000) {
           return null
         } else {
           // TODO: handle chunked coordinate arrays
