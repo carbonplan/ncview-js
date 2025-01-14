@@ -70,7 +70,7 @@ const Slider = ({ index, skipArrayLabels = false }) => {
 
   let value
   if (skipArrayLabels) {
-    value = `Index = ${sliderValue.chunk * chunk_shape + sliderValue.index}`
+    value = `Index=${sliderValue.chunk * chunk_shape + sliderValue.index}`
   } else if (selector.metadata.cfAxis === 'T') {
     value = (
       <DateDisplay
