@@ -7,7 +7,9 @@ import RegionChart from './region-chart'
 const Plots = () => {
   const variable = useStore((state) => state.dataset.level.variable?.name)
   const selectors = useStore((state) => state.selectors)
-  const shape = useStore((state) => state.dataset.level.variable?.shape)
+  const chunkShape = useStore(
+    (state) => state.dataset.level.variable?.chunk_shape
+  )
 
   if (!variable) {
     return
@@ -16,7 +18,7 @@ const Plots = () => {
   const selectorLines = selectors.filter(
     (selector) =>
       typeof selector.chunk === 'number' &&
-      shape[selector.metadata.dimensionIndex] > 1
+      chunkShape[selector.metadata.dimensionIndex] > 1
   )
 
   if (selectorLines.length === 0) {

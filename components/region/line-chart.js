@@ -24,8 +24,8 @@ import RegionInfo from './region-info'
 const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const variable = useStore((state) => state.dataset.level.variable)
   const { units } = useStore((state) => state.dataset.getZattrs(variable.name))
-  const { units: selectorUnits } = useStore((state) =>
-    state.dataset.getZattrs(selector.name)
+  const { units: selectorUnits } = useStore(
+    (state) => state.dataset.getZattrs(selector.name) ?? {}
   )
   const { array, cfAxis } = useStore((state) => state.selectors[index].metadata)
   const isTime = cfAxis === 'T'
@@ -37,7 +37,7 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const formatter = useCallback(
     (x) => {
       if (!array) {
-        return ''
+        return `Index=${x}`
       } else if (array.data[x]) {
         if (isTime) {
           return (
@@ -56,21 +56,20 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const handleDownload = useCallback(
     (e) => {
       e.stopPropagation()
-      if (!array) {
-        return
-      }
 
-      const rows = yValues
-        .map((d, i) =>
-          d === variable.nullValue ? null : [Number(array.data[offset + i]), d]
-        )
-        .filter(Boolean)
+      const rows = yValues.map((d, i) => [
+        array ? Number(array.data[offset + i]) : offset + i,
+        d === variable.nullValue ? null : d,
+      ])
 
       if (rows.length === 0) {
         return
       }
 
-      rows.unshift([selector.name, variable.name])
+      rows.unshift([
+        array ? selector.name : `${selector.name} (index)`,
+        variable.name,
+      ])
       const csvContent =
         'data:text/csv;charset=utf-8,' +
         rows.map((row) => row.join(',')).join('\n')

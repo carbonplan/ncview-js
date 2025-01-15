@@ -4,16 +4,20 @@ import { Box, Divider } from 'theme-ui'
 import useStore from './data/store'
 
 const ArrayMetadata = ({ array }) => {
-  const zattrs = useStore((state) => state.dataset?.getZattrs(array))
+  const zattrs = useStore((state) => state.dataset?.getZattrs(array) ?? {})
   const keys = Object.keys(zattrs)
-
+  const rows =
+    keys.length === 0
+      ? [['Metadata', 'Missing coordinate array and attributes']]
+      : keys.map((key, i) => {
+          const value = Array.isArray(zattrs[key])
+            ? `[${zattrs[key].join(', ')}]`
+            : zattrs[key]
+          return [key, value]
+        })
   return (
     <Box>
-      {Object.keys(zattrs).map((key, i) => {
-        const value = Array.isArray(zattrs[key])
-          ? `[${zattrs[key].join(', ')}]`
-          : zattrs[key]
-
+      {rows.map(([key, value], i) => {
         return (
           <Row
             key={key}
@@ -47,7 +51,7 @@ const ArrayMetadata = ({ array }) => {
             >
               {value}
             </Column>
-            {i === keys.length - 1 ? (
+            {i === rows.length - 1 ? (
               <Column start={1} width={4}>
                 <Divider sx={{ width: '100%' }} />
               </Column>

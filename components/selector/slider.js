@@ -16,7 +16,7 @@ const sx = {
   },
 }
 
-const Slider = ({ index }) => {
+const Slider = ({ index, skipArrayLabels = false }) => {
   const [playing, setPlaying] = usePlay(index, { incrementChunk: true })
   const selector = useStore(
     (state) => state.selectors && state.selectors[index]
@@ -67,6 +67,24 @@ const Slider = ({ index }) => {
     setScrubbing(false)
     setSelector(index, sliderValue)
   }, [index, sliderValue])
+
+  let value
+  if (skipArrayLabels) {
+    value = `Index=${sliderValue.chunk * chunk_shape + sliderValue.index}`
+  } else if (selector.metadata.cfAxis === 'T') {
+    value = (
+      <DateDisplay
+        array={selector.metadata.array}
+        selector={{ ...selector, ...sliderValue }}
+        chunkShape={chunk_shape}
+      />
+    )
+  } else {
+    value =
+      selector.metadata.array.data[
+        sliderValue.chunk * chunk_shape + sliderValue.index
+      ]
+  }
 
   return (
     <Flex sx={{ flexDirection: 'column', gap: 1, mt: 3 }}>
@@ -133,17 +151,7 @@ const Slider = ({ index }) => {
 
       <Box sx={{ ...sx.subLabel, pb: 1 }}>
         <Flex sx={{ gap: 2 }}>
-          {selector.metadata.cfAxis === 'T' ? (
-            <DateDisplay
-              array={selector.metadata.array}
-              selector={{ ...selector, ...sliderValue }}
-              chunkShape={chunk_shape}
-            />
-          ) : (
-            selector.metadata.array.data[
-              sliderValue.chunk * chunk_shape + sliderValue.index
-            ]
-          )}
+          {value}
           <Box>
             (
             <Box as='span' sx={{ color: 'primary' }}>

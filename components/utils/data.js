@@ -16,6 +16,8 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
+const MAX_ARRAY_LENGTH = 1000000
+
 const calculateRange = (arr, { nullValue }) => {
   const filteredData = arr.filter((d) => !Number.isNaN(d) && d !== nullValue)
   if (filteredData.length < 2) {
@@ -94,6 +96,10 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
+const isArrayOverSizeLimit = (dimensions) => {
+  return dimensions.reduce((product, d) => product * d, 1) >= MAX_ARRAY_LENGTH
+}
+
 const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
   if (chunkShape.length === 1) {
     return null
@@ -102,8 +108,7 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
   const fullSpace =
     dimensions
       .filter((d) => [axes?.X, axes?.Y].includes(d))
-      .every((d) => d <= 360) &&
-    chunkShape.reduce((product, d) => product * d, 1) < 1000000
+      .every((d) => d <= 360) && !isArrayOverSizeLimit(chunkShape)
 
   return dimensions.map((d, i) => {
     if ([axes?.X, axes?.Y].includes(d)) {
@@ -127,10 +132,12 @@ const getChunksOverrides = (metadata, variables, cfAxes) => {
   const result = {}
 
   coordinates.forEach((coordinate) => {
-    const { shape, chunks } = metadata.metadata[`${coordinate}/.zarray`]
+    if (metadata.metadata[`${coordinate}/.zarray`]) {
+      const { shape, chunks } = metadata.metadata[`${coordinate}/.zarray`]
 
-    if (shape.some((d, i) => d !== chunks[i])) {
-      result[coordinate] = shape
+      if (shape.some((d, i) => d !== chunks[i])) {
+        result[coordinate] = shape
+      }
     }
   })
 
@@ -205,10 +212,15 @@ export const getArrays = async (
     )
   )
 
-  const result = [...variables, ...coords].reduce((accum, arrayName) => {
-    accum[arrayName] = null
-    return accum
-  }, {})
+  const result = [...variables, ...coords]
+    .filter(
+      (arrayName) =>
+        metadata.metadata[`${level ? `${level}/` : ''}${arrayName}/.zarray`]
+    )
+    .reduce((accum, arrayName) => {
+      accum[arrayName] = null
+      return accum
+    }, {})
   const keys = Object.keys(result)
 
   const arrs = await Promise.all(
@@ -340,12 +352,18 @@ export const getVariableInfo = async (
   const selectorCoordinates = await Promise.all(
     dimensions
       .map((coord) => arrays[coord])
-      .map((arr, i) =>
-        isSpatialDimension(dimensions[i])
-          ? null
-          : // TODO: handle chunked coordinate arrays
-            arr.get_chunk([0], { headers: headers[name] })
-      )
+      .map((arr, i) => {
+        if (
+          isSpatialDimension(dimensions[i]) ||
+          !arr ||
+          isArrayOverSizeLimit(arr.shape)
+        ) {
+          return null
+        } else {
+          // TODO: handle chunked coordinate arrays
+          return arr.get_chunk([0], { headers: headers[name] })
+        }
+      })
   )
 
   const selectors = dimensions.map((d, i) => {

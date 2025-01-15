@@ -149,6 +149,7 @@ export const getVariables = (metadata, cfAxes, pyramid) => {
 
   const prefix = pyramid ? '0/' : ''
 
+  let variables
   const multiDimensionalVariables = Object.keys(metadata.metadata)
     .map((k) => k.match(pyramid ? /0\/\w+(?=\/\.zarray)/ : /\w+(?=\/\.zarray)/))
     .filter(Boolean)
@@ -158,38 +159,14 @@ export const getVariables = (metadata, cfAxes, pyramid) => {
   if (multiDimensionalVariables.length === 0) {
     throw new Error('Please provide a dataset with at least 2D data arrays.')
   }
+  variables = multiDimensionalVariables
 
-  const variablesWithCoords = multiDimensionalVariables.filter((d) =>
-    metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
-      (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
-    )
-  )
-
-  if (variablesWithCoords.length === 0) {
-    const missingCoordinates = multiDimensionalVariables.reduce((a, d) => {
-      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].forEach(
-        (dim) => {
-          if (!metadata.metadata[`${prefix}${dim}/.zarray`]) {
-            a.add(dim)
-          }
-        }
-      )
-      return a
-    }, new Set())
-    throw new Error(
-      `No viewable variables found. Missing coordinate information for ${
-        missingCoordinates.size > 1 ? 'dimensions' : 'dimension'
-      }: ${Array.from(missingCoordinates).join(', ')}.`
-    )
-  }
-
-  const variables = variablesWithCoords.filter((d) => cfAxes[d])
-
-  if (variables.length === 0) {
+  const variablesWithCfAxes = variables.filter((d) => cfAxes[d])
+  if (variablesWithCfAxes.length === 0) {
     throw new Error(
       `No viewable variables found. Unable to infer spatial dimensions for ${
-        variablesWithCoords.size > 1 ? 'variables' : 'variable'
-      }: ${Array.from(variablesWithCoords)
+        variables.size > 1 ? 'variables' : 'variable'
+      }: ${Array.from(variables)
         .map(
           (v) =>
             `${v} (${metadata.metadata[`${prefix}${v}/.zattrs`][
@@ -198,6 +175,59 @@ export const getVariables = (metadata, cfAxes, pyramid) => {
         )
         .join(', ')}.`
     )
+  }
+  variables = variablesWithCfAxes
+
+  if (pyramid) {
+    // @carbonplan/maps requires all dimensions to have coordinate arrays
+    const variablesWithCoords = variables.filter((d) =>
+      metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].every(
+        (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
+      )
+    )
+
+    if (variablesWithCoords.length === 0) {
+      const missingCoordinates = variables.reduce((a, d) => {
+        metadata.metadata[`${prefix}${d}/.zattrs`]['_ARRAY_DIMENSIONS'].forEach(
+          (dim) => {
+            if (!metadata.metadata[`${prefix}${dim}/.zarray`]) {
+              a.add(dim)
+            }
+          }
+        )
+        return a
+      }, new Set())
+      throw new Error(
+        `No viewable variables found. Missing coordinate information for ${
+          missingCoordinates.size > 1 ? 'dimensions' : 'dimension'
+        }: ${Array.from(missingCoordinates).join(', ')}.`
+      )
+    }
+    variables = variablesWithCoords
+  } else {
+    // proxy map rendering requires access to spatial coordinates
+    const variablesWithSpatialCoords = variables.filter((d) =>
+      [cfAxes[d].X, cfAxes[d].Y].every(
+        (dim) => metadata.metadata[`${prefix}${dim}/.zarray`]
+      )
+    )
+
+    if (variablesWithSpatialCoords.length === 0) {
+      const missingCoordinates = variables.reduce((a, d) => {
+        ;[cfAxes[d].X, cfAxes[d].Y].forEach((dim) => {
+          if (!metadata.metadata[`${prefix}${dim}/.zarray`]) {
+            a.add(dim)
+          }
+        })
+        return a
+      }, new Set())
+      throw new Error(
+        `No viewable variables found. Missing coordinate information for spatial ${
+          missingCoordinates.size > 1 ? 'dimensions' : 'dimension'
+        }: ${Array.from(missingCoordinates).join(', ')}.`
+      )
+    }
+    variables = variablesWithSpatialCoords
   }
 
   const levels = Object.keys(metadata.metadata)
