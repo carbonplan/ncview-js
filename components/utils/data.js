@@ -155,14 +155,19 @@ const getChunksOverrides = (metadata, variables, cfAxes) => {
   return result
 }
 
-const getChunksHeader = (metadata, variables, cfAxes) => {
-  const chunks = getChunksOverrides(metadata, variables, cfAxes)
-  return new Headers(
-    Object.keys(chunks).map((key) => [
-      'chunks',
-      `${key}=${chunks[key].join(',')}`,
-    ])
-  )
+const getChunksHeaders = (metadata, variables, cfAxes) => {
+  const headerMapping = variables.reduce((accum, variable) => {
+    const chunks = getChunksOverrides(metadata, [variable], cfAxes)
+    accum[variable] = new Headers(
+      Object.keys(chunks).map((key) => [
+        'chunks',
+        `${key}=${chunks[key].join(',')}`,
+      ])
+    )
+    return accum
+  }, {})
+
+  return headerMapping
 }
 
 export const getArrays = async (
@@ -171,7 +176,7 @@ export const getArrays = async (
 ) => {
   // TODO: instantiate store with headers and clean up manual overrides
 
-  const headers = pyramid ? {} : getChunksHeader(metadata, variables, cfAxes)
+  const headers = pyramid ? {} : getChunksHeaders(metadata, variables, cfAxes)
   const chunksOverrides = pyramid
     ? {}
     : getChunksOverrides(metadata, variables, cfAxes)
@@ -247,7 +252,7 @@ export const getVariableLevelInfo = async (
     ['X', 'Y']
       .map((axis) => arrays[cfAxes[name][axis]])
       // TODO: handle chunked spatial coordinates
-      .map((arr, i) => arr.get_chunk([0], { headers }))
+      .map((arr, i) => arr.get_chunk([0], { headers: headers[name] }))
   )
 
   const axes = ['X', 'Y'].reduce((accum, key, i) => {
@@ -339,7 +344,7 @@ export const getVariableInfo = async (
         isSpatialDimension(dimensions[i])
           ? null
           : // TODO: handle chunked coordinate arrays
-            arr.get_chunk([0], { headers })
+            arr.get_chunk([0], { headers: headers[name] })
       )
   )
 
@@ -375,11 +380,11 @@ export const getVariableInfo = async (
 }
 
 export const getChunkData = async (chunkKey, level) => {
-  const { array, axes, nullValue, chunk_separator, chunk_shape, shape } =
+  const { array, axes, nullValue, chunk_separator, chunk_shape, shape, name } =
     level.variable
   const chunkKeyArray = toKeyArray(chunkKey, { chunk_separator })
   const data = await array
-    .get_chunk(chunkKeyArray, { headers: level.headers })
+    .get_chunk(chunkKeyArray, { headers: level.headers[name] })
     .then((c) => {
       return ndarray(Float32Array.from(c.data, Number), chunk_shape)
     })
