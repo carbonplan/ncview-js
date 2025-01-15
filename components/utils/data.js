@@ -16,6 +16,8 @@ const COMPRESSORS = {
   blosc: Blosc,
 }
 
+const MAX_ARRAY_LENGTH = 1000000
+
 const calculateRange = (arr, { nullValue }) => {
   const filteredData = arr.filter((d) => !Number.isNaN(d) && d !== nullValue)
   if (filteredData.length < 2) {
@@ -103,7 +105,7 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
     dimensions
       .filter((d) => [axes?.X, axes?.Y].includes(d))
       .every((d) => d <= 360) &&
-    chunkShape.reduce((product, d) => product * d, 1) < 1000000
+    chunkShape.reduce((product, d) => product * d, 1) < MAX_ARRAY_LENGTH
 
   return dimensions.map((d, i) => {
     if ([axes?.X, axes?.Y].includes(d)) {
@@ -348,7 +350,11 @@ export const getVariableInfo = async (
     dimensions
       .map((coord) => arrays[coord])
       .map((arr, i) => {
-        if (isSpatialDimension(dimensions[i]) || !arr || arr.shape > 1000) {
+        if (
+          isSpatialDimension(dimensions[i]) ||
+          !arr ||
+          arr.shape > MAX_ARRAY_LENGTH
+        ) {
           return null
         } else {
           // TODO: handle chunked coordinate arrays
