@@ -127,10 +127,12 @@ const getChunksOverrides = (metadata, variables, cfAxes) => {
   const result = {}
 
   coordinates.forEach((coordinate) => {
-    const { shape, chunks } = metadata.metadata[`${coordinate}/.zarray`]
+    if (metadata.metadata[`${coordinate}/.zarray`]) {
+      const { shape, chunks } = metadata.metadata[`${coordinate}/.zarray`]
 
-    if (shape.some((d, i) => d !== chunks[i])) {
-      result[coordinate] = shape
+      if (shape.some((d, i) => d !== chunks[i])) {
+        result[coordinate] = shape
+      }
     }
   })
 
@@ -205,10 +207,15 @@ export const getArrays = async (
     )
   )
 
-  const result = [...variables, ...coords].reduce((accum, arrayName) => {
-    accum[arrayName] = null
-    return accum
-  }, {})
+  const result = [...variables, ...coords]
+    .filter(
+      (arrayName) =>
+        metadata.metadata[`${level ? `${level}/` : ''}${arrayName}/.zarray`]
+    )
+    .reduce((accum, arrayName) => {
+      accum[arrayName] = null
+      return accum
+    }, {})
   const keys = Object.keys(result)
 
   const arrs = await Promise.all(
@@ -341,7 +348,7 @@ export const getVariableInfo = async (
     dimensions
       .map((coord) => arrays[coord])
       .map((arr, i) => {
-        if (isSpatialDimension(dimensions[i]) || arr.shape > 1000) {
+        if (isSpatialDimension(dimensions[i]) || !arr || arr.shape > 1000) {
           return null
         } else {
           // TODO: handle chunked coordinate arrays

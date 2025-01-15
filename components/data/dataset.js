@@ -117,12 +117,7 @@ class Dataset {
     }
     const prefix = this.pyramid ? '0/' : ''
 
-    const zattrs = this.metadata.metadata[`${prefix}${arrayName}/.zattrs`]
-
-    if (!zattrs) {
-      throw new Error(`No .zattrs found for ${arrayName}`)
-    }
-    return zattrs
+    return this.metadata.metadata[`${prefix}${arrayName}/.zattrs`]
   }
 }
 

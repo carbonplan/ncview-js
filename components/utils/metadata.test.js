@@ -276,7 +276,7 @@ describe('metadata utils', () => {
       ).toThrow('Please provide a dataset with at least 2D data arrays.')
     })
 
-    it('throws an error when coordinate arrays are missing for variables', () => {
+    it('throws an error when spatial coordinate arrays are missing for variables', () => {
       expect(() =>
         getVariables(
           {
@@ -290,11 +290,11 @@ describe('metadata utils', () => {
             },
             zarr_consolidated_format: 1,
           },
-          {},
+          { variable: { T: 'time', X: 'x', Y: 'y' } },
           false
         )
       ).toThrow(
-        'No viewable variables found. Missing coordinate information for dimensions: x, y.'
+        'No viewable variables found. Missing coordinate information for spatial dimensions: x, y.'
       )
     })
 
@@ -335,6 +335,28 @@ describe('metadata utils', () => {
               'variable/.zattrs': { _ARRAY_DIMENSIONS: ['time', 'x', 'y'] },
               'time/.zarray': { shape: [365] },
               'time/.zattrs': { _ARRAY_DIMENSIONS: ['time'] },
+              'x/.zarray': { shape: [128] },
+              'x/.zattrs': { _ARRAY_DIMENSIONS: ['x'] },
+              'y/.zarray': { shape: [128] },
+              'y/.zattrs': { _ARRAY_DIMENSIONS: ['y'] },
+            },
+            zarr_consolidated_format: 1,
+          },
+          { variable: { T: 'time', X: 'x', Y: 'y' } },
+          false
+        )
+      ).toEqual({ levels: [], variables: ['variable'] })
+    })
+
+    it('handles variables missing non-spatial coordinate(s)', () => {
+      expect(
+        getVariables(
+          {
+            metadata: {
+              '.zattrs': { top_level_attribute: 'top_level_attribute' },
+              '.zgroup': { zarr_format: 2 },
+              'variable/.zarray': { shape: [365, 128, 128] },
+              'variable/.zattrs': { _ARRAY_DIMENSIONS: ['time', 'x', 'y'] },
               'x/.zarray': { shape: [128] },
               'x/.zattrs': { _ARRAY_DIMENSIONS: ['x'] },
               'y/.zarray': { shape: [128] },
@@ -411,7 +433,40 @@ describe('metadata utils', () => {
         ).toEqual({ levels: [], variables: ['variable_one'] })
       })
 
-      it('filters variables missing coordinate arrays', () => {
+      it('filters variables missing spatial coordinate arrays', () => {
+        expect(
+          getVariables(
+            {
+              metadata: {
+                '.zattrs': { top_level_attribute: 'top_level_attribute' },
+                '.zgroup': { zarr_format: 2 },
+                'variable_one/.zarray': { shape: [365, 128, 128] },
+                'variable_one/.zattrs': {
+                  _ARRAY_DIMENSIONS: ['time', 'x', 'y'],
+                },
+                'variable_two/.zarray': { shape: [365, 128, 128] },
+                'variable_two/.zattrs': {
+                  _ARRAY_DIMENSIONS: ['time', 'missing_x', 'y'],
+                },
+                'time/.zarray': { shape: [365] },
+                'time/.zattrs': { _ARRAY_DIMENSIONS: ['time'] },
+                'x/.zarray': { shape: [128] },
+                'x/.zattrs': { _ARRAY_DIMENSIONS: ['x'] },
+                'y/.zarray': { shape: [128] },
+                'y/.zattrs': { _ARRAY_DIMENSIONS: ['y'] },
+              },
+              zarr_consolidated_format: 1,
+            },
+            {
+              variable_one: { T: 'time', X: 'x', Y: 'y' },
+              variable_two: { T: 'time', X: 'missing_x', Y: 'y' },
+            },
+            false
+          )
+        ).toEqual({ levels: [], variables: ['variable_one'] })
+      })
+
+      it('does not filter variables missing non-spatial coordinate arrays', () => {
         expect(
           getVariables(
             {
@@ -441,7 +496,7 @@ describe('metadata utils', () => {
             },
             false
           )
-        ).toEqual({ levels: [], variables: ['variable_one'] })
+        ).toEqual({ levels: [], variables: ['variable_one', 'variable_two'] })
       })
 
       it('filters variables missing cfAxes information', () => {
@@ -551,7 +606,7 @@ describe('metadata utils', () => {
         ).toThrow('Please provide a dataset with at least 2D data arrays.')
       })
 
-      it('throws an error when coordinate arrays are missing for variables', () => {
+      it('throws an error when spatial coordinate arrays are missing for variables', () => {
         expect(() =>
           getVariables(
             {
@@ -565,11 +620,35 @@ describe('metadata utils', () => {
               },
               zarr_consolidated_format: 1,
             },
-            {},
+            { variable: { T: 'time', X: 'x', Y: 'y' } },
             true
           )
         ).toThrow(
           'No viewable variables found. Missing coordinate information for dimensions: x, y.'
+        )
+      })
+
+      it('throws an error when non-spatial coordinate arrays are missing for variables', () => {
+        expect(() =>
+          getVariables(
+            {
+              metadata: {
+                '.zattrs': { top_level_attribute: 'top_level_attribute' },
+                '.zgroup': { zarr_format: 2 },
+                '0/variable/.zarray': { shape: [365, 128, 128] },
+                '0/variable/.zattrs': { _ARRAY_DIMENSIONS: ['time', 'x', 'y'] },
+                '0/x/.zarray': { shape: [128] },
+                '0/x/.zattrs': { _ARRAY_DIMENSIONS: ['x'] },
+                '0/y/.zarray': { shape: [128] },
+                '0/y/.zattrs': { _ARRAY_DIMENSIONS: ['y'] },
+              },
+              zarr_consolidated_format: 1,
+            },
+            { variable: { T: 'time', X: 'x', Y: 'y' } },
+            true
+          )
+        ).toThrow(
+          'No viewable variables found. Missing coordinate information for dimension: time.'
         )
       })
 

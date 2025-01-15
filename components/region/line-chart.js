@@ -24,8 +24,8 @@ import RegionInfo from './region-info'
 const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const variable = useStore((state) => state.dataset.level.variable)
   const { units } = useStore((state) => state.dataset.getZattrs(variable.name))
-  const { units: selectorUnits } = useStore((state) =>
-    state.dataset.getZattrs(selector.name)
+  const { units: selectorUnits } = useStore(
+    (state) => state.dataset.getZattrs(selector.name) ?? {}
   )
   const { array, cfAxis } = useStore((state) => state.selectors[index].metadata)
   const isTime = cfAxis === 'T'
