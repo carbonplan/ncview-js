@@ -26,7 +26,7 @@ const ResetClim = () => {
     if (clim.some((d) => d === Infinity || d === -Infinity)) {
       clim = [0, 0]
     }
-    setClim(clim)
+    setClim(clim, true)
   }, [chunksToRender, chunks])
 
   return (

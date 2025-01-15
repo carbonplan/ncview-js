@@ -15,6 +15,7 @@ const Display = () => {
   const projection = useStore((state) => state.projection)
   const setProjection = useStore((state) => state.setProjection)
   const clim = useStore((state) => state.clim)
+  const climStep = useStore((state) => state.climStep)
   const setClim = useStore((state) => state.setClim)
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
@@ -123,6 +124,7 @@ const Display = () => {
           colormap={colormap}
           clim={clim}
           setClim={clim ? (setter) => setClim(setter(clim)) : null}
+          setClimStep={climStep}
           format={(d) => formatValue(d, clim)}
           width='100%'
           horizontal
