@@ -96,6 +96,10 @@ export const toKeyArray = (chunkKey, { chunk_separator }) => {
   return chunkKey.split(chunk_separator).map(Number)
 }
 
+const isArrayOverSizeLimit = (dimensions) => {
+  return dimensions.reduce((product, d) => product * d, 1) >= MAX_ARRAY_LENGTH
+}
+
 const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
   if (chunkShape.length === 1) {
     return null
@@ -104,8 +108,7 @@ const getChunkShapeOverride = (chunkShape, shape, dimensions, axes) => {
   const fullSpace =
     dimensions
       .filter((d) => [axes?.X, axes?.Y].includes(d))
-      .every((d) => d <= 360) &&
-    chunkShape.reduce((product, d) => product * d, 1) < MAX_ARRAY_LENGTH
+      .every((d) => d <= 360) && !isArrayOverSizeLimit(chunkShape)
 
   return dimensions.map((d, i) => {
     if ([axes?.X, axes?.Y].includes(d)) {
@@ -353,7 +356,7 @@ export const getVariableInfo = async (
         if (
           isSpatialDimension(dimensions[i]) ||
           !arr ||
-          arr.shape > MAX_ARRAY_LENGTH
+          isArrayOverSizeLimit(arr.shape)
         ) {
           return null
         } else {
