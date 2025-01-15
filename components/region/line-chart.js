@@ -11,7 +11,6 @@ import {
   Ticks,
 } from '@carbonplan/charts'
 import { Box, Flex } from 'theme-ui'
-import { format } from 'd3-format'
 import React, { useCallback } from 'react'
 import { Button } from '@carbonplan/components'
 import { Down } from '@carbonplan/icons'
@@ -20,6 +19,7 @@ import useStore from '../data/store'
 import { isNullValue } from '../utils/data'
 import DateTickLabel from './date-tick-label'
 import RegionInfo from './region-info'
+import { formatValue } from '../utils/display'
 
 const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
   const variable = useStore((state) => state.dataset.level.variable)
@@ -78,7 +78,10 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
       const link = document.createElement('a')
       link.setAttribute('href', encodedUri)
       const suffix = centerPoint
-        ? `${format('.1f')(centerPoint[0])}-${format('.1f')(centerPoint[1])}`
+        ? `${formatValue(centerPoint[0], range)}-${formatValue(
+            centerPoint[1],
+            range
+          )}`
         : ''
       link.setAttribute('download', `${variable.name}${suffix}.csv`)
       document.body.appendChild(link)
@@ -94,6 +97,7 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
       variable.name,
       variable.nullValue,
       offset,
+      range,
     ]
   )
 
@@ -161,7 +165,7 @@ const LineChart = ({ selector, range, centerPoint, yValues, index }) => {
               sx={{ mt: 2, ml: 1, color: 'primary' }}
               align={selector.index >= chunk_shape / 2 ? 'right' : 'left'}
             >
-              {format('.1f')(yValues[selector.index])} {units}
+              {formatValue(yValues[selector.index], range)} {units}
             </Label>
           )}
         </Chart>

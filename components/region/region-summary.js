@@ -1,12 +1,13 @@
 import { Box, Flex } from 'theme-ui'
-import { format } from 'd3-format'
 import React from 'react'
 
 import RegionInfo from './region-info'
 import useStore from '../data/store'
 import { isNullValue } from '../utils/data'
+import { formatValue } from '../utils/display'
 
 const RegionSummary = () => {
+  const clim = useStore((state) => state.clim)
   const plotData = useStore((state) => state.plotData)
   const plotMode = useStore((state) => state.plotMode)
   const variable = useStore((state) => state.dataset.level.variable)
@@ -41,7 +42,7 @@ const RegionSummary = () => {
           </Box>
         ) : (
           <>
-            {format('.1f')(yValues[0])} {units}
+            {formatValue(yValues[0], clim)} {units}
           </>
         )}
       </Flex>
