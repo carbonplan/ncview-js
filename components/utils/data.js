@@ -8,7 +8,7 @@ import {
   // LZ4,
   // Zstd,
 } from 'numcodecs'
-import { deviation, extent } from 'd3-array'
+import { deviation } from 'd3-array'
 import { PROJECTIONS, ASPECTS } from '../constants'
 
 const COMPRESSORS = {
