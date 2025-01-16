@@ -278,7 +278,7 @@ export const getVariableLevelInfo = async (
         return a
       }, new Set())
       const stepDeviation = deviation(stepValues)
-      if (stepDeviation && stepDeviation > 1e-10) {
+      if (stepDeviation && stepDeviation > 1e-3) {
         throw new Error(
           `Cannot handle coordinate: ${cfAxes[name][key]}. Spatial coordinates must be equally spaced.`
         )
