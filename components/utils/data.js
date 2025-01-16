@@ -270,17 +270,19 @@ export const getVariableLevelInfo = async (
   const axes = ['X', 'Y'].reduce((accum, key, i) => {
     const index = dimensions.indexOf(cfAxes[name][key])
     const array = coordinates[i]
-    const stepValues = array.data.reduce((a, d, i) => {
-      if (i === 0) return a
-      const delta = d - array.data[i - 1]
-      a.add(delta)
-      return a
-    }, new Set())
-    const stepDeviation = deviation(stepValues)
-    if (stepDeviation && stepDeviation > 1e-10) {
-      throw new Error(
-        `Cannot handle coordinate: ${cfAxes[name][key]}. Spatial coordinates must be equally spaced.`
-      )
+    if (!pyramid) {
+      const stepValues = array.data.reduce((a, d, i) => {
+        if (i === 0) return a
+        const delta = d - array.data[i - 1]
+        a.add(delta)
+        return a
+      }, new Set())
+      const stepDeviation = deviation(stepValues)
+      if (stepDeviation && stepDeviation > 1e-10) {
+        throw new Error(
+          `Cannot handle coordinate: ${cfAxes[name][key]}. Spatial coordinates must be equally spaced.`
+        )
+      }
     }
 
     const step = Math.abs(Number(array.data[0]) - Number(array.data[1]))
