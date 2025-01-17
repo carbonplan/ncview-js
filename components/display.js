@@ -1,11 +1,11 @@
 import { Box, Flex } from 'theme-ui'
 import { Toggle, Select, Colorbar } from '@carbonplan/components'
 import { colormaps, useThemedColormap } from '@carbonplan/colormaps'
-import { format } from 'd3-format'
 
 import useStore from './data/store'
 import Label from './label'
 import ResetClim from './reset-clim'
+import { formatValue } from './utils/display'
 
 const Display = () => {
   const hasData = useStore((state) => !!state.dataset)
@@ -15,6 +15,7 @@ const Display = () => {
   const projection = useStore((state) => state.projection)
   const setProjection = useStore((state) => state.setProjection)
   const clim = useStore((state) => state.clim)
+  const climStep = useStore((state) => state.climStep)
   const setClim = useStore((state) => state.setClim)
   const setColormap = useStore((state) => state.setColormap)
   const colormapName = useStore((state) => state.colormap)
@@ -123,7 +124,8 @@ const Display = () => {
           colormap={colormap}
           clim={clim}
           setClim={clim ? (setter) => setClim(setter(clim)) : null}
-          format={format('.1f')}
+          setClimStep={climStep}
+          format={(d) => formatValue(d, clim)}
           width='100%'
           horizontal
           sxClim={{ fontSize: [1, 1, 1, 2], mt: ['-1px'], pb: ['2px'] }}

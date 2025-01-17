@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import Dataset from './dataset'
+import { getClimStep } from '../utils/display'
 
 const createDatasetSlice = (set, get) => ({
   // loading
@@ -20,6 +21,7 @@ const createDisplaySlice = (set, get) => ({
   basemaps: { landBoundaries: true, landMask: false, oceanMask: false },
   colormap: 'cool',
   clim: null,
+  climStep: 1,
   centerPoint: null,
   zoom: 0,
   scrubbing: false,
@@ -27,7 +29,8 @@ const createDisplaySlice = (set, get) => ({
   setBasemaps: (basemaps) =>
     set((prev) => ({ basemaps: { ...prev.basemaps, ...basemaps } })),
   setColormap: (colormap) => set({ colormap }),
-  setClim: (clim) => set({ clim }),
+  setClim: (clim, resetStep) =>
+    set({ clim, ...(resetStep && { climStep: getClimStep(clim) }) }),
   setScrubbing: (scrubbing) => set({ scrubbing }),
 })
 
@@ -53,6 +56,7 @@ const useStore = create((set, get) => ({
       selectors: [],
       chunksToRender: [],
       clim: null,
+      climStep: 1,
       projection: 'mercator',
       plotData: null,
     })
@@ -105,7 +109,7 @@ const useStore = create((set, get) => ({
 
     await dataset.updateSelection(cp, zoom, get().selectors)
     const clim = await dataset.getClim()
-    set({ clim: urlClim ?? clim })
+    set({ clim: urlClim ?? clim, climStep: getClimStep(urlClim ?? clim) })
     _unregisterLoading(name)
 
     get().resetMapProps(cp, zoom)
