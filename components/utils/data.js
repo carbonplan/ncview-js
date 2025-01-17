@@ -264,7 +264,13 @@ export const getVariableLevelInfo = async (
     ['X', 'Y']
       .map((axis) => arrays[cfAxes[name][axis]])
       // TODO: handle chunked spatial coordinates
-      .map((arr, i) => arr.get_chunk([0], { headers: headers[name] }))
+      .map((arr, i) =>
+        arr
+          .get_chunk([0], { headers: headers[name] })
+          .then((c) =>
+            ndarray(Float32Array.from(c.data, Number), arr.chunk_shape)
+          )
+      )
   )
 
   const axes = ['X', 'Y'].reduce((accum, key, i) => {
