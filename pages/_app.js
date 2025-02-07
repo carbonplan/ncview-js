@@ -1,4 +1,5 @@
 import React from 'react'
+import Script from 'next/script'
 import { ThemeProvider } from 'theme-ui'
 import { MDXProvider } from '@mdx-js/react'
 import '@carbonplan/components/fonts.css'
